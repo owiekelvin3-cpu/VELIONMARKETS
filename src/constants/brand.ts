@@ -1,0 +1,22 @@
+export const BRAND = {
+  name: "VELION MARKETS",
+  shortName: "VELION",
+  wordmarkSuffix: "MARKETS",
+  legalEntity: "Velion Markets LLC",
+  tagline: "Professional Brokerage & Wealth Management",
+  domain: "velionmarkets.com",
+  url: "https://velionmarkets.com",
+  supportEmail: "support@velionmarkets.com",
+  complianceEmail: "compliance@velionmarkets.com",
+  registrationNumber: "VEL-2021-001",
+  foundedYear: 2021,
+  twitter: "@VelionMarkets",
+  colors: {
+    navy: "#0A0E1A",
+    slate: "#141B2D",
+    gold: "#C9A227",
+    emerald: "#22D3EE",
+    blue: "#1D4ED8",
+    offWhite: "#F8FAFC",
+  },
+} as const;

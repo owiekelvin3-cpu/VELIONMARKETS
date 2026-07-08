@@ -1,0 +1,528 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export type UserRole = "user" | "admin";
+export type KycStatus = "none" | "pending" | "approved" | "rejected";
+export type TransactionStatus = "pending" | "approved" | "rejected" | "completed";
+
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          email: string;
+          full_name: string | null;
+          role: UserRole;
+          kyc_status: KycStatus;
+          avatar_url: string | null;
+          wallet_address: string | null;
+          wallet_label: string | null;
+          phone: string | null;
+          bio: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          full_name?: string | null;
+          role?: UserRole;
+          kyc_status?: KycStatus;
+          avatar_url?: string | null;
+          wallet_address?: string | null;
+          wallet_label?: string | null;
+          phone?: string | null;
+          bio?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          full_name?: string | null;
+          role?: UserRole;
+          kyc_status?: KycStatus;
+          avatar_url?: string | null;
+          wallet_address?: string | null;
+          wallet_label?: string | null;
+          phone?: string | null;
+          bio?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      kyc_submissions: {
+        Row: {
+          id: string;
+          user_id: string;
+          document_type: string;
+          document_url: string | null;
+          status: KycStatus;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          document_type: string;
+          document_url?: string | null;
+          status?: KycStatus;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          document_type?: string;
+          document_url?: string | null;
+          status?: KycStatus;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      balances: {
+        Row: {
+          id: string;
+          user_id: string;
+          currency: string;
+          amount: number;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          currency?: string;
+          amount?: number;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          currency?: string;
+          amount?: number;
+          updated_at?: string;
+        };
+      };
+      deposits: {
+        Row: {
+          id: string;
+          user_id: string;
+          amount: number;
+          currency: string;
+          method: string;
+          status: TransactionStatus;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          amount: number;
+          currency?: string;
+          method: string;
+          status?: TransactionStatus;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          amount?: number;
+          currency?: string;
+          method?: string;
+          status?: TransactionStatus;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      withdrawals: {
+        Row: {
+          id: string;
+          user_id: string;
+          amount: number;
+          currency: string;
+          method: string;
+          wallet_address: string | null;
+          status: TransactionStatus;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          amount: number;
+          currency?: string;
+          method: string;
+          wallet_address?: string | null;
+          status?: TransactionStatus;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          amount?: number;
+          currency?: string;
+          method?: string;
+          wallet_address?: string | null;
+          status?: TransactionStatus;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      trades: {
+        Row: {
+          id: string;
+          user_id: string;
+          asset: string;
+          type: "buy" | "sell";
+          amount: number;
+          price: number;
+          status: TransactionStatus;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          asset: string;
+          type: "buy" | "sell";
+          amount: number;
+          price: number;
+          status?: TransactionStatus;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          asset?: string;
+          type?: "buy" | "sell";
+          amount?: number;
+          price?: number;
+          status?: TransactionStatus;
+          created_at?: string;
+        };
+      };
+      plans: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          price: number;
+          features: string[];
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          price: number;
+          features?: string[];
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          price?: number;
+          features?: string[];
+          is_active?: boolean;
+          created_at?: string;
+        };
+      };
+      copy_trading_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          trader_name: string;
+          allocation: number;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          trader_name: string;
+          allocation: number;
+          status?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          trader_name?: string;
+          allocation?: number;
+          status?: string;
+          created_at?: string;
+        };
+      };
+      mining_packages: {
+        Row: {
+          id: string;
+          user_id: string;
+          package_name: string;
+          investment: number;
+          daily_return: number;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          package_name: string;
+          investment: number;
+          daily_return: number;
+          status?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          package_name?: string;
+          investment?: number;
+          daily_return?: number;
+          status?: string;
+          created_at?: string;
+        };
+      };
+      signal_packages: {
+        Row: {
+          id: string;
+          user_id: string;
+          package_name: string;
+          price: number;
+          status: string;
+          expires_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          package_name: string;
+          price: number;
+          status?: string;
+          expires_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          package_name?: string;
+          price?: number;
+          status?: string;
+          expires_at?: string | null;
+          created_at?: string;
+        };
+      };
+      ai_trading_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          bot_id: string | null;
+          bot_name: string;
+          allocation: number;
+          duration_hours: number;
+          expires_at: string | null;
+          crypto_asset: string;
+          profit_earned: number;
+          last_sync_at: string | null;
+          purchase_cost: number | null;
+          market: string;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          bot_id?: string | null;
+          bot_name: string;
+          allocation: number;
+          duration_hours?: number;
+          expires_at?: string | null;
+          crypto_asset?: string;
+          profit_earned?: number;
+          last_sync_at?: string | null;
+          purchase_cost?: number | null;
+          market?: string;
+          status?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          bot_id?: string | null;
+          bot_name?: string;
+          allocation?: number;
+          duration_hours?: number;
+          expires_at?: string | null;
+          crypto_asset?: string;
+          profit_earned?: number;
+          last_sync_at?: string | null;
+          purchase_cost?: number | null;
+          market?: string;
+          status?: string;
+          created_at?: string;
+        };
+      };
+      ai_bot_trades: {
+        Row: {
+          id: string;
+          subscription_id: string;
+          user_id: string;
+          crypto_asset: string;
+          trade_amount: number;
+          profit: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          subscription_id: string;
+          user_id: string;
+          crypto_asset: string;
+          trade_amount: number;
+          profit: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          subscription_id?: string;
+          user_id?: string;
+          crypto_asset?: string;
+          trade_amount?: number;
+          profit?: number;
+          created_at?: string;
+        };
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          message: string;
+          read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          message: string;
+          read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          message?: string;
+          read?: boolean;
+          created_at?: string;
+        };
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          endpoint?: string;
+          p256dh?: string;
+          auth?: string;
+          user_agent?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      platform_settings: {
+        Row: {
+          id: string;
+          key: string;
+          value: Json;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          key: string;
+          value: Json;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          key?: string;
+          value?: Json;
+          updated_at?: string;
+        };
+      };
+      certificates: {
+        Row: {
+          id: string;
+          certificate_id: string;
+          holder_name: string;
+          issue_date: string;
+          type: string;
+          verified: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          certificate_id: string;
+          holder_name: string;
+          issue_date: string;
+          type: string;
+          verified?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          certificate_id?: string;
+          holder_name?: string;
+          issue_date?: string;
+          type?: string;
+          verified?: boolean;
+          created_at?: string;
+        };
+      };
+    };
+  };
+}
+
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type Deposit = Database["public"]["Tables"]["deposits"]["Row"];
+export type Withdrawal = Database["public"]["Tables"]["withdrawals"]["Row"];
+export type Trade = Database["public"]["Tables"]["trades"]["Row"];
+export type Plan = Database["public"]["Tables"]["plans"]["Row"];
+export type Notification = Database["public"]["Tables"]["notifications"]["Row"];

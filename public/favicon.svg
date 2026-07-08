@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <linearGradient id="velion-cyan" x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67E8F9"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="velion-bg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#141B2D"/>
+      <stop offset="1" stop-color="#0A0E1A"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="11" fill="url(#velion-bg)"/>
+  <rect width="40" height="40" rx="11" fill="url(#velion-cyan)" fill-opacity="0.14"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="10.5" stroke="#22D3EE" stroke-opacity="0.35"/>
+  <path d="M11 13.5L20 29.5L29 13.5" stroke="url(#velion-cyan)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M14.5 18.5L20 27L25.5 18.5" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.55"/>
+  <path d="M24 12.5L29.5 10.5L33 14" stroke="#C9A227" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="33" cy="14" r="1.5" fill="#C9A227"/>
+</svg>
