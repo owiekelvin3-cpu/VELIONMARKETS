@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   createConversation,
@@ -21,8 +21,6 @@ export function useUserSupport(userId: string | undefined) {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState("");
-  const [typing, setTyping] = useState(false);
-  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refreshList = useCallback(async () => {
     if (!userId) return;
@@ -98,11 +96,6 @@ export function useUserSupport(userId: string | undefined) {
               return prev.map((m) =>
                 m.client_id && m.client_id === row.client_id ? { ...row, attachments: m.attachments, pending: false } : m
               );
-            }
-            if (row.sender_role === "admin") {
-              setTyping(true);
-              if (typingTimer.current) clearTimeout(typingTimer.current);
-              typingTimer.current = setTimeout(() => setTyping(false), 600);
             }
             return [...prev, { ...row, attachments: [] }];
           });
@@ -190,7 +183,6 @@ export function useUserSupport(userId: string | undefined) {
     loadingMessages,
     hasMore,
     error,
-    typing,
     startNew,
     send,
     reopen,
