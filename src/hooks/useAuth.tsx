@@ -12,7 +12,12 @@ interface AuthContextType {
   loading: boolean;
   sessionExpired: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null; user: User | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    location?: { country: string; region: string }
+  ) => Promise<{ error: Error | null; user: User | null }>;
   signOut: () => Promise<void>;
   refreshProfile: (userId?: string) => Promise<Profile | null>;
   clearSessionExpired: () => void;
@@ -162,14 +167,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    location?: { country: string; region: string }
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: {
+          full_name: fullName,
+          country: location?.country,
+          region: location?.region,
+        },
+      },
     });
     if (!error && data.user) {
-      await supabase.from("profiles").update({ full_name: fullName }).eq("id", data.user.id);
+      await supabase.from("profiles").update({
+        full_name: fullName,
+        country: location?.country || null,
+        region: location?.region || null,
+      }).eq("id", data.user.id);
       setSessionExpired(false);
     }
     return { error: error as Error | null, user: data.user ?? null };

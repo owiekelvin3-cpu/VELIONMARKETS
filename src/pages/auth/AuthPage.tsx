@@ -14,10 +14,19 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
 import { Logo } from "@/components/brand/Logo";
 import { IMAGES } from "@/constants/images";
-import { Mail, X } from "@/lib/icons";
+import {
+  COUNTRIES,
+  getCountryName,
+  getRegionsForCountry,
+  hasPresetRegions,
+} from "@/constants/geo";
+import { Mail, X, ChevronDown } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 type Mode = "login" | "register";
+
+const selectClass =
+  "h-12 w-full appearance-none rounded-xl border border-border bg-secondary/40 px-3.5 pr-10 text-sm text-foreground outline-none transition-colors focus-visible:border-emerald/50 focus-visible:ring-2 focus-visible:ring-emerald/20";
 
 export default function AuthPage() {
   const { t } = useTranslation();
@@ -30,13 +39,21 @@ export default function AuthPage() {
     (location.state as { sessionExpired?: boolean } | null)?.sessionExpired === true;
   const [error, setError] = useState(sessionExpired ? t("auth.sessionExpired") : "");
   const [loading, setLoading] = useState(false);
+  const [countryCode, setCountryCode] = useState("");
+  const [region, setRegion] = useState("");
 
   useEffect(() => {
     if (sessionExpired) clearSessionExpired();
   }, [sessionExpired, clearSessionExpired]);
 
+  useEffect(() => {
+    setRegion("");
+  }, [countryCode]);
+
   function setMode(next: Mode) {
     setError("");
+    setCountryCode("");
+    setRegion("");
     setSearchParams(next === "register" ? { mode: "register" } : {}, { replace: true });
   }
 
@@ -69,17 +86,39 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    if (!countryCode) {
+      setError(t("auth.countryRequired"));
+      setLoading(false);
+      return;
+    }
+    if (!region.trim()) {
+      setError(t("auth.regionRequired"));
+      setLoading(false);
+      return;
+    }
+
     const permissionPromise = prepareNotificationsOnUserGesture();
     const form = new FormData(e.currentTarget);
     const { error, user } = await signUp(
       form.get("email") as string,
       form.get("password") as string,
-      form.get("fullName") as string
+      form.get("fullName") as string,
+      {
+        country: getCountryName(countryCode),
+        region: region.trim(),
+      }
     );
     if (error) {
       setError(error.message);
     } else {
-      if (user) await completePushSetup(user.id, permissionPromise);
+      if (user) {
+        try {
+          await completePushSetup(user.id, permissionPromise);
+        } catch {
+          /* ignore */
+        }
+      }
       navigate("/dashboard");
     }
     setLoading(false);
@@ -87,6 +126,9 @@ export default function AuthPage() {
 
   const fieldClass =
     "h-12 rounded-xl border-border bg-secondary/40 text-foreground placeholder:text-muted focus-visible:border-emerald/50 focus-visible:ring-emerald/20";
+
+  const presetRegions = countryCode ? getRegionsForCountry(countryCode) : [];
+  const useRegionSelect = countryCode ? hasPresetRegions(countryCode) : false;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-void px-3 py-6 sm:px-6 sm:py-10">
@@ -104,7 +146,6 @@ export default function AuthPage() {
         <AuthBrandPanel />
 
         <div className="relative flex w-full flex-col bg-card text-foreground lg:w-1/2">
-          {/* Mobile cinematic strip — image stays dark for contrast */}
           <div className="relative h-36 overflow-hidden lg:hidden">
             <img src={IMAGES.auth.panel} alt="" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-void via-void/50 to-void/30" />
@@ -124,7 +165,7 @@ export default function AuthPage() {
             </Link>
           </div>
 
-          <div className="flex flex-1 flex-col justify-center px-6 py-10 sm:px-12 sm:py-12">
+          <div className="flex flex-1 flex-col justify-center px-6 py-8 sm:px-12 sm:py-10">
             <AnimatePresence mode="wait">
               <motion.div
                 key={mode}
@@ -132,11 +173,15 @@ export default function AuthPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.25 }}
-                className="mx-auto w-full max-w-[340px]"
+                className="mx-auto w-full max-w-[360px]"
               >
-                <h1 className="mb-8 text-center font-display text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
+                <h1 className="mb-2 text-center font-display text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
                   {mode === "login" ? t("auth.signInTitle") : t("auth.signUpTitle")}
                 </h1>
+                {mode === "register" && (
+                  <p className="mb-6 text-center text-sm text-muted">{t("auth.signUpLocationHint")}</p>
+                )}
+                {mode === "login" && <div className="mb-8" />}
 
                 {mode === "login" ? (
                   <form onSubmit={handleLogin} className="space-y-4">
@@ -172,7 +217,7 @@ export default function AuthPage() {
                     </Button>
                   </form>
                 ) : (
-                  <form onSubmit={handleRegister} className="space-y-4">
+                  <form onSubmit={handleRegister} className="space-y-3.5">
                     <Input
                       id="reg-name"
                       name="fullName"
@@ -193,6 +238,72 @@ export default function AuthPage() {
                         className={cn(fieldClass, "pl-10")}
                       />
                     </div>
+
+                    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                      <div className="relative sm:col-span-2">
+                        <label htmlFor="reg-country" className="sr-only">{t("auth.country")}</label>
+                        <select
+                          id="reg-country"
+                          name="country"
+                          required
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          autoComplete="country"
+                          className={cn(selectClass, !countryCode && "text-muted")}
+                        >
+                          <option value="" disabled>
+                            {t("auth.countryPlaceholder")}
+                          </option>
+                          {COUNTRIES.map((c) => (
+                            <option key={c.code} value={c.code} className="bg-void text-foreground">
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                      </div>
+
+                      <div className="relative sm:col-span-2">
+                        <label htmlFor="reg-region" className="sr-only">{t("auth.region")}</label>
+                        {useRegionSelect ? (
+                          <>
+                            <select
+                              id="reg-region"
+                              name="region"
+                              required
+                              value={region}
+                              onChange={(e) => setRegion(e.target.value)}
+                              autoComplete="address-level1"
+                              disabled={!countryCode}
+                              className={cn(selectClass, !region && "text-muted", !countryCode && "opacity-60")}
+                            >
+                              <option value="" disabled>
+                                {t("auth.regionPlaceholder")}
+                              </option>
+                              {presetRegions.map((r) => (
+                                <option key={r} value={r} className="bg-void text-foreground">
+                                  {r}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                          </>
+                        ) : (
+                          <Input
+                            id="reg-region"
+                            name="region"
+                            required
+                            value={region}
+                            onChange={(e) => setRegion(e.target.value)}
+                            autoComplete="address-level1"
+                            disabled={!countryCode}
+                            placeholder={t("auth.regionPlaceholder")}
+                            className={cn(fieldClass, !countryCode && "opacity-60")}
+                          />
+                        )}
+                      </div>
+                    </div>
+
                     <PasswordInput
                       id="reg-password"
                       name="password"

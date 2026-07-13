@@ -385,7 +385,14 @@
     "adminSignIn": "Admin Sign In",
     "adminDesc": "Authorised personnel only.",
     "adminSigningIn": "Signing in...",
-    "createAccount": "Create account"
+    "createAccount": "Create account",
+    "country": "Country",
+    "region": "State / Region",
+    "countryPlaceholder": "Select country",
+    "regionPlaceholder": "State / Region",
+    "countryRequired": "Please select your country.",
+    "regionRequired": "Please enter your state or region.",
+    "signUpLocationHint": "Tell us where you’re based — required for account compliance."
   },
   "dashboard": {
     "title": "Client Dashboard",
@@ -1169,6 +1176,7 @@
       "location": "Location",
       "country": "Country",
       "city": "City",
+      "region": "State / Region",
       "timezone": "Timezone",
       "lastKnownLocation": "Detected location",
       "lastKnownIp": "Last known IP",

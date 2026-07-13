@@ -28,6 +28,7 @@ export interface Database {
           bio: string | null;
           country: string | null;
           city: string | null;
+          region: string | null;
           timezone: string | null;
           last_known_ip: string | null;
           last_known_location: string | null;
@@ -48,6 +49,7 @@ export interface Database {
           bio?: string | null;
           country?: string | null;
           city?: string | null;
+          region?: string | null;
           timezone?: string | null;
           last_known_ip?: string | null;
           last_known_location?: string | null;
@@ -68,6 +70,7 @@ export interface Database {
           bio?: string | null;
           country?: string | null;
           city?: string | null;
+          region?: string | null;
           timezone?: string | null;
           last_known_ip?: string | null;
           last_known_location?: string | null;

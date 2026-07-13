@@ -404,9 +404,10 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
                       </div>
                     </div>
                     <DetailRow label={t("admin.userDetail.lastKnownIp")} value={profile.last_known_ip} mono />
-                    <DetailRow label={t("admin.userDetail.country")} value={profile.country} />
-                    <DetailRow label={t("admin.userDetail.city")} value={profile.city} />
-                    <DetailRow label={t("admin.userDetail.timezone")} value={profile.timezone} />
+                <DetailRow label={t("admin.userDetail.country")} value={profile.country} />
+                <DetailRow label={t("admin.userDetail.region")} value={profile.region} />
+                <DetailRow label={t("admin.userDetail.city")} value={profile.city} />
+                <DetailRow label={t("admin.userDetail.timezone")} value={profile.timezone} />
                   </>
                 ) : (
                   <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200/90">
