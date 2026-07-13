@@ -288,21 +288,20 @@ export async function fetchTrendingCoins(force = false): Promise<TrendingCoin[]>
       }>;
     };
 
-    const items = (data.coins ?? [])
-      .map((row, i) => {
-        const item = row.item;
-        if (!item?.id || !item.symbol || !item.name) return null;
-        return {
-          id: item.id,
-          symbol: item.symbol.toUpperCase(),
-          name: item.name,
-          rank: item.market_cap_rank ?? i + 1,
-          priceUsd: item.data?.price,
-          change24h: item.data?.price_change_percentage_24h?.usd,
-        } satisfies TrendingCoin;
-      })
-      .filter((c): c is TrendingCoin => Boolean(c))
-      .slice(0, 12);
+    const items: TrendingCoin[] = [];
+    for (const [i, row] of (data.coins ?? []).entries()) {
+      const item = row.item;
+      if (!item?.id || !item.symbol || !item.name) continue;
+      items.push({
+        id: item.id,
+        symbol: item.symbol.toUpperCase(),
+        name: item.name,
+        rank: item.market_cap_rank ?? i + 1,
+        priceUsd: item.data?.price,
+        change24h: item.data?.price_change_percentage_24h?.usd,
+      });
+      if (items.length >= 12) break;
+    }
 
     trendsCache = { at: Date.now(), items };
     return items;
