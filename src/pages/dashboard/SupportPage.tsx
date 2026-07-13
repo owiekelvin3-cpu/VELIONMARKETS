@@ -163,7 +163,7 @@ export default function SupportPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("support.searchConversations")}
-                className="h-10 w-full rounded-full border border-border bg-secondary/40 pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-emerald/20"
+                className="h-10 w-full rounded-full border border-border bg-secondary/40 pl-9 pr-3 text-base outline-none focus:ring-1 focus:ring-emerald/20"
               />
             </div>
           </div>

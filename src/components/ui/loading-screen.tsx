@@ -10,7 +10,7 @@ export function LoadingScreen({ fullScreen = false }: { fullScreen?: boolean }) 
     <div
       className={cn(
         "flex items-center justify-center",
-        fullScreen ? "min-h-screen bg-gradient-void" : "min-h-[50vh]"
+        fullScreen ? "min-h-screen min-h-dvh bg-gradient-void" : "min-h-[50vh]"
       )}
       role="status"
       aria-label={t("common.loading")}

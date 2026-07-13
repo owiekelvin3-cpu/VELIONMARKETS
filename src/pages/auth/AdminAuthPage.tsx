@@ -92,7 +92,7 @@ export default function AdminAuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#060608]">
+    <div className="flex min-h-screen min-h-dvh bg-[#060608]">
       <AdminBrandPanel />
 
       <div className="relative flex flex-1 flex-col justify-center px-6 py-12 lg:px-16 xl:px-24">

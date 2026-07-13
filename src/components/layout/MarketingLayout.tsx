@@ -8,10 +8,10 @@ export function MarketingLayout() {
   const location = useLocation();
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
+    <div className="relative min-h-screen min-h-dvh overflow-x-clip">
       <AnimatedBackground />
       <Header />
-      <main className="relative pt-16">
+      <main className="relative pt-[calc(3.5rem+env(safe-area-inset-top))] sm:pt-[calc(4rem+env(safe-area-inset-top))]">
         <PageEnter key={location.pathname}>
           <Outlet />
         </PageEnter>

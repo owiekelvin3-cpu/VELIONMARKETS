@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Menu, Search, X } from "@/lib/icons";
@@ -81,7 +81,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const [lastY, setLastY] = useState(0);
+  const lastYRef = useRef(0);
   const [expanded, setExpanded] = useState<string | null>("markets");
   const [search, setSearch] = useState("");
   const location = useLocation();
@@ -91,12 +91,12 @@ export function Header() {
     const onScroll = () => {
       const y = window.scrollY;
       setScrolled(y > 12);
-      setHidden(y > lastY && y > 140 && !open);
-      setLastY(y);
+      setHidden(y > lastYRef.current && y > 140 && !open);
+      lastYRef.current = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [lastY, open]);
+  }, [open]);
 
   useEffect(() => {
     setOpen(false);
@@ -104,9 +104,31 @@ export function Header() {
   }, [location.pathname, location.hash]);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
+    if (!open) return;
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    const prev = {
+      overflow: style.overflow,
+      position: style.position,
+      top: style.top,
+      left: style.left,
+      right: style.right,
+      width: style.width,
+    };
+    style.overflow = "hidden";
+    style.position = "fixed";
+    style.top = `-${scrollY}px`;
+    style.left = "0";
+    style.right = "0";
+    style.width = "100%";
     return () => {
-      document.body.style.overflow = "";
+      style.overflow = prev.overflow;
+      style.position = prev.position;
+      style.top = prev.top;
+      style.left = prev.left;
+      style.right = prev.right;
+      style.width = prev.width;
+      window.scrollTo(0, scrollY);
     };
   }, [open]);
 
@@ -149,7 +171,7 @@ export function Header() {
         animate={{ y: hidden ? -110 : 0, opacity: 1 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          "fixed left-0 right-0 top-0 z-50 border-b transition-colors duration-300",
+          "fixed left-0 right-0 top-0 z-50 border-b transition-colors duration-300 pt-[env(safe-area-inset-top)]",
           scrolled
             ? "border-border bg-void/90 backdrop-blur-xl"
             : "border-transparent bg-void/40 backdrop-blur-md"
@@ -251,13 +273,13 @@ export function Header() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 380, damping: 36 }}
-              className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-void shadow-2xl"
+              className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-void pt-[env(safe-area-inset-top)] shadow-2xl"
             >
-              <div className="flex h-14 items-center justify-between border-b border-border px-4">
+              <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
                 <Logo wordmarkClassName="inline-flex" />
                 <button
                   type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-secondary"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-secondary"
                   onClick={() => setOpen(false)}
                   aria-label={t("nav.closeMenu")}
                 >
@@ -265,20 +287,23 @@ export function Header() {
                 </button>
               </div>
 
-              <div className="border-b border-border px-4 py-3">
+              <div className="shrink-0 border-b border-border px-4 py-3">
                 <label className="relative block">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                   <input
                     type="search"
+                    enterKeyHint="search"
+                    autoComplete="off"
+                    autoCorrect="off"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder={t("nav.searchPlaceholder")}
-                    className="h-11 w-full rounded-xl border border-border bg-secondary/40 pl-10 pr-3 text-sm text-foreground outline-none ring-emerald/40 placeholder:text-muted focus:ring-2"
+                    className="h-11 w-full rounded-xl border border-border bg-secondary/40 pl-10 pr-3 text-base text-foreground outline-none ring-emerald/40 placeholder:text-muted focus:ring-2"
                   />
                 </label>
               </div>
 
-              <div className="flex-1 overflow-y-auto overscroll-contain">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
                 <nav className="px-2 py-2">
                   {filteredSections.map((section) => {
                     const hasItems = Boolean(section.items?.length);
@@ -356,7 +381,7 @@ export function Header() {
                 </nav>
               </div>
 
-              <div className="space-y-3 border-t border-border px-4 py-4">
+              <div className="shrink-0 space-y-3 border-t border-border px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <div className="flex items-center gap-2">
                   <div className="flex flex-1 items-center justify-between rounded-xl border border-border bg-secondary/30 px-3 py-2">
                     <span className="text-xs text-muted">{t("common.language")}</span>

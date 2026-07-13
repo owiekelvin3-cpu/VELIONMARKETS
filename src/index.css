@@ -76,16 +76,24 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: clip;
   }
 
   body {
     @apply bg-void text-foreground font-sans antialiased;
     background: linear-gradient(180deg, #09090b 0%, #0c0c0e 50%, #09090b 100%);
-    background-attachment: fixed;
+    /* fixed backgrounds paint incorrectly / jank on iOS Safari */
+    background-attachment: scroll;
+    min-height: 100dvh;
+    overflow-x: clip;
+    -webkit-tap-highlight-color: transparent;
   }
 
   :root.light body {
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%);
+    background-attachment: scroll;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -105,6 +113,32 @@
   :focus-visible {
     outline: 2px solid rgba(16, 185, 129, 0.5);
     outline-offset: 2px;
+  }
+
+  /* iOS Safari zooms focused fields under 16px — keep form controls at 16px */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  input[type="search"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Soften rubber-band scroll chaining on mobile chrome */
+  button,
+  [role="button"],
+  a {
+    touch-action: manipulation;
+  }
+
+  img,
+  video,
+  svg {
+    max-width: 100%;
+    height: auto;
   }
 }
 
@@ -389,8 +423,10 @@
   }
 
   .select-input {
-    @apply flex h-12 w-full rounded-xl border border-border px-4 py-2 text-sm text-foreground transition-all duration-300;
+    @apply flex h-12 w-full rounded-xl border border-border px-4 py-2 text-base text-foreground transition-all duration-300;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   :root.light .select-input {
@@ -413,7 +449,7 @@
   }
 
   .textarea-input {
-    @apply flex w-full rounded-xl border border-border px-4 py-3 text-sm text-foreground transition-all duration-300;
+    @apply flex w-full rounded-xl border border-border px-4 py-3 text-base text-foreground transition-all duration-300;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
   }
 
@@ -534,18 +570,12 @@ html.support-chat-open body {
   html {
     overscroll-behavior: none;
   }
+}
 
+/* Prefer dvh where supported; keep vh fallback for older iOS */
+@supports not (height: 100dvh) {
   body {
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-  }
-
-  input,
-  textarea,
-  [contenteditable="true"] {
-    user-select: text;
-    -webkit-user-select: text;
+    min-height: 100vh;
   }
 }
 

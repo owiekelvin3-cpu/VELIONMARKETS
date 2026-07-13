@@ -53,10 +53,30 @@ export function AdminLayout() {
 
   useEffect(() => {
     if (!sidebarOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    const prev = {
+      overflow: style.overflow,
+      position: style.position,
+      top: style.top,
+      left: style.left,
+      right: style.right,
+      width: style.width,
+    };
+    style.overflow = "hidden";
+    style.position = "fixed";
+    style.top = `-${scrollY}px`;
+    style.left = "0";
+    style.right = "0";
+    style.width = "100%";
     return () => {
-      document.body.style.overflow = prev;
+      style.overflow = prev.overflow;
+      style.position = prev.position;
+      style.top = prev.top;
+      style.left = prev.left;
+      style.right = prev.right;
+      style.width = prev.width;
+      window.scrollTo(0, scrollY);
     };
   }, [sidebarOpen]);
 
@@ -143,7 +163,7 @@ export function AdminLayout() {
       )}
 
       <div className="flex min-w-0 w-full flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/90 px-3 backdrop-blur-xl sm:gap-3 sm:px-4 md:px-6">
+        <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b border-border bg-background/90 px-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:gap-3 sm:px-4 md:px-6">
           <button
             type="button"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-secondary lg:hidden"

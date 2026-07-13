@@ -46,7 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-void px-4">
+      <div className="flex min-h-screen min-h-dvh items-center justify-center bg-gradient-void px-4">
         <div className="mx-auto max-w-md text-center">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-b from-red-500/15 to-red-500/5 ring-1 ring-red-500/25">
             <AlertTriangle className="h-8 w-8 text-red-400" aria-hidden="true" />

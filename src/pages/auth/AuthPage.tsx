@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 type Mode = "login" | "register";
 
 const selectClass =
-  "h-12 w-full appearance-none rounded-xl border border-border bg-secondary/40 px-3.5 pr-10 text-sm text-foreground outline-none transition-colors focus-visible:border-emerald/50 focus-visible:ring-2 focus-visible:ring-emerald/20";
+  "h-12 w-full appearance-none rounded-xl border border-border bg-secondary/40 px-3.5 pr-10 text-base text-foreground outline-none transition-colors focus-visible:border-emerald/50 focus-visible:ring-2 focus-visible:ring-emerald/20";
 
 export default function AuthPage() {
   const { t } = useTranslation();
@@ -131,7 +131,7 @@ export default function AuthPage() {
   const useRegionSelect = countryCode ? hasPresetRegions(countryCode) : false;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-void px-3 py-6 sm:px-6 sm:py-10">
+    <div className="flex min-h-screen min-h-dvh items-center justify-center bg-void px-3 py-6 sm:px-6 sm:py-10">
       <div className="absolute right-4 top-4 z-20 flex items-center gap-2 sm:right-6 sm:top-6">
         <ThemeToggle />
         <LanguageSelector />
