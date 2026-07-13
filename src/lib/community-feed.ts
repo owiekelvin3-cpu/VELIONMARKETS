@@ -61,60 +61,25 @@ type FeedConfig = {
 
 const RSS2JSON = "https://api.rss2json.com/v1/api.json";
 const COINGECKO_TRENDING = "https://api.coingecko.com/api/v3/search/trending";
+const SERVER_FEED_URL = "/api/community-feed";
 /** Soft in-memory TTL; daily key forces a fresh pull once per calendar day. */
 const CACHE_MS = 60 * 60 * 1000;
-const STORAGE_KEY = "velion-community-feed-v1";
+const STORAGE_KEY = "velion-community-feed-v2";
+/** Prefer a fresh pull when the daily snapshot is too thin for pagination. */
+const MIN_HEALTHY_COUNT = 36;
 
 const FEEDS: FeedConfig[] = [
-  {
-    id: "cointelegraph",
-    source: "Cointelegraph",
-    topic: "crypto",
-    rssUrl: "https://cointelegraph.com/rss",
-    limit: 10,
-  },
-  {
-    id: "decrypt",
-    source: "Decrypt",
-    topic: "crypto",
-    rssUrl: "https://decrypt.co/feed",
-    limit: 10,
-  },
-  {
-    id: "bbc-business",
-    source: "BBC Business",
-    topic: "finance",
-    rssUrl: "https://feeds.bbci.co.uk/news/business/rss.xml",
-    limit: 10,
-  },
-  {
-    id: "cnbc",
-    source: "CNBC",
-    topic: "markets",
-    rssUrl: "https://www.cnbc.com/id/100003114/device/rss/rss.html",
-    limit: 10,
-  },
-  {
-    id: "yahoo-finance",
-    source: "Yahoo Finance",
-    topic: "markets",
-    rssUrl: "https://finance.yahoo.com/news/rssindex",
-    limit: 10,
-  },
-  {
-    id: "guardian-business",
-    source: "The Guardian",
-    topic: "finance",
-    rssUrl: "https://www.theguardian.com/business/rss",
-    limit: 10,
-  },
-  {
-    id: "cointelegraph-markets",
-    source: "Cointelegraph",
-    topic: "crypto",
-    rssUrl: "https://cointelegraph.com/rss/category/market-analysis",
-    limit: 10,
-  },
+  { id: "ct-main", source: "Cointelegraph", topic: "crypto", rssUrl: "https://cointelegraph.com/rss", limit: 10 },
+  { id: "ct-btc", source: "Cointelegraph", topic: "crypto", rssUrl: "https://cointelegraph.com/rss/tag/bitcoin", limit: 10 },
+  { id: "ct-altcoin", source: "Cointelegraph", topic: "crypto", rssUrl: "https://cointelegraph.com/rss/tag/altcoin", limit: 10 },
+  { id: "ct-regulation", source: "Cointelegraph", topic: "crypto", rssUrl: "https://cointelegraph.com/rss/tag/regulation", limit: 10 },
+  { id: "ct-markets", source: "Cointelegraph", topic: "crypto", rssUrl: "https://cointelegraph.com/rss/category/market-analysis", limit: 10 },
+  { id: "decrypt", source: "Decrypt", topic: "crypto", rssUrl: "https://decrypt.co/feed", limit: 10 },
+  { id: "bbc-business", source: "BBC Business", topic: "finance", rssUrl: "https://feeds.bbci.co.uk/news/business/rss.xml", limit: 10 },
+  { id: "guardian-business", source: "The Guardian", topic: "finance", rssUrl: "https://www.theguardian.com/business/rss", limit: 10 },
+  { id: "guardian-money", source: "The Guardian", topic: "finance", rssUrl: "https://www.theguardian.com/money/rss", limit: 10 },
+  { id: "cnbc", source: "CNBC", topic: "markets", rssUrl: "https://www.cnbc.com/id/100003114/device/rss/rss.html", limit: 10 },
+  { id: "yahoo-finance", source: "Yahoo Finance", topic: "markets", rssUrl: "https://finance.yahoo.com/news/rssindex", limit: 10 },
 ];
 
 function todayKey() {
@@ -225,36 +190,62 @@ async function fetchFeed(feed: FeedConfig): Promise<CommunityArticle[]> {
     .filter((a): a is CommunityArticle => Boolean(a));
 }
 
+async function fetchFromServerApi(): Promise<CommunityArticle[] | null> {
+  try {
+    const res = await fetch(SERVER_FEED_URL, { headers: { Accept: "application/json" } });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { articles?: CommunityArticle[] };
+    if (!Array.isArray(data.articles) || data.articles.length === 0) return null;
+    return data.articles.filter((a) => Boolean(a.image && a.title && a.url));
+  } catch {
+    return null;
+  }
+}
+
+function dedupeArticles(merged: CommunityArticle[]) {
+  const seen = new Set<string>();
+  return merged
+    .filter((a) => {
+      const key = a.url.split("?")[0];
+      if (seen.has(key) || !a.image) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
+}
+
 export async function fetchCommunityArticles(force = false): Promise<CommunityArticle[]> {
   const day = todayKey();
 
   if (!force && articlesCache?.day === day && Date.now() - articlesCache.at < CACHE_MS) {
-    return articlesCache.items;
+    if (articlesCache.items.length >= MIN_HEALTHY_COUNT) return articlesCache.items;
   }
 
   if (!force) {
     const stored = readStoredArticles();
-    if (stored) {
+    if (stored && stored.length >= MIN_HEALTHY_COUNT) {
       articlesCache = { day, at: Date.now(), items: stored };
       return stored;
     }
   }
 
+  // Prefer server RSS aggregator (full feeds, many pages) when available on Vercel
+  const fromApi = await fetchFromServerApi();
+  if (fromApi && fromApi.length > 0) {
+    const deduped = dedupeArticles(fromApi);
+    articlesCache = { day, at: Date.now(), items: deduped };
+    writeStoredArticles(deduped);
+    return deduped;
+  }
+
+  // Fallback: browser rss2json (≈10 items/feed)
   const settled = await Promise.allSettled(FEEDS.map((f) => fetchFeed(f)));
   const merged: CommunityArticle[] = [];
   for (const result of settled) {
     if (result.status === "fulfilled") merged.push(...result.value);
   }
 
-  const seen = new Set<string>();
-  const deduped = merged
-    .filter((a) => {
-      const key = a.url.split("?")[0];
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return Boolean(a.image);
-    })
-    .sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
+  const deduped = dedupeArticles(merged);
 
   if (deduped.length === 0) {
     if (articlesCache?.items.length) return articlesCache.items;
@@ -391,23 +382,14 @@ export function articlesToIdeas(articles: CommunityArticle[]): CommunityIdea[] {
   });
 }
 
-export const COMMUNITY_SOURCES = FEEDS.map((f) => ({
-  id: f.id,
-  name: f.source,
-  topic: f.topic,
-  homepage:
-    f.id.startsWith("cointelegraph")
-      ? "https://cointelegraph.com"
-      : f.id === "decrypt"
-        ? "https://decrypt.co"
-        : f.id === "bbc-business"
-          ? "https://www.bbc.com/news/business"
-          : f.id === "cnbc"
-            ? "https://www.cnbc.com"
-            : f.id === "guardian-business"
-              ? "https://www.theguardian.com/business"
-              : "https://finance.yahoo.com",
-}));
+export const COMMUNITY_SOURCES = [
+  { id: "cointelegraph", name: "Cointelegraph", topic: "crypto" as const, homepage: "https://cointelegraph.com" },
+  { id: "decrypt", name: "Decrypt", topic: "crypto" as const, homepage: "https://decrypt.co" },
+  { id: "bbc-business", name: "BBC Business", topic: "finance" as const, homepage: "https://www.bbc.com/news/business" },
+  { id: "guardian", name: "The Guardian", topic: "finance" as const, homepage: "https://www.theguardian.com/business" },
+  { id: "cnbc", name: "CNBC", topic: "markets" as const, homepage: "https://www.cnbc.com" },
+  { id: "yahoo-finance", name: "Yahoo Finance", topic: "markets" as const, homepage: "https://finance.yahoo.com" },
+];
 
 /** Page size for TradingView-style community grid */
 export const COMMUNITY_PAGE_SIZE = 9;

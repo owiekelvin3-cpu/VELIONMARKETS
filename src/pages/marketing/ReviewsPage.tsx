@@ -216,8 +216,12 @@ export default function ReviewsPage() {
   }
 
   useEffect(() => {
-    void load(false);
-    // Re-check hourly so a new calendar day pulls a fresh daily snapshot
+    try {
+      localStorage.removeItem("velion-community-feed-v1");
+    } catch {
+      /* ignore */
+    }
+    void load(true);
     const id = window.setInterval(() => void load(false), 60 * 60 * 1000);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
