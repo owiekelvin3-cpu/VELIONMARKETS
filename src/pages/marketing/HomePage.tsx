@@ -10,6 +10,7 @@ import { HowItWorks } from "@/components/marketing/HowItWorks";
 import { GlobalInflationMap } from "@/components/marketing/GlobalInflationMap";
 import { CommunityPulse } from "@/components/marketing/CommunityPulse";
 import { FAQSection } from "@/components/marketing/FAQSection";
+import { BackToTop } from "@/components/marketing/BackToTop";
 
 export default function HomePage() {
   const location = useLocation();
@@ -35,6 +36,7 @@ export default function HomePage() {
       <HowItWorks />
       <CommunityPulse />
       <FAQSection />
+      <BackToTop />
     </>
   );
 }
