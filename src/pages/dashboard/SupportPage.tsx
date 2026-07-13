@@ -59,8 +59,8 @@ export default function SupportPage() {
   };
 
   const threadBody = composing ? (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 sm:p-6">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mx-auto w-full max-w-lg space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-4 sm:p-6">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mx-auto w-full max-w-lg space-y-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald/15 text-emerald">
             <MessageCircle className="h-5 w-5" />
@@ -74,7 +74,7 @@ export default function SupportPage() {
           <Label htmlFor="support-subject">{t("support.subject")}</Label>
           <Input
             id="support-subject"
-            className="mt-1.5"
+            className="mt-1.5 text-base"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder={t("support.subjectPlaceholder")}
@@ -84,7 +84,7 @@ export default function SupportPage() {
           <Label htmlFor="support-first">{t("support.firstMessage")}</Label>
           <textarea
             id="support-first"
-            className="mt-1.5 min-h-[140px] w-full rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-emerald/20"
+            className="mt-1.5 min-h-[120px] w-full rounded-xl border border-border bg-secondary/40 px-4 py-3 text-base outline-none focus:ring-1 focus:ring-emerald/20"
             value={firstMessage}
             onChange={(e) => setFirstMessage(e.target.value)}
             placeholder={t("support.firstMessagePlaceholder")}
@@ -108,7 +108,7 @@ export default function SupportPage() {
         onLoadMore={support.loadOlder}
       />
       {active.status === "resolved" ? (
-        <div className="border-t border-border p-4 text-center text-sm text-muted">
+        <div className="shrink-0 border-t border-border p-4 text-center text-sm text-muted">
           {t("support.resolvedHint")}{" "}
           <button type="button" className="font-medium text-emerald hover:underline" onClick={() => void support.reopen(active.id)}>
             {t("support.reopen")}
@@ -210,9 +210,10 @@ export default function SupportPage() {
           title={threadTitle}
           subtitle={threadSubtitle}
           onBack={backToList}
+          safeAreaTop
           trailing={
             active ? (
-              <div className="pr-1">
+              <div className="max-w-[40%] truncate pr-1">
                 <SupportStatusBadge status={active.status} />
               </div>
             ) : undefined

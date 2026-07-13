@@ -398,6 +398,7 @@ export default function AdminSupportPage() {
               title={t("admin.userInfo")}
               subtitle={active.user?.email}
               onBack={() => setMobileDetails(false)}
+              safeAreaTop
             >
               <div className="min-h-0 flex-1 overflow-y-auto">{detailsPanel}</div>
             </SupportThreadFrame>
@@ -406,11 +407,12 @@ export default function AdminSupportPage() {
               title={active.user?.full_name || active.user?.email || active.subject}
               subtitle={active.subject}
               onBack={backToList}
+              safeAreaTop
               trailing={
                 <button
                   type="button"
                   onClick={() => setMobileDetails(true)}
-                  className="mr-1 flex h-10 w-10 items-center justify-center rounded-full text-emerald hover:bg-secondary"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-emerald hover:bg-secondary"
                   aria-label={t("admin.userInfo")}
                 >
                   <HelpCircle className="h-5 w-5" />

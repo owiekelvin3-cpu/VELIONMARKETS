@@ -511,14 +511,22 @@ html.support-chat-open body {
 
 .support-mobile-overlay {
   overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+.support-mobile-overlay > * {
+  min-height: 0;
+  height: 100%;
 }
 
 .support-message-scroller {
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .support-composer textarea {
   field-sizing: content;
+  font-size: 16px; /* prevent iOS zoom-on-focus */
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -15,57 +23,97 @@ import {
 } from "@/lib/support";
 import type { SupportAttachment, SupportConversationStatus } from "@/types/database";
 
-/** Keyboard overlap via visualViewport (iOS Safari / Android Chrome). */
-export function useKeyboardInset() {
-  const [inset, setInset] = useState(0);
+const SupportViewportContext = createContext({ keyboardOpen: false });
+
+/** Pin chat shell to the visible viewport (handles iOS/Android keyboard). */
+export function useVisualViewportBox() {
+  const [box, setBox] = useState({
+    top: 0,
+    height: typeof window !== "undefined" ? window.innerHeight : 0,
+    keyboardOpen: false,
+  });
 
   useEffect(() => {
     const vv = window.visualViewport;
-    if (!vv) return;
 
     const update = () => {
-      const overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setInset(overlap);
+      if (!vv) {
+        setBox({ top: 0, height: window.innerHeight, keyboardOpen: false });
+        return;
+      }
+      const keyboardOpen = window.innerHeight - vv.height > 60;
+      setBox({
+        top: Math.max(0, vv.offsetTop),
+        height: Math.max(240, vv.height),
+        keyboardOpen,
+      });
     };
 
     update();
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
+    vv?.addEventListener("resize", update);
+    vv?.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
     window.addEventListener("orientationchange", update);
     return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
+      vv?.removeEventListener("resize", update);
+      vv?.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
       window.removeEventListener("orientationchange", update);
     };
   }, []);
 
-  return inset;
+  return box;
 }
 
-/** Locks body scroll while a mobile chat overlay is open. */
+/** Locks page scroll behind the mobile chat overlay (iOS-safe). */
 export function useBodyScrollLock(locked: boolean, mediaQuery = "(max-width: 1023px)") {
   useEffect(() => {
     if (!locked) return;
     const mq = window.matchMedia(mediaQuery);
+    let scrollY = 0;
+
+    const lock = () => {
+      scrollY = window.scrollY;
+      document.documentElement.classList.add("support-chat-open");
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+    };
+
+    const unlock = () => {
+      document.documentElement.classList.remove("support-chat-open");
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
 
     const apply = () => {
-      if (mq.matches) {
-        document.body.style.overflow = "hidden";
-        document.documentElement.classList.add("support-chat-open");
-      } else {
-        document.body.style.overflow = "";
-        document.documentElement.classList.remove("support-chat-open");
-      }
+      if (mq.matches) lock();
+      else unlock();
     };
 
     apply();
     mq.addEventListener("change", apply);
     return () => {
       mq.removeEventListener("change", apply);
-      document.body.style.overflow = "";
-      document.documentElement.classList.remove("support-chat-open");
+      unlock();
     };
   }, [locked, mediaQuery]);
+}
+
+function scrollMobileThreadToBottom() {
+  const scroller = document.querySelector(
+    ".support-mobile-overlay .support-message-scroller"
+  ) as HTMLElement | null;
+  if (!scroller) return;
+  scroller.scrollTop = scroller.scrollHeight;
 }
 
 /** Full-viewport mobile Messages-style shell (covers dashboard chrome). */
@@ -81,25 +129,35 @@ export function SupportMobileChatOverlay({
 }) {
   const media = hideFrom === "xl" ? "(max-width: 1279px)" : "(max-width: 1023px)";
   useBodyScrollLock(open, media);
-  const keyboardInset = useKeyboardInset();
+  const box = useVisualViewportBox();
+
+  useEffect(() => {
+    if (!open || !box.keyboardOpen) return;
+    const id = window.setTimeout(() => scrollMobileThreadToBottom(), 50);
+    return () => window.clearTimeout(id);
+  }, [open, box.keyboardOpen, box.height]);
 
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div
-      className={cn(
-        "support-mobile-overlay fixed inset-0 z-[80] flex flex-col bg-background",
-        hideFrom === "xl" ? "xl:hidden" : "lg:hidden"
-      )}
-      style={{
-        height: keyboardInset > 0 ? `calc(100dvh - ${keyboardInset}px)` : "100dvh",
-        maxHeight: keyboardInset > 0 ? `calc(100dvh - ${keyboardInset}px)` : "100dvh",
-      }}
-      role="dialog"
-      aria-modal="true"
-    >
-      {children}
-    </div>,
+    <SupportViewportContext.Provider value={{ keyboardOpen: box.keyboardOpen }}>
+      <div
+        className={cn(
+          "support-mobile-overlay fixed left-0 right-0 z-[80] flex flex-col overflow-hidden bg-background",
+          hideFrom === "xl" ? "xl:hidden" : "lg:hidden"
+        )}
+        style={{
+          top: box.top,
+          height: box.height,
+          maxHeight: box.height,
+        }}
+        data-keyboard={box.keyboardOpen ? "open" : "closed"}
+        role="dialog"
+        aria-modal="true"
+      >
+        {children}
+      </div>
+    </SupportViewportContext.Provider>,
     document.body
   );
 }
@@ -283,9 +341,12 @@ export function SupportMessageList({
     if (messages.length === 0) return;
     const grew = messages.length > prevLen.current;
     prevLen.current = messages.length;
-    if (grew) {
-      bottomRef.current?.scrollIntoView({ behavior: messages.length < 8 ? "auto" : "smooth" });
-    }
+    if (!grew) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    // Prefer scrolling the list container — scrollIntoView can jump the
+    // visualViewport / keyboard layout on mobile.
+    scroller.scrollTop = scroller.scrollHeight;
   }, [messages.length]);
 
   const items = useMemo(() => {
@@ -352,14 +413,19 @@ export function SupportComposer({
   disabled,
   placeholder,
   compact,
+  keyboardOpen,
 }: {
   onSend: (body: string, files: File[]) => Promise<void> | void;
   disabled?: boolean;
   placeholder?: string;
   /** Hide desktop drop hint — used in mobile fullscreen. */
   compact?: boolean;
+  /** When true, skip bottom safe-area padding (keyboard already lifted the viewport). */
+  keyboardOpen?: boolean;
 }) {
   const { t } = useTranslation();
+  const viewport = useContext(SupportViewportContext);
+  const kbOpen = keyboardOpen ?? viewport.keyboardOpen;
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -372,7 +438,7 @@ export function SupportComposer({
     const el = taRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 100)}px`;
   };
 
   useEffect(() => {
@@ -394,6 +460,7 @@ export function SupportComposer({
       setFiles([]);
       setEmojiOpen(false);
       requestAnimationFrame(resize);
+      scrollMobileThreadToBottom();
     } finally {
       setSending(false);
     }
@@ -402,8 +469,8 @@ export function SupportComposer({
   return (
     <div
       className={cn(
-        "support-composer shrink-0 border-t border-border/80 bg-background/95 px-2 pt-2 backdrop-blur-xl sm:px-3",
-        "pb-[max(0.5rem,env(safe-area-inset-bottom))]",
+        "support-composer shrink-0 border-t border-border/80 bg-background px-2 pt-1.5 sm:px-3 sm:pt-2",
+        kbOpen ? "pb-1.5" : "pb-[max(0.5rem,env(safe-area-inset-bottom))]",
         dragOver && "ring-2 ring-inset ring-emerald/40"
       )}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -415,11 +482,11 @@ export function SupportComposer({
       }}
     >
       {files.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-2 px-1">
+        <div className="mb-1.5 flex flex-wrap gap-2 px-1">
           {files.map((f, i) => (
-            <span key={`${f.name}-${i}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-2.5 py-1 text-xs">
-              <Paperclip className="h-3 w-3" />
-              <span className="max-w-[120px] truncate">{f.name}</span>
+            <span key={`${f.name}-${i}`} className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-2.5 py-1 text-xs">
+              <Paperclip className="h-3 w-3 shrink-0" />
+              <span className="max-w-[min(40vw,140px)] truncate">{f.name}</span>
               <button type="button" aria-label={t("common.close")} onClick={() => setFiles((p) => p.filter((_, idx) => idx !== i))}>
                 <X className="h-3 w-3" />
               </button>
@@ -429,12 +496,12 @@ export function SupportComposer({
       )}
 
       {emojiOpen && (
-        <div className="mb-2 grid max-h-32 grid-cols-8 gap-1 overflow-y-auto rounded-2xl border border-border bg-card p-2 shadow-lg">
+        <div className="mb-1.5 grid max-h-28 grid-cols-8 gap-0.5 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-lg">
           {SUPPORT_EMOJI.map((e) => (
             <button
               key={e}
               type="button"
-              className="rounded-lg p-1.5 text-lg hover:bg-secondary"
+              className="rounded-lg p-1 text-lg hover:bg-secondary"
               onClick={() => {
                 setText((v) => v + e);
                 taRef.current?.focus();
@@ -446,10 +513,10 @@ export function SupportComposer({
         </div>
       )}
 
-      <div className="flex items-end gap-1.5">
+      <div className="flex items-end gap-1">
         <button
           type="button"
-          className="mb-0.5 rounded-full p-2.5 text-[#8e8e93] hover:bg-secondary hover:text-foreground"
+          className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#8e8e93] hover:bg-secondary hover:text-foreground"
           aria-label={t("support.attach")}
           onClick={() => fileRef.current?.click()}
         >
@@ -469,7 +536,7 @@ export function SupportComposer({
         <button
           type="button"
           className={cn(
-            "mb-0.5 rounded-full p-2.5 text-[#8e8e93] hover:bg-secondary hover:text-foreground",
+            "mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#8e8e93] hover:bg-secondary hover:text-foreground",
             emojiOpen && "bg-secondary text-foreground"
           )}
           aria-label={t("support.emoji")}
@@ -484,8 +551,17 @@ export function SupportComposer({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={1}
+            enterKeyHint="send"
+            autoComplete="off"
+            autoCorrect="on"
             placeholder={placeholder ?? t("support.messagePlaceholder")}
-            className="max-h-[120px] min-h-[36px] w-full resize-none rounded-[20px] border border-border/80 bg-secondary/50 px-4 py-2 text-[15px] leading-5 text-foreground outline-none placeholder:text-muted focus:border-emerald/35 focus:ring-1 focus:ring-emerald/20"
+            /* text-base (16px) prevents iOS Safari zoom-on-focus */
+            className="max-h-[100px] min-h-[40px] w-full resize-none rounded-[20px] border border-border/80 bg-secondary/50 px-3.5 py-2.5 text-base leading-5 text-foreground outline-none placeholder:text-muted focus:border-emerald/35 focus:ring-1 focus:ring-emerald/20"
+            onFocus={() => {
+              scrollMobileThreadToBottom();
+              window.setTimeout(scrollMobileThreadToBottom, 120);
+              window.setTimeout(scrollMobileThreadToBottom, 320);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -498,7 +574,7 @@ export function SupportComposer({
 
         <Button
           size="icon"
-          className="mb-0.5 h-9 w-9 shrink-0 rounded-full"
+          className="mb-0.5 h-10 w-10 shrink-0 rounded-full"
           onClick={() => void submit()}
           disabled={disabled || sending || (!text.trim() && files.length === 0)}
           aria-label={t("support.send")}
@@ -522,6 +598,7 @@ export function SupportThreadFrame({
   children,
   composer,
   className,
+  safeAreaTop,
 }: {
   title: string;
   subtitle?: string;
@@ -530,20 +607,22 @@ export function SupportThreadFrame({
   children: ReactNode;
   composer?: ReactNode;
   className?: string;
+  /** Apply notch safe-area on the header (mobile overlay). */
+  safeAreaTop?: boolean;
 }) {
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col bg-background", className)}>
+    <div className={cn("flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background", className)}>
       <header
         className={cn(
-          "flex shrink-0 items-center gap-2 border-b border-border/80 bg-background/90 px-2 py-2.5 backdrop-blur-xl sm:px-3",
-          "pt-[max(0.5rem,env(safe-area-inset-top))]"
+          "flex shrink-0 items-center gap-1.5 border-b border-border/80 bg-background/95 px-1.5 py-2 backdrop-blur-xl sm:gap-2 sm:px-3 sm:py-2.5",
+          safeAreaTop && "pt-[max(0.5rem,env(safe-area-inset-top))]"
         )}
       >
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-emerald hover:bg-secondary"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-emerald hover:bg-secondary"
             aria-label="Back"
           >
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -551,13 +630,13 @@ export function SupportThreadFrame({
             </svg>
           </button>
         )}
-        <div className="min-w-0 flex-1 text-center sm:text-left">
-          <p className="truncate font-display text-[15px] font-semibold tracking-tight text-foreground">{title}</p>
-          {subtitle && <p className="truncate text-[11px] text-muted">{subtitle}</p>}
+        <div className="min-w-0 flex-1 px-1 text-center sm:text-left">
+          <p className="truncate font-display text-[15px] font-semibold leading-tight tracking-tight text-foreground sm:text-base">{title}</p>
+          {subtitle && <p className="truncate text-[11px] leading-tight text-muted">{subtitle}</p>}
         </div>
-        <div className="flex shrink-0 items-center gap-1">{trailing}</div>
+        <div className="flex h-11 min-w-[2.75rem] shrink-0 items-center justify-end gap-1">{trailing}</div>
       </header>
-      <div className="support-thread-wallpaper flex min-h-0 flex-1 flex-col">{children}</div>
+      <div className="support-thread-wallpaper flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
       {composer}
     </div>
   );
