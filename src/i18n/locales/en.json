@@ -441,7 +441,14 @@
     "verified": "Verified",
     "kycNone": "Not verified",
     "kycPending": "Pending review",
-    "kycRejected": "Rejected"
+    "kycRejected": "Rejected",
+    "loadError": "We couldn’t load your portfolio. Please try again.",
+    "fundAccount": "Fund account",
+    "settledDeposits": "Approved & completed",
+    "openPositions": "Pending or open",
+    "verificationStatus": "Identity verification",
+    "profileLoadErrorTitle": "Couldn’t load your profile",
+    "profileLoadErrorDesc": "Your session is active, but we couldn’t fetch your account details. Retry or sign out and try again."
   },
   "notifications": {
     "title": "Notifications",

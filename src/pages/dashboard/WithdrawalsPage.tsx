@@ -64,7 +64,7 @@ export default function WithdrawalsPage() {
 
         <p className="pb-2 text-center text-xs text-muted">
           {t("withdrawals.needHelp")}{" "}
-          <Link to="/dashboard/settings" className="font-medium text-foreground hover:text-emerald">
+          <Link to="/dashboard/support" className="font-medium text-foreground hover:text-emerald">
             {t("withdrawals.contactSupport")}
           </Link>
         </p>

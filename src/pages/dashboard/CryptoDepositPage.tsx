@@ -167,7 +167,7 @@ export default function CryptoDepositPage() {
                     <p className="font-medium">{formatCurrency(d.amount)}</p>
                     <p className="text-xs text-muted">{d.method} · {formatDate(d.created_at)}</p>
                   </div>
-                  <Badge variant={d.status === "completed" ? "success" : "warning"}>{d.status}</Badge>
+                  <Badge variant={d.status === "completed" || d.status === "approved" ? "success" : "warning"}>{d.status}</Badge>
                 </div>
               ))}
             </div>

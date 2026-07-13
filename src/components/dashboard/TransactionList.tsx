@@ -105,8 +105,8 @@ export function RecentTransactionsCard({ items, total, limit, onItemClick, selec
   const hasMore = total > limit;
 
   return (
-    <div className="surface-panel">
-      <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+    <div className="dashboard-stat !p-0 overflow-hidden">
+      <div className="flex items-center justify-between border-b border-border/80 px-5 py-3.5">
         <h2 className="font-display text-sm font-semibold text-foreground">{t("dashboard.recentTransactions")}</h2>
         {hasMore && (
           <Link to="/dashboard/transactions" className="flex items-center text-xs text-muted hover:text-emerald">

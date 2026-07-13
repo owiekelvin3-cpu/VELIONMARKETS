@@ -121,6 +121,11 @@ export async function fetchUserTransactions(userId: string): Promise<UserTransac
       .order("created_at", { ascending: false }),
   ]);
 
+  const firstError = depRes.error ?? wdrRes.error ?? tradeRes.error;
+  if (firstError) {
+    throw firstError;
+  }
+
   const merged = [
     ...(depRes.data ?? []).map(mapDeposit),
     ...(wdrRes.data ?? []).map(mapWithdrawal),

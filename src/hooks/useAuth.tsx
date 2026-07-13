@@ -10,6 +10,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  profileStatus: "idle" | "loading" | "ready" | "error";
   sessionExpired: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (
@@ -30,9 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileStatus, setProfileStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [sessionExpired, setSessionExpired] = useState(false);
 
   const fetchProfile = useCallback(async (userId: string) => {
+    setProfileStatus("loading");
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -43,10 +46,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const ok = await ensureValidSession();
       if (ok) {
         const retry = await supabase.from("profiles").select("*").eq("id", userId).single();
-        if (retry.data) setProfile(retry.data);
-        return retry.data ?? null;
+        if (retry.data) {
+          setProfile(retry.data);
+          setProfileStatus("ready");
+          return retry.data;
+        }
+        setProfile(null);
+        setProfileStatus("error");
+        return null;
       }
       setSessionExpired(true);
+      setProfileStatus("error");
       await supabase.auth.signOut();
       return null;
     }
@@ -54,10 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error("Failed to load profile", error);
       setProfile(null);
+      setProfileStatus("error");
       return null;
     }
 
     setProfile(data);
+    setProfileStatus("ready");
     void syncUserLocation(userId);
     return data;
   }, []);
@@ -74,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setUser(null);
     setProfile(null);
+    setProfileStatus("idle");
     if (expired) setSessionExpired(true);
     await supabase.auth.signOut();
     setLoading(false);
@@ -127,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(() => { void fetchProfile(nextSession.user.id); }, 0);
         } else if (event === "SIGNED_OUT") {
           setProfile(null);
+          setProfileStatus("idle");
         }
 
         if (event === "TOKEN_REFRESHED") {
@@ -163,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setUser(data.session.user);
       setSessionExpired(false);
+      await fetchProfile(data.session.user.id);
     }
     return { error: error as Error | null };
   };
@@ -199,6 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionExpired(false);
     await supabase.auth.signOut();
     setProfile(null);
+    setProfileStatus("idle");
   };
 
   return (
@@ -208,6 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         loading,
+        profileStatus,
         sessionExpired,
         signIn,
         signUp,

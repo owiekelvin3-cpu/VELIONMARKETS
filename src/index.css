@@ -395,31 +395,72 @@
   /* Soft panel used across dashboard — works in both themes */
   .surface-panel,
   .panel-surface {
-    @apply rounded-xl border border-border bg-card;
+    @apply rounded-2xl border border-border bg-card;
   }
 
   .surface-muted,
   .panel-muted {
-    @apply rounded-xl border border-border bg-secondary/40;
+    @apply rounded-2xl border border-border bg-secondary/40;
   }
 
   .dashboard-shell {
-    @apply mx-auto w-full min-w-0 max-w-[1400px] space-y-4 sm:space-y-6;
+    @apply relative z-[1] mx-auto w-full min-w-0 max-w-[1400px] space-y-4 sm:space-y-6;
+  }
+
+  .dashboard-atmosphere {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 70% 45% at 0% -10%, color-mix(in oklab, var(--color-emerald) 14%, transparent), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 100% 0%, color-mix(in oklab, var(--color-gold) 8%, transparent), transparent 50%),
+      radial-gradient(ellipse 60% 50% at 50% 120%, color-mix(in oklab, var(--color-emerald) 6%, transparent), transparent 55%);
+  }
+
+  :root.light .dashboard-atmosphere {
+    background:
+      radial-gradient(ellipse 70% 45% at 0% -10%, rgba(16, 185, 129, 0.08), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 100% 0%, rgba(201, 162, 39, 0.06), transparent 50%),
+      radial-gradient(ellipse 60% 50% at 50% 120%, rgba(16, 185, 129, 0.04), transparent 55%);
+  }
+
+  .dashboard-hero {
+    @apply relative rounded-2xl border border-border bg-card/80 shadow-[0_8px_40px_rgba(0,0,0,0.18)] backdrop-blur-xl;
+  }
+
+  :root.light .dashboard-hero {
+    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+  }
+
+  .dashboard-stat {
+    @apply rounded-2xl border border-border bg-card/70 p-4 backdrop-blur-sm transition-colors hover:border-emerald/25;
+  }
+
+  .dashboard-sidebar {
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--color-void) 92%, var(--color-emerald) 8%) 0%, var(--color-void) 28%, var(--color-void) 100%);
+  }
+
+  :root.light .dashboard-sidebar {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   }
 
   .nav-item-active {
-    @apply relative bg-secondary/70 text-foreground;
+    @apply relative bg-emerald/10 text-foreground;
   }
 
   .nav-item-active::before {
     content: "";
     position: absolute;
     left: 0;
-    top: 20%;
-    bottom: 20%;
-    width: 2px;
+    top: 18%;
+    bottom: 18%;
+    width: 3px;
     border-radius: 999px;
     background: var(--color-emerald);
+    box-shadow: 0 0 12px color-mix(in oklab, var(--color-emerald) 50%, transparent);
   }
 
   .select-input {
