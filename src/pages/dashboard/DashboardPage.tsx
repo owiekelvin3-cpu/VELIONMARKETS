@@ -104,19 +104,19 @@ export default function DashboardPage() {
         subtitle={t("dashboard.portfolioOverview")}
         actions={
           <>
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-none">
               <Link to="/dashboard/deposits">
                 <ArrowDownToLine className="h-3.5 w-3.5" />
                 {t("dashboard.deposits")}
               </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-none">
               <Link to="/dashboard/withdrawals">
                 <ArrowUpFromLine className="h-3.5 w-3.5" />
                 {t("dashboard.withdrawals")}
               </Link>
             </Button>
-            <Button size="sm" asChild>
+            <Button size="sm" asChild className="w-full sm:w-auto">
               <Link to="/dashboard/trading-room">
                 <CandlestickChart className="h-3.5 w-3.5" />
                 {t("dashboard.tradingRoom")}
@@ -137,7 +137,7 @@ export default function DashboardPage() {
               <Wallet className="h-3.5 w-3.5 text-emerald" aria-hidden="true" />
               {t("dashboard.portfolioBalance")}
             </div>
-            <p className="mt-2 font-display text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
+            <p className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-5xl">
               {formatCurrency(balance)}
             </p>
             <div className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2.5 py-1 text-xs text-muted">

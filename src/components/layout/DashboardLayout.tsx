@@ -5,7 +5,7 @@ import { Logo, LogoIcon } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, TrendingUp, History,
-  Copy, Pickaxe, Radio, FileCheck, LogOut, Menu, Shield, Search, CandlestickChart, Bot, Settings, MessageCircle,
+  Copy, Pickaxe, Radio, FileCheck, LogOut, Menu, Shield, Search, CandlestickChart, Bot, Settings, MessageCircle, X,
 } from "@/lib/icons";
 import { UserAvatar } from "@/components/settings/UserAvatar";
 import { useState, useCallback, useEffect } from "react";
@@ -97,6 +97,19 @@ export function DashboardLayout() {
   }, [searchQuery, navigate]);
 
   useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [sidebarOpen]);
+
+  useEffect(() => {
     if (!user?.id) return;
     void syncUserLocation(user.id);
     const onVisible = () => {
@@ -109,24 +122,34 @@ export function DashboardLayout() {
   }, [user?.id]);
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-background">
+    <div className="flex min-h-dvh w-full max-w-[100vw] overflow-x-hidden bg-background">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[15.5rem] flex-col border-r border-border bg-void transition-transform duration-300 lg:static lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-40 flex w-[min(18rem,88vw)] flex-col border-r border-border bg-void transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-60 lg:translate-x-0 xl:w-64",
+          sidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0 lg:shadow-none"
         )}
         aria-label={t("dashboard.navLabel")}
       >
-        <div className="border-b border-border px-4 py-4">
-          <Link to="/dashboard" className="block">
-            <Logo size="sm" wordmarkClassName="text-sm" />
-          </Link>
-          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-            {t("dashboard.clientPortal")}
-          </p>
+        <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-4">
+          <div className="min-w-0">
+            <Link to="/dashboard" className="block" onClick={() => setSidebarOpen(false)}>
+              <Logo size="sm" wordmarkClassName="text-sm" />
+            </Link>
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+              {t("dashboard.clientPortal")}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-label={t("dashboard.closeSidebar")}
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto px-2.5 py-4">
+        <nav className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-2.5 py-4">
           {navGroups.map((group) => (
             <div key={group.labelKey}>
               <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
@@ -141,14 +164,14 @@ export function DashboardLayout() {
                       to={link.href}
                       onClick={() => setSidebarOpen(false)}
                       className={cn(
-                        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors",
+                        "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
                         active
                           ? "nav-item-active"
                           : "text-muted hover:bg-secondary/50 hover:text-foreground"
                       )}
                     >
                       <link.icon className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
-                      {t(link.labelKey)}
+                      <span className="truncate">{t(link.labelKey)}</span>
                     </Link>
                   );
                 })}
@@ -159,7 +182,8 @@ export function DashboardLayout() {
           {profile?.role === "admin" && (
             <Link
               to="/dashboard/admin"
-              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-gold hover:bg-gold/10"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gold hover:bg-gold/10"
             >
               <Shield className="h-4 w-4" aria-hidden="true" />
               {t("nav.adminPanel")}
@@ -172,7 +196,7 @@ export function DashboardLayout() {
             to="/dashboard/settings"
             onClick={() => setSidebarOpen(false)}
             className={cn(
-              "mb-2 flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors",
+              "mb-2 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
               settingsActive
                 ? "nav-item-active"
                 : "text-muted hover:bg-secondary/50 hover:text-foreground"
@@ -210,18 +234,18 @@ export function DashboardLayout() {
         />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur-xl md:px-6">
+      <div className="flex min-w-0 w-full flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/90 px-3 backdrop-blur-xl sm:gap-3 sm:px-4 md:px-6">
           <button
             type="button"
-            className="rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
+            className="shrink-0 rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label={t("dashboard.openSidebar")}
           >
             <Menu className="h-5 w-5" />
           </button>
 
-          <form onSubmit={handleSearch} className="relative hidden min-w-0 flex-1 md:block">
+          <form onSubmit={handleSearch} className="relative hidden min-w-0 flex-1 sm:block">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" aria-hidden="true" />
             <input
               type="search"
@@ -232,15 +256,15 @@ export function DashboardLayout() {
             />
           </form>
 
-          <div className="ml-auto flex items-center gap-0.5">
+          <div className="ml-auto flex shrink-0 items-center gap-0.5">
             <ThemeToggle />
             <LanguageSelector />
             <NotificationBell />
-            <LogoIcon className="ml-1 hidden h-7 w-7 sm:block lg:hidden" />
+            <LogoIcon className="ml-1 hidden h-7 w-7 md:block lg:hidden" />
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 lg:p-7">
+        <main className="min-w-0 flex-1 overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-7">
           <div className="dashboard-shell">
             <PageEnter key={location.pathname}>
               <Outlet />
