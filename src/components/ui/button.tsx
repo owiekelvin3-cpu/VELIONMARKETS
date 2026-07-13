@@ -9,18 +9,18 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "rounded-full bg-gradient-emerald text-void shadow-[0_4px_24px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.45)] hover:scale-[1.02]",
+          "rounded-full bg-gradient-emerald text-white shadow-[0_4px_24px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.45)] hover:scale-[1.02]",
         secondary:
           "rounded-full glass text-foreground hover:border-emerald/25 hover:bg-gradient-emerald-subtle",
         outline:
-          "rounded-full border border-white/12 bg-gradient-to-b from-white/[0.06] to-transparent text-foreground hover:border-emerald/35 hover:shadow-[0_0_24px_rgba(16,185,129,0.1)]",
+          "rounded-full border border-border bg-gradient-to-b from-secondary to-transparent text-foreground hover:border-emerald/35 hover:shadow-[0_0_24px_rgba(16,185,129,0.1)]",
         ghost:
-          "rounded-full text-muted hover:text-foreground hover:bg-white/5",
+          "rounded-full text-muted hover:text-foreground hover:bg-secondary/60",
         destructive:
-          "rounded-full bg-gradient-to-b from-red-500/15 to-red-500/5 text-red-400 border border-red-500/25",
+          "rounded-full bg-gradient-to-b from-red-500/15 to-red-500/5 text-red-500 border border-red-500/25",
         link: "text-emerald underline-offset-4 hover:underline",
         gold:
-          "rounded-full bg-gradient-to-r from-gold-soft via-gold to-[#a68520] text-void shadow-[0_4px_24px_rgba(201,162,39,0.3)] hover:shadow-[0_8px_32px_rgba(201,162,39,0.4)] hover:scale-[1.02]",
+          "rounded-full bg-gradient-to-r from-gold-soft via-gold to-[#a68520] text-[#0f172a] shadow-[0_4px_24px_rgba(201,162,39,0.3)] hover:shadow-[0_8px_32px_rgba(201,162,39,0.4)] hover:scale-[1.02]",
       },
       size: {
         default: "h-12 px-8 text-sm",

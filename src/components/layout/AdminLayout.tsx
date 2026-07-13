@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { NotificationToast } from "@/components/notifications/NotificationToast";
 import { PushNotificationInit } from "@/components/notifications/PushNotificationInit";
@@ -46,15 +47,15 @@ export function AdminLayout() {
     exact ? location.pathname === href : location.pathname === href || location.pathname.startsWith(`${href}/`);
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-[#060608]">
+    <div className="flex min-h-screen overflow-x-hidden bg-background">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/[0.06] bg-[#0a0a0c] transition-transform duration-300 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-void transition-transform duration-300 lg:static lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
         aria-label={t("admin.navLabel")}
       >
-        <div className="flex h-16 items-center border-b border-white/[0.06] px-5">
+        <div className="flex h-16 items-center border-b border-border px-5">
           <Link to="/dashboard/admin" className="flex items-center gap-2">
             <Logo size="sm" wordmarkClassName="text-sm" />
             <span className="rounded-md bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold">
@@ -76,7 +77,7 @@ export function AdminLayout() {
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive(link.href, "exact" in link ? link.exact : false)
                   ? "bg-gold/10 text-gold"
-                  : "text-muted hover:bg-white/[0.04] hover:text-foreground"
+                  : "text-muted hover:bg-secondary/70 hover:text-foreground"
               )}
             >
               <link.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -85,15 +86,15 @@ export function AdminLayout() {
           ))}
         </nav>
 
-        <div className="border-t border-white/[0.06] p-3">
+        <div className="border-t border-border p-3">
           <Link
             to="/dashboard"
-            className="mb-3 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-white/[0.04] hover:text-foreground"
+            className="mb-3 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-secondary/70 hover:text-foreground"
           >
             <LayoutDashboard className="h-4 w-4" />
             {t("admin.backToDashboard")}
           </Link>
-          <div className="mb-3 flex items-center gap-3 rounded-lg bg-white/[0.03] px-3 py-2.5">
+          <div className="mb-3 flex items-center gap-3 rounded-lg bg-secondary/60 px-3 py-2.5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold/15 text-xs font-bold text-gold ring-1 ring-gold/20">
               {initials}
             </div>
@@ -102,7 +103,7 @@ export function AdminLayout() {
               <p className="truncate text-xs text-muted">{profile?.email}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="w-full border-white/10 bg-transparent" onClick={signOut}>
+          <Button variant="outline" size="sm" className="w-full border-border bg-transparent" onClick={signOut}>
             <LogOut className="mr-2 h-4 w-4" />
             {t("common.signOut")}
           </Button>
@@ -119,10 +120,10 @@ export function AdminLayout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-white/[0.06] bg-[#060608]/90 px-4 backdrop-blur-xl md:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-background/90 px-4 backdrop-blur-xl md:px-6">
           <button
             type="button"
-            className="rounded-lg p-2 text-muted hover:bg-white/5 lg:hidden"
+            className="rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label={t("dashboard.openSidebar")}
           >
@@ -132,6 +133,7 @@ export function AdminLayout() {
             <p className="truncate text-sm font-medium text-foreground">{BRAND.name}</p>
             <p className="text-xs text-muted">{t("admin.portalLabel")}</p>
           </div>
+          <ThemeToggle />
           <LanguageSelector />
           <NotificationBell />
         </header>

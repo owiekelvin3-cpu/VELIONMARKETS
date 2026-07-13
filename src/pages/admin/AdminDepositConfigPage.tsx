@@ -44,7 +44,7 @@ function PartnerEditor({
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+    <div className="rounded-xl border border-border bg-secondary/50 p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
@@ -62,7 +62,7 @@ function PartnerEditor({
               type="checkbox"
               checked={partner.enabled !== false}
               onChange={(e) => onChange({ ...partner, enabled: e.target.checked })}
-              className="rounded border-white/20"
+              className="rounded border-border"
             />
             {t("admin.partnerEnabled")}
           </label>
@@ -201,7 +201,7 @@ export default function AdminDepositConfigPage() {
       {success && <p className="rounded-lg border border-emerald/20 bg-emerald/5 px-4 py-3 text-sm text-emerald">{success}</p>}
 
       <Tabs defaultValue="wallets" className="space-y-6">
-        <TabsList className="grid w-full max-w-xl grid-cols-3 bg-white/[0.03]">
+        <TabsList className="grid w-full max-w-xl grid-cols-3 bg-secondary/60">
           <TabsTrigger value="wallets" className="gap-2">
             <Coins className="h-4 w-4" />
             {t("admin.cryptoWallets")}
@@ -252,7 +252,7 @@ export default function AdminDepositConfigPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="border-white/10"
+                className="border-border"
                 onClick={() => updatePartners("cryptoPartners", (p) => [...p, emptyPartner()])}
               >
                 <Plus className="mr-1.5 h-3.5 w-3.5" />
@@ -291,7 +291,7 @@ export default function AdminDepositConfigPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="border-white/10"
+                className="border-border"
                 onClick={() => updatePartners("giftCardPartners", (p) => [...p, emptyPartner()])}
               >
                 <Plus className="mr-1.5 h-3.5 w-3.5" />

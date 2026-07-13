@@ -38,9 +38,9 @@ function SectionShell({
   }[accent];
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+    <section className="relative overflow-hidden rounded-2xl border border-border bg-secondary/50">
       <div className={cn("pointer-events-none absolute inset-0 bg-gradient-to-br", styles.glow)} />
-      <div className="relative border-b border-white/[0.06] px-5 py-5 sm:px-6">
+      <div className="relative border-b border-border px-5 py-5 sm:px-6">
         <div className="flex gap-4">
           <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", styles.icon)}>
             <Icon className="h-5 w-5" aria-hidden="true" />
@@ -77,8 +77,8 @@ function PartnerCard({ partner, accent }: { partner: PurchasePartner; accent: "e
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "group flex items-center gap-4 rounded-xl border border-white/[0.06] bg-[#0a0a0c]/60 p-4 transition-all duration-200",
-        "hover:bg-white/[0.04]",
+        "group flex items-center gap-4 rounded-xl border border-border bg-card/60 p-4 transition-all duration-200",
+        "hover:bg-secondary/70",
         hoverRing
       )}
     >
@@ -97,7 +97,7 @@ function PartnerCard({ partner, accent }: { partner: PurchasePartner; accent: "e
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-display text-sm font-semibold text-foreground">{partner.name}</p>
           {partnerTag(partner, t) && (
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-muted">
+            <span className="rounded-full border border-border bg-secondary/70 px-2 py-0.5 text-[10px] font-medium text-muted">
               {partnerTag(partner, t)}
             </span>
           )}
@@ -138,7 +138,7 @@ function BuyCryptoPartners() {
       {partners.map((partner) => (
         <PartnerCard key={partner.id} partner={partner} accent="emerald" />
       ))}
-      <p className="flex items-start gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-xs leading-relaxed text-muted">
+      <p className="flex items-start gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-xs leading-relaxed text-muted">
         <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald" aria-hidden="true" />
         {t("deposits.buyCryptoFooter")}
       </p>
@@ -163,7 +163,7 @@ function BuyGiftCardPartners() {
       {partners.map((partner) => (
         <PartnerCard key={partner.id} partner={partner} accent="gold" />
       ))}
-      <p className="flex items-start gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-xs leading-relaxed text-muted">
+      <p className="flex items-start gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-xs leading-relaxed text-muted">
         <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" aria-hidden="true" />
         {t("deposits.giftCardsFooter")}
       </p>

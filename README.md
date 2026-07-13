@@ -1,32 +1,59 @@
-# React + TypeScript + Vite
+# VELION MARKETS
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Professional brokerage platform — React, TypeScript, Vite, Tailwind, Supabase.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm ci
+cp .env.example .env
+# Fill VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Open [http://localhost:5173](http://localhost:5173).
+
+## Production build
+
+```bash
+npm run build
+npm run preview
+```
+
+## Deploy to Vercel
+
+1. Push this repo to GitHub (already linked as `VELIONMARKETS` if using the project remote).
+2. In [Vercel](https://vercel.com): **Add New Project** → import the repo.
+3. Framework preset: **Vite** (auto-detected via `vercel.json`).
+4. Set environment variables (Production + Preview):
+
+| Name | Required | Notes |
+|------|----------|--------|
+| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key |
+| `VITE_VAPID_PUBLIC_KEY` | No | Web Push public key |
+| `VITE_ERROR_REPORTING_URL` | No | Optional error ingest |
+
+5. Deploy. SPA routes, Binance market proxy, service worker, and video caching are configured in [`vercel.json`](vercel.json).
+
+6. In Supabase → **Authentication → URL Configuration**, add:
+   - Site URL: your production domain (e.g. `https://velionmarkets.com`)
+   - Redirect URLs: `https://*.vercel.app/**` and your custom domain
+
+7. Optional custom domain: Vercel Project → **Domains** → add `velionmarkets.com` / `www`.
+
+### Important
+
+- Never set `SUPABASE_SERVICE_ROLE_KEY` in Vercel for this frontend app.
+- After changing `VITE_*` env vars, trigger a **redeploy** so Vite can bake them into the client bundle.
+- Hero video ships from `public/videos/platform.mp4` (~8MB) — included in the static output.
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Vite dev server |
+| `npm run build` | Typecheck + production build |
+| `npm run preview` | Preview `dist/` locally |
+| `npm run lint` | Oxlint |
+| `npm run create-admin` | Create admin user (needs service role key locally) |

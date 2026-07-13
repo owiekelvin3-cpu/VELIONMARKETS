@@ -41,7 +41,7 @@ export function NotificationToast() {
       )}
       role="status"
     >
-      <div className="flex gap-3 rounded-xl border border-emerald/25 bg-[#0a0a0c]/95 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
+      <div className="flex gap-3 rounded-xl border border-emerald/25 bg-card/95 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald/10 text-emerald">
           <Bell className="h-5 w-5" />
         </div>
@@ -55,7 +55,7 @@ export function NotificationToast() {
         <button
           type="button"
           onClick={() => setToast(null)}
-          className="shrink-0 rounded-lg p-1 text-muted hover:bg-white/5 hover:text-foreground"
+          className="shrink-0 rounded-lg p-1 text-muted hover:bg-secondary hover:text-foreground"
           aria-label={t("notifications.dismissToast")}
         >
           <X className="h-4 w-4" />

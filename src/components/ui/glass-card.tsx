@@ -23,7 +23,7 @@ export function GlassCard({
       className={cn(
         "rounded-2xl p-6 md:p-8",
         elevated ? "card-elevated" : "glass",
-        !elevated && hover && "transition-all duration-500 hover:border-emerald/20 hover:shadow-[0_24px_64px_rgba(0,0,0,0.45),0_0_32px_rgba(16,185,129,0.06)]",
+        !elevated && hover && "transition-all duration-500 hover:border-emerald/20 hover:shadow-[0_16px_48px_rgba(15,23,42,0.12),0_0_28px_rgba(16,185,129,0.08)]",
         glow && "glow-emerald-sm",
         className
       )}

@@ -16,5 +16,10 @@ export const supabase: SupabaseClient<any> = createClient(
       detectSessionInUrl: true,
       flowType: "pkce",
     },
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+    },
   }
 );

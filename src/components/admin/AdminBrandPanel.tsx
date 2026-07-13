@@ -46,7 +46,7 @@ export function AdminBrandPanel() {
               transition={{ delay: 0.2 + i * 0.08 }}
               className="flex items-center gap-3 text-sm text-muted"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-gold">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary/70 text-gold">
                 <item.icon className="h-4 w-4" />
               </div>
               {item.text}

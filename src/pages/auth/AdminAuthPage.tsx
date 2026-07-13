@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import { completePushSetup } from "@/lib/push-notifications";
+import { prepareNotificationsOnUserGesture } from "@/lib/notification-preferences";
 import { fetchAdminProfile } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +40,7 @@ export default function AdminAuthPage() {
     setLoading(true);
     setError("");
 
+    const permissionPromise = prepareNotificationsOnUserGesture();
     const form = new FormData(e.currentTarget);
     const email = form.get("email") as string;
     const password = form.get("password") as string;
@@ -65,6 +68,7 @@ export default function AdminAuthPage() {
         return;
       }
       await refreshProfile(session.user.id);
+      await completePushSetup(session.user.id, permissionPromise);
       navigate("/dashboard/admin", { replace: true });
     } catch {
       setError(t("admin.authFailed"));

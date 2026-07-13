@@ -15,6 +15,10 @@ export function Footer() {
     {
       titleKey: "footer.platform",
       links: [
+        { href: "/#markets", labelKey: "nav.markets" },
+        { href: "/world-economy", labelKey: "footer.economy" },
+        { href: "/forex-news", labelKey: "footer.forexNews" },
+        { href: "/brokers", labelKey: "footer.brokers" },
         { href: "/services", labelKey: "nav.services" },
         { href: "/trading-signals", labelKey: "footer.tradingSignals" },
         { href: "/trading-room", labelKey: "footer.tradingRoom" },
@@ -54,7 +58,7 @@ export function Footer() {
   ] as const;
 
   return (
-    <footer className="relative mt-20 border-t border-white/8 bg-gradient-to-b from-charcoal/80 to-void pt-24 pb-12">
+    <footer className="relative mt-20 border-t border-border bg-gradient-to-b from-charcoal/80 to-void pt-24 pb-12">
       <div className="absolute inset-x-0 top-0 divider-gradient" aria-hidden="true" />
       <Container>
         <FadeIn className="mb-20 text-center">
@@ -121,7 +125,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-20 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-10 md:flex-row">
+        <div className="mt-20 flex flex-col items-center justify-between gap-4 border-t border-border pt-10 md:flex-row">
           <p className="text-center text-xs text-muted md:text-left">
             &copy; {BRAND.foundedYear}&ndash;{new Date().getFullYear()} {BRAND.legalEntity}. {t("common.allRightsReserved")}
           </p>

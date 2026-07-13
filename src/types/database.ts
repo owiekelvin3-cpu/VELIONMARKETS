@@ -25,6 +25,12 @@ export interface Database {
           wallet_label: string | null;
           phone: string | null;
           bio: string | null;
+          country: string | null;
+          city: string | null;
+          timezone: string | null;
+          last_known_ip: string | null;
+          last_known_location: string | null;
+          location_updated_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -39,6 +45,12 @@ export interface Database {
           wallet_label?: string | null;
           phone?: string | null;
           bio?: string | null;
+          country?: string | null;
+          city?: string | null;
+          timezone?: string | null;
+          last_known_ip?: string | null;
+          last_known_location?: string | null;
+          location_updated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -53,6 +65,12 @@ export interface Database {
           wallet_label?: string | null;
           phone?: string | null;
           bio?: string | null;
+          country?: string | null;
+          city?: string | null;
+          timezone?: string | null;
+          last_known_ip?: string | null;
+          last_known_location?: string | null;
+          location_updated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

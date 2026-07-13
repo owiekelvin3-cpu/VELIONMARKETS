@@ -84,7 +84,7 @@ export default function AdminDepositsPage() {
         title={t("admin.allDeposits")}
         description={pendingCount > 0 ? t("admin.pendingDepositsCount", { count: pendingCount }) : undefined}
         action={
-          <div className="flex gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+          <div className="flex gap-1 rounded-lg border border-border bg-secondary/50 p-1">
             {(["all", "pending", "completed"] as const).map((f) => (
               <button
                 key={f}
@@ -113,7 +113,7 @@ export default function AdminDepositsPage() {
               const isExpanded = expandedId === d.id;
 
               return (
-                <div key={d.id} className="rounded-xl border border-white/[0.04] bg-white/[0.02]">
+                <div key={d.id} className="rounded-xl border border-border bg-secondary/50">
                   <div className="flex flex-wrap items-center justify-between gap-3 p-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -135,7 +135,7 @@ export default function AdminDepositsPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-white/10"
+                        className="border-border"
                         onClick={() => setExpandedId(isExpanded ? null : d.id)}
                       >
                         <Eye className="mr-1.5 h-3.5 w-3.5" />
@@ -155,7 +155,7 @@ export default function AdminDepositsPage() {
                   </div>
 
                   {isExpanded && (
-                    <div className="border-t border-white/[0.04] p-4">
+                    <div className="border-t border-border p-4">
                       <DepositDetailPanel
                         deposit={d}
                         onClose={() => setExpandedId(null)}

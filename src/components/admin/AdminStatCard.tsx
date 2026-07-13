@@ -19,7 +19,7 @@ const ACCENT = {
 
 export function AdminStatCard({ label, value, icon: Icon, trend, accent = "emerald", loading }: AdminStatCardProps) {
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+    <div className="rounded-2xl border border-border bg-secondary/50 p-5">
       <div className="flex items-start justify-between">
         <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", ACCENT[accent])}>
           <Icon className="h-5 w-5" aria-hidden="true" />

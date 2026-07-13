@@ -32,7 +32,7 @@ export function LanguageSelector({ className, showLabel = false }: LanguageSelec
   const current = LANGUAGES.find((l) => l.code === locale) ?? LANGUAGES[0];
 
   const selectLocale = (code: LanguageCode) => {
-    i18n.changeLanguage(code);
+    void i18n.changeLanguage(code);
   };
 
   return (
@@ -41,7 +41,7 @@ export function LanguageSelector({ className, showLabel = false }: LanguageSelec
         <button
           type="button"
           className={cn(
-            "flex items-center gap-2 rounded-full px-2 py-2 text-muted transition-colors hover:bg-white/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/40",
+            "flex items-center gap-2 rounded-full px-2 py-2 text-muted transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/40",
             className
           )}
           aria-label={`${t("common.language")}: ${current.native}`}

@@ -101,7 +101,7 @@ export default function AdminTradesPage() {
         ) : (
           <div className="space-y-2">
             {trades.map((trade) => (
-              <div key={trade.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm">
+              <div key={trade.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm">
                 <span className="font-medium">
                   {trade.type.toUpperCase()} {trade.asset} — {trade.amount} @ {formatCurrency(trade.price)}
                 </span>

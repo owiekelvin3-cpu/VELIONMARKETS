@@ -49,12 +49,14 @@ import {
   faLock,
   faMagnifyingGlass,
   faMagnifyingGlassPlus,
+  faMoon,
   faPlus,
   faRightFromBracket,
   faRobot,
   faServer,
   faShieldHalved,
   faStar,
+  faSun,
   faTableCellsLarge,
   faTowerBroadcast,
   faTrash,
@@ -124,6 +126,7 @@ export const Lock = createIcon(faLock, "Lock");
 export const LogOut = createIcon(faRightFromBracket, "LogOut");
 export const Mail = createIcon(faEnvelope, "Mail");
 export const Menu = createIcon(faBars, "Menu");
+export const Moon = createIcon(faMoon, "Moon");
 export const Pickaxe = createIcon(faHammer, "Pickaxe");
 export const Plus = createIcon(faPlus, "Plus");
 export const Radio = createIcon(faTowerBroadcast, "Radio");
@@ -135,6 +138,7 @@ export const Shield = createIcon(faShieldHalved, "Shield");
 export const ShieldCheck = createIcon(faCircleCheck, "ShieldCheck");
 export const Sparkles = createIcon(faWandMagicSparkles, "Sparkles");
 export const Star = createIcon(faStar, "Star");
+export const Sun = createIcon(faSun, "Sun");
 export const TrendingDown = createIcon(faArrowTrendDown, "TrendingDown");
 export const TrendingUp = createIcon(faArrowTrendUp, "TrendingUp");
 export const Trash2 = createIcon(faTrash, "Trash2");

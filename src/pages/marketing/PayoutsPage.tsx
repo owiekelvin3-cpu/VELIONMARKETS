@@ -28,15 +28,17 @@ export default function PayoutsPage() {
                 <GlassCard className="flex items-center justify-between !p-5">
                   <div>
                     <p className="text-xl font-bold text-gradient-emerald">{formatCurrency(p.amount)}</p>
-                    <p className="text-sm text-muted">Client {p.client} &middot; {p.method} &middot; {formatDate(p.date)}</p>
+                    <p className="text-sm text-muted">
+                      {t("pages.payoutsClient", { id: p.client })} &middot; {p.method} &middot; {formatDate(p.date)}
+                    </p>
                   </div>
-                  <Badge variant="success">Completed</Badge>
+                  <Badge variant="success">{t("common.completed")}</Badge>
                 </GlassCard>
               </StaggerItem>
             ))}
           </StaggerContainer>
           <FadeIn className="mt-8 text-center text-sm text-muted">
-            Client identities are partially anonymised. Payouts processed within 1-3 business days.
+            {t("pages.payoutsNote")}
           </FadeIn>
         </div>
       </section>

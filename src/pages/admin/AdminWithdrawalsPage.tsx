@@ -66,7 +66,7 @@ export default function AdminWithdrawalsPage() {
         ) : (
           <div className="space-y-3">
             {withdrawals.map((w) => (
-              <div key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-4">
+              <div key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 p-4">
                 <div>
                   <p className="font-medium text-foreground">{formatCurrency(w.amount)}</p>
                   <p className="text-sm text-muted">{w.method} · {formatDate(w.created_at)}</p>

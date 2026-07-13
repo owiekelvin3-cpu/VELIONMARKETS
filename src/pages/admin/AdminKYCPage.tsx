@@ -68,7 +68,7 @@ export default function AdminKYCPage() {
         ) : (
           <div className="space-y-3">
             {submissions.map((s) => (
-              <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-4">
+              <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 p-4">
                 <div>
                   <p className="font-medium text-foreground">{s.profiles?.full_name || s.profiles?.email}</p>
                   <p className="text-sm text-muted">{s.document_type} · {formatDate(s.created_at)}</p>

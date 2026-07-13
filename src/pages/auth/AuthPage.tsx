@@ -3,6 +3,9 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { completePushSetup } from "@/lib/push-notifications";
+import { prepareNotificationsOnUserGesture } from "@/lib/notification-preferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,10 +35,16 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    const permissionPromise = prepareNotificationsOnUserGesture();
     const form = new FormData(e.currentTarget);
     const { error } = await signIn(form.get("email") as string, form.get("password") as string);
-    if (error) setError(error.message);
-    else navigate("/dashboard");
+    if (error) {
+      setError(error.message);
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) await completePushSetup(user.id, permissionPromise);
+      navigate("/dashboard");
+    }
     setLoading(false);
   };
 
@@ -43,14 +52,19 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    const permissionPromise = prepareNotificationsOnUserGesture();
     const form = new FormData(e.currentTarget);
-    const { error } = await signUp(
+    const { error, user } = await signUp(
       form.get("email") as string,
       form.get("password") as string,
       form.get("fullName") as string
     );
-    if (error) setError(error.message);
-    else navigate("/dashboard");
+    if (error) {
+      setError(error.message);
+    } else {
+      if (user) await completePushSetup(user.id, permissionPromise);
+      navigate("/dashboard");
+    }
     setLoading(false);
   };
 
@@ -73,7 +87,7 @@ export default function AuthPage() {
             <AuthFormHeader />
 
             <Tabs defaultValue={defaultTab}>
-              <TabsList className="mb-8 grid h-11 w-full grid-cols-2 rounded-xl bg-white/[0.04] p-1">
+              <TabsList className="mb-8 grid h-11 w-full grid-cols-2 rounded-xl bg-secondary/70 p-1">
                 <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-emerald/15 data-[state=active]:text-emerald">
                   {t("auth.login")}
                 </TabsTrigger>
@@ -98,7 +112,7 @@ export default function AuthPage() {
                         type="checkbox"
                         checked={remember}
                         onChange={(e) => setRemember(e.target.checked)}
-                        className="rounded border-white/20 bg-white/5 text-emerald focus:ring-emerald/40"
+                        className="rounded border-border bg-secondary text-emerald focus:ring-emerald/40"
                       />
                       {t("auth.rememberMe")}
                     </label>

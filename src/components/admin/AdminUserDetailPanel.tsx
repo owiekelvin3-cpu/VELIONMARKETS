@@ -1,0 +1,350 @@
+import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import {
+  X, Mail, Globe2, Wallet, Shield, Clock, Key, Globe,
+  Copy, Check, ExternalLink, RefreshCw,
+} from "@/lib/icons";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/admin/StatusBadge";
+import { LoadingScreen } from "@/components/ui/loading-screen";
+import {
+  fetchAdminUserDetails, sendUserPasswordReset,
+  type AdminUserDetails,
+} from "@/lib/admin-api";
+import { formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+
+interface AdminUserDetailPanelProps {
+  userId: string | null;
+  onClose: () => void;
+  onUpdated?: () => void;
+}
+
+function DetailRow({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+  const empty = value === null || value === undefined || value === "";
+  return (
+    <div className="flex flex-col gap-1 border-b border-border py-3 last:border-0 sm:flex-row sm:items-start sm:justify-between">
+      <span className="shrink-0 text-xs font-medium uppercase tracking-wider text-muted">{label}</span>
+      <span className={cn(
+        "text-sm sm:text-right",
+        empty ? "text-muted italic" : "text-foreground",
+        mono && !empty && "font-mono text-xs break-all"
+      )}>
+        {empty ? "—" : value}
+      </span>
+    </div>
+  );
+}
+
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString();
+}
+
+function hasLocationData(profile: AdminUserDetails["profile"]): boolean {
+  return Boolean(
+    profile.last_known_location
+    || profile.last_known_ip
+    || profile.country
+    || profile.city
+    || profile.timezone
+  );
+}
+
+export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDetailPanelProps) {
+  const { t } = useTranslation();
+  const [data, setData] = useState<AdminUserDetails | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const load = useCallback(async (silent = false) => {
+    if (!userId) return;
+    if (silent) setRefreshing(true);
+    else setLoading(true);
+    setError("");
+    try {
+      const details = await fetchAdminUserDetails(userId);
+      setData(details);
+      onUpdated?.();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load user");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [userId, onUpdated]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const interval = window.setInterval(() => { void load(true); }, 15000);
+    return () => window.clearInterval(interval);
+  }, [userId, load]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [userId, onClose]);
+
+  if (!userId) return null;
+
+  const profile = data?.profile;
+  const auth = data?.auth;
+  const stats = data?.stats;
+  const locationReady = profile ? hasLocationData(profile) : false;
+  const displayLocation = profile?.last_known_location
+    || [profile?.city, profile?.country].filter(Boolean).join(", ")
+    || null;
+
+  const copyId = async () => {
+    if (!userId) return;
+    await navigator.clipboard.writeText(userId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePasswordReset = async () => {
+    if (!profile?.email) return;
+    setMessage("");
+    try {
+      await sendUserPasswordReset(profile.email);
+      setMessage(t("admin.userDetail.resetSent", { email: profile.email }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Reset failed");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
+      <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-label={t("admin.userDetail.close")} />
+
+      <div className="relative z-10 flex h-full w-full max-w-xl flex-col border-l border-border bg-void shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-5">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wider text-emerald">{t("admin.userDetail.title")}</p>
+            <h2 className="mt-1 truncate font-display text-xl font-bold">{profile?.full_name || profile?.email || "…"}</h2>
+            <p className="truncate text-sm text-muted">{profile?.email}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-2 text-muted hover:bg-secondary hover:text-foreground">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          {loading ? (
+            <LoadingScreen />
+          ) : error && !data ? (
+            <p className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">{error}</p>
+          ) : data && profile ? (
+            <div className="space-y-6">
+              {(error || message) && (
+                <p className={cn("rounded-lg border px-4 py-3 text-sm", message
+                  ? "border-emerald/30 bg-emerald/10 text-emerald"
+                  : "border-red-500/20 bg-red-500/5 text-red-400"
+                )}>{message || error}</p>
+              )}
+
+              <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <StatusBadge status={profile.role} />
+                  <StatusBadge status={profile.kyc_status} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-secondary/80 p-3">
+                    <p className="text-xs text-muted">{t("admin.userDetail.balance")}</p>
+                    <p className="mt-1 font-display text-lg font-bold text-emerald">{formatCurrency(data.balance)}</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary/80 p-3">
+                    <p className="text-xs text-muted">{t("admin.userDetail.memberSince")}</p>
+                    <p className="mt-1 text-sm font-medium">{formatDate(profile.created_at)}</p>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                <h3 className="mb-2 flex items-center gap-2 font-display text-sm font-semibold">
+                  <Mail className="h-4 w-4 text-emerald" />
+                  {t("admin.userDetail.identity")}
+                </h3>
+                <DetailRow label={t("admin.name")} value={profile.full_name} />
+                <DetailRow label={t("admin.email")} value={profile.email} />
+                <DetailRow label={t("admin.userDetail.phone")} value={profile.phone} />
+                <DetailRow label={t("admin.userDetail.bio")} value={profile.bio} />
+                <DetailRow
+                  label={t("admin.userDetail.userId")}
+                  value={
+                    <button type="button" onClick={copyId} className="inline-flex items-center gap-1.5 text-emerald hover:underline">
+                      <span className="font-mono text-xs">{userId.slice(0, 8)}…</span>
+                      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                  }
+                />
+              </section>
+
+              <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <h3 className="flex items-center gap-2 font-display text-sm font-semibold">
+                    <Globe2 className="h-4 w-4 text-emerald" />
+                    {t("admin.userDetail.location")}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {locationReady && (
+                      <Badge variant="success" className="text-[10px]">{t("admin.userDetail.locationLive")}</Badge>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void load(true)}
+                      disabled={refreshing}
+                      className="rounded-lg p-1.5 text-muted hover:bg-secondary hover:text-foreground disabled:opacity-50"
+                      aria-label={t("admin.userDetail.refreshLocation")}
+                    >
+                      <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
+                    </button>
+                  </div>
+                </div>
+
+                {locationReady ? (
+                  <>
+                    <div className="mb-4 rounded-lg border border-emerald/20 bg-emerald/5 px-4 py-3">
+                      <div className="flex items-start gap-2">
+                        <Globe2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald" />
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground">{displayLocation}</p>
+                          <p className="mt-1 text-xs text-muted">
+                            {t("admin.userDetail.locationDetectedAt", {
+                              time: formatDate(profile.location_updated_at ?? profile.updated_at),
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <DetailRow label={t("admin.userDetail.lastKnownIp")} value={profile.last_known_ip} mono />
+                    <DetailRow label={t("admin.userDetail.country")} value={profile.country} />
+                    <DetailRow label={t("admin.userDetail.city")} value={profile.city} />
+                    <DetailRow label={t("admin.userDetail.timezone")} value={profile.timezone} />
+                  </>
+                ) : (
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200/90">
+                    {t("admin.userDetail.locationPending")}
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                <h3 className="mb-2 flex items-center gap-2 font-display text-sm font-semibold">
+                  <Shield className="h-4 w-4 text-emerald" />
+                  {t("admin.userDetail.security")}
+                </h3>
+                <DetailRow
+                  label={t("admin.userDetail.password")}
+                  value={
+                    <span className="text-muted">
+                      {auth?.has_password ? t("admin.userDetail.passwordEncrypted") : t("admin.userDetail.noPassword")}
+                    </span>
+                  }
+                />
+                <DetailRow label={t("admin.userDetail.emailVerified")} value={auth?.email_confirmed_at ? formatDate(auth.email_confirmed_at) : t("admin.userDetail.notVerified")} />
+                <DetailRow label={t("admin.userDetail.lastSignIn")} value={formatDate(auth?.last_sign_in_at)} />
+                <DetailRow label={t("admin.userDetail.authProviders")} value={
+                  auth?.providers?.length
+                    ? auth.providers.join(", ")
+                    : "email"
+                } />
+                <DetailRow label={t("admin.userDetail.accountCreated")} value={formatDate(auth?.created_at)} />
+                <Button variant="outline" size="sm" className="mt-3 border-border" onClick={handlePasswordReset}>
+                  <Key className="mr-2 h-3.5 w-3.5" />
+                  {t("admin.userDetail.sendReset")}
+                </Button>
+                <p className="mt-2 text-xs text-muted">{t("admin.userDetail.passwordNote")}</p>
+              </section>
+
+              <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                <h3 className="mb-2 flex items-center gap-2 font-display text-sm font-semibold">
+                  <Wallet className="h-4 w-4 text-emerald" />
+                  {t("admin.userDetail.wallet")}
+                </h3>
+                <DetailRow label={t("admin.userDetail.walletLabel")} value={profile.wallet_label} />
+                <DetailRow label={t("admin.userDetail.walletAddress")} value={profile.wallet_address} mono />
+              </section>
+
+              <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold">
+                  <Globe className="h-4 w-4 text-emerald" />
+                  {t("admin.userDetail.activity")}
+                </h3>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  {[
+                    { label: t("admin.userDetail.deposits"), value: `${stats?.deposits_count ?? 0} · ${formatCurrency(stats?.deposits_total ?? 0)}` },
+                    { label: t("admin.userDetail.withdrawals"), value: `${stats?.withdrawals_count ?? 0} · ${formatCurrency(stats?.withdrawals_total ?? 0)}` },
+                    { label: t("admin.userDetail.trades"), value: String(stats?.trades_count ?? 0) },
+                    { label: t("admin.userDetail.activeTrades"), value: String(stats?.active_trades ?? 0) },
+                    { label: t("admin.userDetail.aiBots"), value: String(stats?.ai_bots_active ?? 0) },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-lg bg-secondary/80 px-3 py-2">
+                      <p className="text-[10px] uppercase tracking-wider text-muted">{item.label}</p>
+                      <p className="mt-0.5 font-medium">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {data.recent_deposits.length > 0 && (
+                <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                  <h3 className="mb-3 font-display text-sm font-semibold">{t("admin.userDetail.recentDeposits")}</h3>
+                  <div className="space-y-2">
+                    {data.recent_deposits.map((d) => (
+                      <div key={d.id} className="flex items-center justify-between rounded-lg bg-secondary/80 px-3 py-2 text-sm">
+                        <span className="text-muted">{d.method} · {formatDate(d.created_at)}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{formatCurrency(d.amount)}</span>
+                          <Badge variant={d.status === "completed" ? "success" : "secondary"} className="text-[10px]">{d.status}</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {data.kyc_submissions.length > 0 && (
+                <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                  <h3 className="mb-3 font-display text-sm font-semibold">{t("admin.userDetail.kycDocs")}</h3>
+                  <div className="space-y-2">
+                    {data.kyc_submissions.map((k) => (
+                      <div key={k.id} className="flex items-center justify-between rounded-lg bg-secondary/80 px-3 py-2 text-sm">
+                        <span>{k.document_type}</span>
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={k.status} />
+                          {k.document_url && (
+                            <a href={k.document_url} target="_blank" rel="noopener noreferrer" className="text-emerald hover:underline">
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button asChild variant="outline" size="sm" className="mt-3 border-border">
+                    <Link to="/dashboard/admin/kyc">{t("admin.userDetail.reviewKyc")}</Link>
+                  </Button>
+                </section>
+              )}
+
+              <p className="flex items-center gap-1.5 text-xs text-muted">
+                <Clock className="h-3.5 w-3.5" />
+                {t("admin.userDetail.lastUpdated")}: {formatDate(profile.updated_at)}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}

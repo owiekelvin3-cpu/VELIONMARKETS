@@ -102,7 +102,7 @@ export default function CryptoDepositPage() {
               className={`rounded-xl border p-3 text-center transition-all ${
                 selected === c.id
                   ? "border-emerald/40 bg-emerald/10"
-                  : "border-white/[0.06] bg-white/[0.02] hover:border-white/10"
+                  : "border-border bg-secondary/50 hover:border-border"
               }`}
             >
               <CryptoBrandIcon asset={c} selected={selected === c.id} />
@@ -111,10 +111,10 @@ export default function CryptoDepositPage() {
           ))}
         </div>
 
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+        <div className="rounded-2xl border border-border bg-secondary/50 p-5">
           <p className="text-sm text-muted">{t("deposits.sendTo", { asset: crypto.label })}</p>
           <div className="mt-3 flex items-center gap-2">
-            <code className="flex-1 truncate rounded-lg bg-black/30 px-3 py-2.5 text-xs text-emerald sm:text-sm">
+            <code className="flex-1 truncate rounded-lg bg-secondary px-3 py-2.5 text-xs text-emerald sm:text-sm">
               {wallet}
             </code>
             <Button type="button" variant="outline" size="icon" onClick={copyAddress} className="shrink-0">
@@ -123,7 +123,7 @@ export default function CryptoDepositPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border bg-secondary/50 p-5">
           <div>
             <Label htmlFor="amount">{t("deposits.amountUsd")}</Label>
             <Input
@@ -158,7 +158,7 @@ export default function CryptoDepositPage() {
         </form>
 
         {history.length > 0 && (
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+          <div className="rounded-2xl border border-border bg-secondary/50 p-5">
             <h2 className="mb-4 font-display font-semibold text-foreground">{t("deposits.recentDeposits")}</h2>
             <div className="space-y-3">
               {history.map((d) => (

@@ -21,8 +21,8 @@ export function DepositMethodCard({
     <Link
       to={to}
       className={cn(
-        "group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5",
-        "transition-all duration-200 hover:border-emerald/25 hover:bg-white/[0.04] hover:shadow-[0_0_32px_rgba(16,185,129,0.06)]"
+        "group flex items-center gap-4 rounded-2xl border border-border bg-secondary/50 p-5",
+        "transition-all duration-200 hover:border-emerald/25 hover:bg-secondary/70 hover:shadow-[0_0_32px_rgba(16,185,129,0.06)]"
       )}
     >
       {iconGrid}

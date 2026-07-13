@@ -31,7 +31,7 @@ export default function AdminOverviewPage() {
         title={t("admin.overviewTitle")}
         subtitle={t("admin.overviewSubtitle", { name: profile?.full_name || profile?.email || "Admin" })}
         action={
-          <Button variant="outline" size="sm" onClick={refresh} className="border-white/10">
+          <Button variant="outline" size="sm" onClick={refresh} className="border-border">
             <RefreshCw className={cnIcon(loading)} />
             {t("admin.refresh")}
           </Button>
@@ -69,7 +69,7 @@ export default function AdminOverviewPage() {
               <Link
                 key={link.href}
                 to={link.href}
-                className="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 transition-colors hover:border-emerald/25 hover:bg-white/[0.04]"
+                className="flex items-center gap-4 rounded-xl border border-border bg-secondary/50 p-4 transition-colors hover:border-emerald/25 hover:bg-secondary/70"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald/10 text-emerald">
                   <link.icon className="h-5 w-5" />

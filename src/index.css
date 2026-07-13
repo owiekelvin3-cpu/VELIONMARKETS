@@ -41,6 +41,32 @@
   --radius-3xl: 2rem;
 }
 
+:root {
+  color-scheme: dark;
+}
+
+:root.light {
+  color-scheme: light;
+  --color-void: #f8fafc;
+  --color-charcoal: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f1f5f9;
+  --color-navy: #e2e8f0;
+  --color-slate: #cbd5e1;
+  --color-muted: #64748b;
+  --color-foreground: #0f172a;
+  --color-background: #f1f5f9;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: rgba(15, 23, 42, 0.06);
+  --color-secondary-foreground: #0f172a;
+  --color-muted-foreground: #64748b;
+  --color-accent-foreground: #ffffff;
+  --color-border: rgba(15, 23, 42, 0.12);
+  --color-input: #ffffff;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -58,6 +84,10 @@
     background-attachment: fixed;
   }
 
+  :root.light body {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%);
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
@@ -66,6 +96,10 @@
   ::selection {
     background: rgba(16, 185, 129, 0.35);
     color: #fff;
+  }
+
+  :root.light ::selection {
+    color: #0f172a;
   }
 
   :focus-visible {
@@ -91,13 +125,46 @@
     @apply py-16 md:py-24;
   }
 
+  .text-market-up {
+    color: #10b981;
+  }
+
+  .text-market-down {
+    color: #f87171;
+  }
+
+  :root.light .text-market-down {
+    color: #dc2626;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
   /* ── Gradients (never flat) ── */
   .bg-gradient-void {
     background: linear-gradient(180deg, #09090b 0%, #111111 50%, #09090b 100%);
   }
 
+  :root.light .bg-gradient-void {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%);
+  }
+
   .bg-gradient-surface {
     background: linear-gradient(145deg, rgba(22, 22, 22, 0.9) 0%, rgba(15, 23, 42, 0.4) 50%, rgba(22, 22, 22, 0.9) 100%);
+  }
+
+  :root.light .bg-gradient-surface {
+    background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%);
   }
 
   .bg-gradient-emerald {
@@ -106,6 +173,10 @@
 
   .bg-gradient-emerald-subtle {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.05) 100%);
+  }
+
+  :root.light .bg-gradient-emerald-subtle {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.04) 100%);
   }
 
   .bg-gradient-gold-subtle {
@@ -121,11 +192,22 @@
     );
   }
 
+  :root.light .bg-gradient-card {
+    background: linear-gradient(160deg, #ffffff 0%, #f8fafc 45%, #f1f5f9 100%);
+  }
+
   .bg-gradient-hero {
     background:
       radial-gradient(ellipse 90% 60% at 50% -30%, rgba(16, 185, 129, 0.14), transparent 60%),
       radial-gradient(ellipse 50% 40% at 100% 0%, rgba(201, 162, 39, 0.06), transparent 50%),
       radial-gradient(ellipse 40% 30% at 0% 100%, rgba(16, 185, 129, 0.05), transparent 50%);
+  }
+
+  :root.light .bg-gradient-hero {
+    background:
+      radial-gradient(ellipse 90% 60% at 50% -30%, rgba(16, 185, 129, 0.1), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 100% 0%, rgba(201, 162, 39, 0.05), transparent 50%),
+      radial-gradient(ellipse 40% 30% at 0% 100%, rgba(16, 185, 129, 0.04), transparent 50%);
   }
 
   .border-gradient {
@@ -137,6 +219,13 @@
 
   .text-gradient {
     background: linear-gradient(135deg, #ffffff 0%, #d4d4d8 60%, #a1a1aa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  :root.light .text-gradient {
+    background: linear-gradient(135deg, #0f172a 0%, #334155 55%, #64748b 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -165,12 +254,24 @@
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
+  :root.light .glass {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.82) 100%);
+    border-color: rgba(15, 23, 42, 0.08);
+    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+
   .glass-strong {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  :root.light .glass-strong {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.92) 100%);
+    border-color: rgba(15, 23, 42, 0.1);
+    box-shadow: 0 8px 40px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
   }
 
   .glow-emerald {
@@ -180,8 +281,19 @@
       0 20px 60px rgba(0, 0, 0, 0.4);
   }
 
+  :root.light .glow-emerald {
+    box-shadow:
+      0 0 40px rgba(16, 185, 129, 0.1),
+      0 0 80px rgba(16, 185, 129, 0.05),
+      0 16px 40px rgba(15, 23, 42, 0.08);
+  }
+
   .glow-emerald-sm {
     box-shadow: 0 0 24px rgba(16, 185, 129, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  :root.light .glow-emerald-sm {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.12), 0 8px 24px rgba(15, 23, 42, 0.08);
   }
 
   .card-elevated {
@@ -193,6 +305,14 @@
     transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease, border-color 0.4s ease;
   }
 
+  :root.light .card-elevated {
+    background: #ffffff;
+    border-color: rgba(15, 23, 42, 0.1);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 1) inset,
+      0 16px 40px -12px rgba(15, 23, 42, 0.12);
+  }
+
   .card-elevated:hover {
     transform: translateY(-4px);
     border-color: rgba(16, 185, 129, 0.2);
@@ -202,8 +322,19 @@
       0 28px 60px -12px rgba(0, 0, 0, 0.55);
   }
 
+  :root.light .card-elevated:hover {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 1) inset,
+      0 0 28px rgba(16, 185, 129, 0.08),
+      0 20px 48px -12px rgba(15, 23, 42, 0.14);
+  }
+
   .noise {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+
+  :root.light .noise {
+    opacity: 0.35;
   }
 
   .grid-pattern {
@@ -213,9 +344,28 @@
     background-size: 72px 72px;
   }
 
+  :root.light .grid-pattern {
+    background-image:
+      linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  }
+
+  /* Soft panel used across dashboard — works in both themes */
+  .surface-panel {
+    @apply rounded-2xl border border-border bg-card;
+  }
+
+  .surface-muted {
+    @apply rounded-xl border border-border bg-secondary/60;
+  }
+
   .select-input {
-    @apply flex h-12 w-full rounded-xl border border-white/10 px-4 py-2 text-sm text-foreground transition-all duration-300;
+    @apply flex h-12 w-full rounded-xl border border-border px-4 py-2 text-sm text-foreground transition-all duration-300;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  :root.light .select-input {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   }
 
   .select-input:focus {
@@ -224,9 +374,22 @@
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
   }
 
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
   .textarea-input {
-    @apply flex w-full rounded-xl border border-white/10 px-4 py-3 text-sm text-foreground transition-all duration-300;
+    @apply flex w-full rounded-xl border border-border px-4 py-3 text-sm text-foreground transition-all duration-300;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  :root.light .textarea-input {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   }
 
   .textarea-input:focus {
@@ -244,7 +407,15 @@
   }
 
   .data-table tr {
-    @apply border-b border-white/5 transition-colors hover:bg-white/[0.02];
+    @apply border-b border-border transition-colors hover:bg-secondary/40;
+  }
+
+  .panel-surface {
+    @apply rounded-2xl border border-border bg-card;
+  }
+
+  .panel-muted {
+    @apply rounded-xl border border-border bg-secondary/40;
   }
 
   .divider-gradient {

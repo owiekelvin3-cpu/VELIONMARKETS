@@ -75,7 +75,7 @@ export function UserAvatar({
               e.target.value = "";
             }}
           />
-          <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-[#0a0a0c] text-emerald shadow-lg">
+          <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-emerald shadow-lg">
             <Camera className="h-3.5 w-3.5" />
           </span>
         </>

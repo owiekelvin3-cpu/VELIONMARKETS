@@ -4,6 +4,7 @@ import { Bell, CheckCheck } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { primeNotificationSound } from "@/lib/notification-sound";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -37,7 +38,7 @@ export function NotificationBell() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-[min(100vw-2rem,22rem)] p-0">
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <p className="font-display text-sm font-semibold text-foreground">{t("notifications.title")}</p>
           {unreadCount > 0 && (
             <button
@@ -65,7 +66,7 @@ export function NotificationBell() {
                   if (!n.read) markRead(n.id);
                 }}
                 className={cn(
-                  "w-full border-b border-white/[0.04] px-4 py-3 text-left transition-colors hover:bg-white/[0.03]",
+                  "w-full border-b border-border px-4 py-3 text-left transition-colors hover:bg-secondary/60",
                   !n.read && "bg-emerald/[0.04]"
                 )}
               >
@@ -83,7 +84,7 @@ export function NotificationBell() {
         </div>
 
         {supported && (
-          <div className="border-t border-white/[0.06] px-4 py-3">
+          <div className="border-t border-border px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-medium text-foreground">{t("notifications.pushTitle")}</p>
@@ -97,9 +98,12 @@ export function NotificationBell() {
                 type="button"
                 size="sm"
                 variant={enabled && permission === "granted" ? "default" : "outline"}
-                className={cn(!enabled && "border-white/10")}
+                className={cn(!enabled && "border-border")}
                 disabled={busy || permission === "denied"}
-                onClick={toggle}
+                onClick={() => {
+                  primeNotificationSound();
+                  void toggle();
+                }}
               >
                 {permission === "granted" && enabled
                   ? t("notifications.pushOn")

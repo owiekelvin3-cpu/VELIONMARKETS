@@ -23,9 +23,9 @@ export function LogoIcon({
   className?: string;
   variant?: "default" | "gold";
 }) {
-  const gradId = variant === "gold" ? "velion-gold" : "velion-cyan";
-  const accent = variant === "gold" ? "#EAB308" : "#22D3EE";
-  const accentDeep = variant === "gold" ? "#CA8A04" : "#1D4ED8";
+  const gradId = variant === "gold" ? "velion-gold" : "velion-emerald";
+  const accent = variant === "gold" ? BRAND.colors.gold : BRAND.colors.emerald;
+  const accentDeep = variant === "gold" ? "#CA8A04" : BRAND.colors.emeraldGlow;
 
   return (
     <svg
@@ -36,17 +36,17 @@ export function LogoIcon({
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="velion-cyan" x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#67E8F9" />
-          <stop offset="1" stopColor="#1D4ED8" />
+        <linearGradient id="velion-emerald" x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+          <stop stopColor={BRAND.colors.emeraldSoft} />
+          <stop offset="1" stopColor={BRAND.colors.emeraldGlow} />
         </linearGradient>
         <linearGradient id="velion-gold" x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FDE047" />
           <stop offset="1" stopColor="#CA8A04" />
         </linearGradient>
         <linearGradient id="velion-bg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#141B2D" />
-          <stop offset="1" stopColor="#0A0E1A" />
+          <stop stopColor={BRAND.colors.slate} />
+          <stop offset="1" stopColor={BRAND.colors.navy} />
         </linearGradient>
       </defs>
       <rect width="40" height="40" rx="11" fill="url(#velion-bg)" />
@@ -54,7 +54,7 @@ export function LogoIcon({
         width="40"
         height="40"
         rx="11"
-        fill={variant === "gold" ? "url(#velion-gold)" : "url(#velion-cyan)"}
+        fill={variant === "gold" ? "url(#velion-gold)" : "url(#velion-emerald)"}
         fillOpacity="0.14"
       />
       <rect
@@ -64,7 +64,7 @@ export function LogoIcon({
         height="39"
         rx="10.5"
         stroke={accent}
-        strokeOpacity="0.35"
+        strokeOpacity="0.4"
       />
       <path
         d="M11 13.5L20 29.5L29 13.5"
@@ -79,16 +79,16 @@ export function LogoIcon({
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeOpacity="0.55"
+        strokeOpacity="0.65"
       />
       <path
         d="M24 12.5L29.5 10.5L33 14"
-        stroke="#C9A227"
+        stroke={BRAND.colors.gold}
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="33" cy="14" r="1.5" fill="#C9A227" />
+      <circle cx="33" cy="14" r="1.5" fill={BRAND.colors.gold} />
     </svg>
   );
 }
@@ -118,7 +118,7 @@ export function Logo({
           </span>
           <span
             className={cn(
-              "mt-0.5 font-display font-medium tracking-[0.28em] text-muted",
+              "mt-0.5 font-display font-medium tracking-[0.28em] text-emerald",
               s.suffix
             )}
           >

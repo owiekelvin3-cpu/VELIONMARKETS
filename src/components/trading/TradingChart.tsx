@@ -9,6 +9,7 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import type { Candle } from "@/lib/market-api";
+import { useTheme } from "@/hooks/useTheme";
 
 interface TradingChartProps {
   candles: Candle[];
@@ -16,7 +17,18 @@ interface TradingChartProps {
   loading?: boolean;
 }
 
+function chartTheme(isLight: boolean) {
+  return {
+    background: isLight ? "#ffffff" : "#0a0a0c",
+    text: isLight ? "#64748b" : "#9ca3af",
+    grid: isLight ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.04)",
+    border: isLight ? "rgba(15,23,42,0.1)" : "rgba(255,255,255,0.06)",
+  };
+}
+
 export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -26,20 +38,27 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const colors = chartTheme(isLight);
+
+    const getHeight = () => {
+      const w = containerRef.current?.clientWidth ?? 600;
+      return w < 640 ? 320 : 420;
+    };
+
     const chart = createChart(containerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: "#0d0d10" },
-        textColor: "#9ca3af",
+        background: { type: ColorType.Solid, color: colors.background },
+        textColor: colors.text,
       },
       grid: {
-        vertLines: { color: "rgba(255,255,255,0.04)" },
-        horzLines: { color: "rgba(255,255,255,0.04)" },
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid },
       },
       crosshair: { mode: 1 },
-      rightPriceScale: { borderColor: "rgba(255,255,255,0.06)" },
-      timeScale: { borderColor: "rgba(255,255,255,0.06)", timeVisible: true },
+      rightPriceScale: { borderColor: colors.border },
+      timeScale: { borderColor: colors.border, timeVisible: true },
       width: containerRef.current.clientWidth || 600,
-      height: 420,
+      height: getHeight(),
       autoSize: false,
     });
 
@@ -71,8 +90,9 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
       const entry = entries[0];
       if (!entry || !chartRef.current) return;
       const width = Math.floor(entry.contentRect.width);
+      const height = width < 640 ? 320 : 420;
       if (width > 0) {
-        chartRef.current.applyOptions({ width });
+        chartRef.current.applyOptions({ width, height });
       }
     });
 
@@ -85,7 +105,7 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
     };
-  }, []);
+  }, [isLight]);
 
   useEffect(() => {
     fittedRef.current = false;
@@ -115,13 +135,16 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
       chartRef.current?.timeScale().fitContent();
       fittedRef.current = true;
     }
-  }, [candles, symbol]);
+  }, [candles, symbol, isLight]);
 
   return (
-    <div className="relative min-h-[420px] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0d0d10]">
+    <div className="relative min-h-[320px] overflow-hidden rounded-2xl border border-border bg-card sm:min-h-[420px]">
       {loading && candles.length === 0 && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0d0d10]/80 text-sm text-muted">
-          Loading chart…
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/90 text-sm text-muted">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald/30 border-t-emerald" />
+            Loading chart…
+          </span>
         </div>
       )}
       {!loading && candles.length === 0 && (
@@ -129,7 +152,7 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
           No chart data available
         </div>
       )}
-      <div ref={containerRef} className="h-[420px] w-full" />
+      <div ref={containerRef} className="h-[320px] w-full sm:h-[420px]" />
     </div>
   );
 }

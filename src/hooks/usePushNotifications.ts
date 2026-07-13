@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { primeNotificationSound } from "@/lib/notification-sound";
+import { ensureNotificationDefaults } from "@/lib/notification-preferences";
 import {
   disablePushNotifications,
   enablePushNotifications,
@@ -16,12 +18,17 @@ export function usePushNotifications(userId: string | undefined) {
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
+  const syncState = useCallback(() => {
     setSupported(isPushSupported());
     const perm = getNotificationPermission();
     setPermission(perm);
-    setEnabled(getPushEnabledPreference() && perm !== "denied");
+    setEnabled(getPushEnabledPreference() && perm === "granted");
   }, []);
+
+  useEffect(() => {
+    ensureNotificationDefaults();
+    syncState();
+  }, [syncState]);
 
   useEffect(() => {
     if (!userId || !supported) return;
@@ -33,15 +40,18 @@ export function usePushNotifications(userId: string | undefined) {
     });
   }, [userId, supported]);
 
-  const enable = useCallback(async () => {
+  const requestPermission = useCallback(async () => {
     if (!userId) return permission;
     setBusy(true);
+    primeNotificationSound();
     const result = await enablePushNotifications(userId);
     setPermission(result);
-    setEnabled(result === "granted" || (getPushEnabledPreference() && result !== "denied"));
+    setEnabled(result === "granted");
     setBusy(false);
     return result;
   }, [userId, permission]);
+
+  const enable = requestPermission;
 
   const disable = useCallback(async () => {
     if (!userId) return;
@@ -55,9 +65,9 @@ export function usePushNotifications(userId: string | undefined) {
     if (enabled) {
       await disable();
     } else {
-      await enable();
+      await requestPermission();
     }
-  }, [enabled, enable, disable]);
+  }, [enabled, disable, requestPermission]);
 
   return {
     supported,
@@ -67,9 +77,10 @@ export function usePushNotifications(userId: string | undefined) {
     enable,
     disable,
     toggle,
+    requestPermission,
     setEnabled: (value: boolean) => {
       setPushEnabledPreference(value);
-      setEnabled(value);
+      setEnabled(value && Notification.permission === "granted");
     },
   };
 }

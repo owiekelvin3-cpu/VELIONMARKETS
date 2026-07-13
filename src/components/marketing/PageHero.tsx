@@ -1,51 +1,65 @@
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FadeIn } from "@/components/motion/Motion";
 import { Container } from "@/components/ui/section";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
+/** Clean TradingView-style page header — brand title, short subtitle, optional CTA. */
 export function PageHero({
   badge,
   title,
   subtitle,
-  image,
   children,
+  align = "left",
+  cta,
+  image: _image,
 }: {
   badge?: string;
   title: string;
   subtitle?: string;
-  image?: string;
   children?: React.ReactNode;
+  align?: "left" | "center";
+  cta?: { label: string; href: string };
+  /** Kept for compatibility — unused in the clean TV-style hero */
+  image?: string;
 }) {
+  void _image;
   return (
-    <section className="relative overflow-hidden pb-20 pt-4 md:pb-28 md:pt-8">
-      {image && (
-        <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-          <img src={image} alt="" className="h-full w-full object-cover opacity-[0.12]" loading="eager" />
-          <div className="absolute inset-0 bg-gradient-to-b from-void/20 via-void/90 to-void" />
-        </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-hero opacity-60 pointer-events-none" aria-hidden="true" />
+    <section className="relative overflow-hidden border-b border-border/60 pb-10 pt-8 md:pb-14 md:pt-12">
       <Container>
-        <FadeIn className="mx-auto max-w-4xl text-center">
+        <FadeIn
+          className={cn(
+            "max-w-3xl",
+            align === "center" && "mx-auto text-center"
+          )}
+        >
           {badge && (
-            <span className="mb-8 inline-block rounded-full border border-emerald/20 bg-gradient-emerald-subtle px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-emerald">
               {badge}
-            </span>
+            </p>
           )}
           <motion.h1
-            initial={{ opacity: 0, y: 28 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="font-display text-4xl font-bold tracking-tight text-gradient sm:text-5xl md:text-6xl lg:text-7xl"
+            transition={{ duration: 0.55 }}
+            className="font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-[3.25rem] md:leading-[1.08]"
           >
             {title}
           </motion.h1>
           {subtitle && (
-            <p className="mx-auto mt-7 max-w-2xl text-base leading-relaxed text-muted md:text-xl md:leading-relaxed">
+            <p className={cn("mt-4 max-w-2xl text-base text-muted md:text-lg", align === "center" && "mx-auto")}>
               {subtitle}
             </p>
           )}
-          <div className="divider-gradient mx-auto mt-10 w-24" />
-          {children && <div className="mt-10">{children}</div>}
+          {cta && (
+            <div className={cn("mt-7", align === "center" && "flex justify-center")}>
+              <Button asChild size="lg">
+                <Link to={cta.href}>{cta.label}</Link>
+              </Button>
+            </div>
+          )}
+          {children && <div className="mt-8">{children}</div>}
         </FadeIn>
       </Container>
     </section>

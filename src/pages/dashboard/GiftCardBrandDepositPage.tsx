@@ -96,7 +96,7 @@ export default function GiftCardBrandDepositPage() {
       />
 
       <FadeIn>
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6">
+        <div className="rounded-2xl border border-border bg-secondary/50 p-5 sm:p-6">
           <Link
             to="/dashboard/deposits/gift-card"
             className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
@@ -175,7 +175,7 @@ export default function GiftCardBrandDepositPage() {
                 placeholder={t("deposits.additionalNotesPlaceholder")}
                 rows={4}
                 className={cn(
-                  "mt-2 flex w-full resize-none rounded-xl border border-white/10 px-4 py-3 text-sm text-foreground transition-all",
+                  "mt-2 flex w-full resize-none rounded-xl border border-border px-4 py-3 text-sm text-foreground transition-all",
                   "bg-gradient-to-b from-white/[0.06] to-white/[0.02] placeholder:text-muted/70",
                   "focus-visible:outline-none focus-visible:border-emerald/40 focus-visible:ring-[3px] focus-visible:ring-emerald/15"
                 )}

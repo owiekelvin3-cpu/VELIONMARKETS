@@ -12,11 +12,12 @@ export const BRAND = {
   foundedYear: 2021,
   twitter: "@VelionMarkets",
   colors: {
-    navy: "#0A0E1A",
-    slate: "#141B2D",
+    navy: "#09090B",
+    slate: "#161616",
     gold: "#C9A227",
-    emerald: "#22D3EE",
-    blue: "#1D4ED8",
-    offWhite: "#F8FAFC",
+    emerald: "#10B981",
+    emeraldSoft: "#34D399",
+    emeraldGlow: "#059669",
+    offWhite: "#FAFAFA",
   },
 } as const;

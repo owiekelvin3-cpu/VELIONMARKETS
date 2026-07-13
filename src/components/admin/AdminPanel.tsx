@@ -10,9 +10,9 @@ interface AdminPanelProps {
 
 export function AdminPanel({ title, description, children, className, action }: AdminPanelProps) {
   return (
-    <div className={cn("rounded-2xl border border-white/[0.06] bg-white/[0.02]", className)}>
+    <div className={cn("rounded-2xl border border-border bg-secondary/50", className)}>
       {(title || action) && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
           <div>
             {title && <h2 className="font-display font-semibold text-foreground">{title}</h2>}
             {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}

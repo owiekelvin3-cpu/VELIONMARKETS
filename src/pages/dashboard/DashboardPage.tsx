@@ -5,15 +5,21 @@ import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { StaggerContainer, StaggerItem } from "@/components/motion/Motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
-import { ensureValidSession } from "@/lib/auth-session";
-import { Badge } from "@/components/ui/badge";
+import { formatAuthError, withValidSession } from "@/lib/auth-session";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import {
   ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet,
-  ArrowRight, ShieldCheck, Bot,
+  ShieldCheck, Bot,
 } from "@/lib/icons";
-import type { Deposit, Trade } from "@/types/database";
+import { RecentTransactionsCard } from "@/components/dashboard/TransactionList";
+import { TransactionReceiptPanel } from "@/components/dashboard/TransactionReceiptPanel";
+import {
+  fetchUserTransactions,
+  OVERVIEW_TRANSACTION_LIMIT,
+  type UserTransaction,
+} from "@/lib/transactions";
+import type { Deposit } from "@/types/database";
 
 const KYC_LABELS: Record<string, string> = {
   none: "dashboard.kycNone",
@@ -26,27 +32,32 @@ export default function DashboardPage() {
   const { t } = useTranslation();
   const { user, profile } = useAuth();
   const [balance, setBalance] = useState(0);
-  const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
+  const [selectedTx, setSelectedTx] = useState<UserTransaction | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
       setError("");
-      await ensureValidSession();
-      const [balRes, depRes, allDepRes, tradeRes] = await Promise.all([
-        supabase.from("balances").select("amount").eq("user_id", user.id).single(),
-        supabase.from("deposits").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
-        supabase.from("deposits").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
-        supabase.from("trades").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
-      ]);
-      if (balRes.error && balRes.error.code !== "PGRST116") setError(balRes.error.message);
-      setBalance(balRes.data?.amount ?? 0);
-      setDeposits(depRes.data ?? []);
-      setAllDeposits(allDepRes.data ?? []);
-      setTrades(tradeRes.data ?? []);
+      try {
+        const [balRes, allDepRes, txList] = await withValidSession(() =>
+          Promise.all([
+            supabase.from("balances").select("amount").eq("user_id", user.id).single(),
+            supabase.from("deposits").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
+            fetchUserTransactions(user.id),
+          ])
+        );
+        if (balRes.error && balRes.error.code !== "PGRST116") {
+          setError(formatAuthError(balRes.error, t("auth.sessionExpired")));
+        }
+        setBalance(balRes.data?.amount ?? 0);
+        setAllDeposits(allDepRes.data ?? []);
+        setTransactions(txList);
+      } catch {
+        setError(t("auth.sessionExpired"));
+      }
     };
     load();
   }, [user]);
@@ -56,7 +67,11 @@ export default function DashboardPage() {
     [allDeposits]
   );
 
-  const activeTrades = trades.filter((tr) => tr.status === "pending" || tr.status === "approved").length;
+  const activeTrades = transactions.filter(
+    (tx) => tx.kind === "trade" && (tx.status === "pending" || tx.status === "approved")
+  ).length;
+
+  const recentTransactions = transactions.slice(0, OVERVIEW_TRANSACTION_LIMIT);
 
   const chartData = useMemo(() => {
     let running = Math.max(balance * 0.7, 0);
@@ -98,7 +113,7 @@ export default function DashboardPage() {
         <p className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm text-red-400">{error}</p>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-transparent">
+      <div className="overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-secondary to-transparent">
         <div className="grid gap-6 p-6 lg:grid-cols-2 lg:p-8">
           <div>
             <div className="flex items-center gap-2 text-sm text-muted">
@@ -111,7 +126,7 @@ export default function DashboardPage() {
 
             <div className="mt-6 flex flex-wrap gap-3">
               {quickActions.map((action) => (
-                <Button key={action.href} variant="outline" size="sm" asChild className="border-white/10 bg-white/[0.03]">
+                <Button key={action.href} variant="outline" size="sm" asChild className="border-border bg-secondary/60">
                   <Link to={action.href}>
                     <action.icon className="mr-2 h-4 w-4" />
                     {t(action.labelKey)}
@@ -139,7 +154,7 @@ export default function DashboardPage() {
       <StaggerContainer className="grid gap-4 sm:grid-cols-3">
         {stats.map((s) => (
           <StaggerItem key={s.labelKey}>
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+            <div className="rounded-xl border border-border bg-secondary/50 p-5">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted">{t(s.labelKey)}</p>
                 <s.icon className="h-4 w-4 text-emerald/70" aria-hidden="true" />
@@ -150,53 +165,15 @@ export default function DashboardPage() {
         ))}
       </StaggerContainer>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02]">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
-            <h2 className="font-display font-semibold text-foreground">{t("dashboard.recentDeposits")}</h2>
-            <Link to="/dashboard/deposits" className="flex items-center text-xs text-emerald hover:underline">
-              {t("dashboard.viewAll")} <ArrowRight className="ml-1 h-3 w-3" />
-            </Link>
-          </div>
-          <div className="p-5">
-            {deposits.length === 0 ? (
-              <p className="text-sm text-muted">{t("dashboard.noDeposits")}</p>
-            ) : (
-              <div className="space-y-3">
-                {deposits.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between rounded-lg bg-white/[0.02] px-3 py-2.5 text-sm">
-                    <span className="font-medium">{formatCurrency(d.amount)}</span>
-                    <Badge variant={d.status === "completed" ? "success" : "warning"}>{d.status}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+      <RecentTransactionsCard
+        items={recentTransactions}
+        total={transactions.length}
+        limit={OVERVIEW_TRANSACTION_LIMIT}
+        onItemClick={setSelectedTx}
+        selectedId={selectedTx?.id}
+      />
 
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02]">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
-            <h2 className="font-display font-semibold text-foreground">{t("dashboard.recentTrades")}</h2>
-            <Link to="/dashboard/trades" className="flex items-center text-xs text-emerald hover:underline">
-              {t("dashboard.viewAll")} <ArrowRight className="ml-1 h-3 w-3" />
-            </Link>
-          </div>
-          <div className="p-5">
-            {trades.length === 0 ? (
-              <p className="text-sm text-muted">{t("dashboard.noTrades")}</p>
-            ) : (
-              <div className="space-y-3">
-                {trades.map((tr) => (
-                  <div key={tr.id} className="flex items-center justify-between rounded-lg bg-white/[0.02] px-3 py-2.5 text-sm">
-                    <span className="font-medium">{tr.type.toUpperCase()} {tr.asset}</span>
-                    <Badge variant={tr.status === "completed" ? "success" : "warning"}>{tr.status}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <TransactionReceiptPanel transaction={selectedTx} onClose={() => setSelectedTx(null)} />
     </div>
   );
 }

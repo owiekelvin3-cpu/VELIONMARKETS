@@ -1,124 +1,66 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
-  ArrowRight, Building2, Coins, Globe2, Sparkles, Wallet, Zap,
+  ArrowRight, Clock, Coins, Sparkles, Zap,
 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/dashboard/DepositIcons";
-import { EwalletProviderIcon } from "@/components/dashboard/WithdrawIcons";
+import {
+  EwalletProviderIcon,
+  getMethodStyles,
+  WithdrawMethodIcon,
+  WithdrawMethodPreview,
+} from "@/components/dashboard/WithdrawIcons";
 import { CRYPTO_ASSETS } from "@/constants/deposit-assets";
-import { EWALLET_PROVIDERS } from "@/constants/withdrawal-methods";
+import { EWALLET_PROVIDERS, WITHDRAW_METHODS, type WithdrawMethodId } from "@/constants/withdrawal-methods";
 
-type Accent = "emerald" | "blue" | "indigo" | "gold";
-
-function SectionShell({
-  icon: Icon,
-  accent,
-  title,
-  subtitle,
-  badge,
-  children,
-  footer,
-}: {
-  icon: typeof Coins;
-  accent: Accent;
-  title: string;
-  subtitle: string;
-  badge: string;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
-  const styles: Record<Accent, { badge: string; icon: string; glow: string; link: string }> = {
-    emerald: {
-      badge: "border-emerald/25 bg-emerald/10 text-emerald",
-      icon: "bg-emerald/10 text-emerald",
-      glow: "from-emerald/8 via-transparent to-transparent",
-      link: "text-emerald hover:text-emerald/80",
-    },
-    blue: {
-      badge: "border-blue-500/25 bg-blue-500/10 text-blue-400",
-      icon: "bg-blue-500/10 text-blue-400",
-      glow: "from-blue-500/8 via-transparent to-transparent",
-      link: "text-blue-400 hover:text-blue-300",
-    },
-    indigo: {
-      badge: "border-indigo-500/25 bg-indigo-500/10 text-indigo-400",
-      icon: "bg-indigo-500/10 text-indigo-400",
-      glow: "from-indigo-500/8 via-transparent to-transparent",
-      link: "text-indigo-400 hover:text-indigo-300",
-    },
-    gold: {
-      badge: "border-gold/25 bg-gold/10 text-gold",
-      icon: "bg-gold/10 text-gold",
-      glow: "from-gold/8 via-transparent to-transparent",
-      link: "text-gold hover:text-gold/80",
-    },
-  };
-  const s = styles[accent];
-
-  return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-      <div className={cn("pointer-events-none absolute inset-0 bg-gradient-to-br", s.glow)} />
-      <div className="relative border-b border-white/[0.06] px-5 py-5 sm:px-6">
-        <div className="flex gap-4">
-          <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", s.icon)}>
-            <Icon className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <div>
-            <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider", s.badge)}>
-              <Sparkles className="h-3 w-3" aria-hidden="true" />
-              {badge}
-            </span>
-            <h2 className="mt-2 font-display text-lg font-semibold text-foreground sm:text-xl">{title}</h2>
-            <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted">{subtitle}</p>
-          </div>
-        </div>
-      </div>
-      <div className="relative p-5 sm:p-6">{children}</div>
-      {footer && (
-        <div className="relative border-t border-white/[0.06] px-5 py-4 sm:px-6">
-          <div className={cn("inline-flex items-center gap-2 text-sm font-medium", s.link)}>{footer}</div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function FiatMethodCard({
-  to,
-  icon: Icon,
+function MethodHeroCard({
+  method,
+  href,
   title,
   description,
   timing,
-  accent,
 }: {
-  to: string;
-  icon: typeof Building2;
+  method: WithdrawMethodId;
+  href: string;
   title: string;
   description: string;
   timing: string;
-  accent: "blue" | "indigo";
 }) {
-  const ring = accent === "blue" ? "hover:border-blue-500/30 hover:shadow-[0_0_24px_rgba(59,130,246,0.08)]" : "hover:border-indigo-500/30 hover:shadow-[0_0_24px_rgba(99,102,241,0.08)]";
-  const iconBg = accent === "blue" ? "bg-blue-500/10 text-blue-400" : "bg-indigo-500/10 text-indigo-400";
+  const s = getMethodStyles(method);
 
   return (
     <Link
-      to={to}
+      to={href}
       className={cn(
-        "group flex flex-col rounded-xl border border-white/[0.06] bg-[#0a0a0c]/60 p-5 transition-all duration-200",
-        "hover:bg-white/[0.04]",
-        ring
+        "group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 transition-all duration-300",
+        "hover:-translate-y-0.5",
+        s.ring
       )}
     >
-      <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl", iconBg)}>
-        <Icon className="h-5 w-5" aria-hidden="true" />
+      <div className={cn("pointer-events-none absolute inset-0 bg-gradient-to-br opacity-80", s.gradient)} />
+      <div className="relative flex items-start justify-between gap-3">
+        <WithdrawMethodIcon method={method} />
+        <span className={cn(
+          "inline-flex items-center gap-1 rounded-full border border-border/80 bg-background/60 px-2.5 py-1 text-[10px] font-medium backdrop-blur-sm",
+          s.text
+        )}>
+          <Clock className="h-3 w-3" />
+          {timing}
+        </span>
       </div>
-      <h3 className="mt-4 font-display text-sm font-semibold text-foreground">{title}</h3>
-      <p className="mt-1 flex-1 text-xs leading-relaxed text-muted">{description}</p>
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-[11px] text-muted">{timing}</span>
-        <ArrowRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+      <div className="relative mt-4 flex-1">
+        <h3 className="font-display text-base font-semibold text-foreground">{title}</h3>
+        <p className="mt-1.5 text-xs leading-relaxed text-muted line-clamp-2">{description}</p>
+      </div>
+      <div className="relative mt-4 flex items-center justify-between gap-3">
+        <WithdrawMethodPreview method={method} />
+        <span className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background/80 transition-all",
+          "group-hover:border-transparent group-hover:bg-emerald group-hover:text-black"
+        )}>
+          <ArrowRight className="h-4 w-4" />
+        </span>
       </div>
     </Link>
   );
@@ -128,108 +70,102 @@ export function WithdrawFundsShowcase() {
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted/70">
-          {t("withdrawals.quickWithdraw")}
-        </span>
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+    <div className="space-y-8">
+      <div>
+        <div className="mb-4 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-emerald" />
+          <h2 className="font-display text-lg font-semibold text-foreground">{t("withdrawals.chooseMethod")}</h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {WITHDRAW_METHODS.map((m) => (
+            <MethodHeroCard
+              key={m.id}
+              method={m.id}
+              href={m.href}
+              title={t(m.titleKey)}
+              description={t(m.descKey)}
+              timing={t(m.timingKey)}
+            />
+          ))}
+        </div>
       </div>
 
-      <SectionShell
-        icon={Coins}
-        accent="emerald"
-        badge={t("withdrawals.cryptoBadge")}
-        title={t("withdrawals.cryptoQuickTitle")}
-        subtitle={t("withdrawals.cryptoQuickDesc")}
-        footer={
-          <Link to="/dashboard/withdrawals/crypto" className="inline-flex items-center gap-2">
+      <section className="rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald/10 text-emerald">
+              <Coins className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-display font-semibold text-foreground">{t("withdrawals.cryptoQuickTitle")}</h3>
+              <p className="text-xs text-muted">{t("withdrawals.cryptoQuickDesc")}</p>
+            </div>
+          </div>
+          <Link
+            to="/dashboard/withdrawals/crypto"
+            className="hidden items-center gap-1 text-xs font-medium text-emerald hover:underline sm:inline-flex"
+          >
             {t("withdrawals.viewAllCrypto")}
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
-        }
-      >
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        </div>
+        <div className="flex gap-3 overflow-x-auto p-4 pb-5 scrollbar-none">
           {CRYPTO_ASSETS.map((asset) => (
             <Link
               key={asset.id}
               to={`/dashboard/withdrawals/crypto?coin=${asset.id}`}
               className={cn(
-                "group flex flex-col items-center rounded-xl border border-white/[0.06] bg-[#0a0a0c]/60 p-4 text-center transition-all duration-200",
-                "hover:border-emerald/30 hover:bg-white/[0.04] hover:shadow-[0_0_24px_rgba(16,185,129,0.08)]"
+                "group flex min-w-[108px] shrink-0 flex-col items-center rounded-2xl border border-border bg-secondary/30 p-4 text-center transition-all",
+                "hover:border-emerald/35 hover:bg-emerald/5 hover:shadow-[0_8px_24px_rgba(16,185,129,0.1)]"
               )}
             >
-              <BrandLogo src={asset.iconUrl} alt={asset.label} size="md" />
-              <p className="mt-3 font-display text-sm font-semibold text-foreground">{asset.symbol}</p>
-              <p className="mt-0.5 text-xs text-muted">{asset.label}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-emerald opacity-0 transition-opacity group-hover:opacity-100">
-                <Zap className="h-3 w-3" aria-hidden="true" />
+              <BrandLogo src={asset.iconUrl} alt={asset.label} size="lg" />
+              <p className="mt-3 font-display text-sm font-bold text-foreground">{asset.symbol}</p>
+              <p className="mt-0.5 text-[10px] text-muted">{asset.label}</p>
+              <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-emerald opacity-0 transition-opacity group-hover:opacity-100">
+                <Zap className="h-3 w-3" />
                 {t("withdrawals.withdrawNow")}
               </span>
             </Link>
           ))}
         </div>
-      </SectionShell>
+      </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SectionShell
-          icon={Building2}
-          accent="blue"
-          badge={t("withdrawals.fiatBadge")}
-          title={t("withdrawals.bankWireTitle")}
-          subtitle={t("withdrawals.bankWireDesc")}
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FiatMethodCard
-              to="/dashboard/withdrawals/bank"
-              icon={Building2}
-              title={t("withdrawals.bankTitle")}
-              description={t("withdrawals.bankDesc")}
-              timing={t("withdrawals.bankTiming")}
-              accent="blue"
-            />
-            <FiatMethodCard
-              to="/dashboard/withdrawals/wire"
-              icon={Globe2}
-              title={t("withdrawals.wireTitle")}
-              description={t("withdrawals.wireDesc")}
-              timing={t("withdrawals.wireTiming")}
-              accent="indigo"
-            />
+      <section className="rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+              <Zap className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-display font-semibold text-foreground">{t("withdrawals.ewalletQuickTitle")}</h3>
+              <p className="text-xs text-muted">{t("withdrawals.ewalletQuickDesc")}</p>
+            </div>
           </div>
-        </SectionShell>
-
-        <SectionShell
-          icon={Wallet}
-          accent="gold"
-          badge={t("withdrawals.ewalletBadge")}
-          title={t("withdrawals.ewalletQuickTitle")}
-          subtitle={t("withdrawals.ewalletQuickDesc")}
-          footer={
-            <Link to="/dashboard/withdrawals/ewallet" className="inline-flex items-center gap-2">
-              {t("withdrawals.viewAllEwallets")}
-              <ArrowRight className="h-4 w-4" />
+          <Link
+            to="/dashboard/withdrawals/ewallet"
+            className="hidden items-center gap-1 text-xs font-medium text-amber-400 hover:underline sm:inline-flex"
+          >
+            {t("withdrawals.viewAllEwallets")}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-5">
+          {EWALLET_PROVIDERS.map((provider) => (
+            <Link
+              key={provider.id}
+              to={`/dashboard/withdrawals/ewallet?provider=${provider.id}`}
+              className={cn(
+                "group flex flex-col items-center rounded-2xl border border-border bg-secondary/30 p-4 text-center transition-all",
+                "hover:border-amber-500/30 hover:bg-amber-500/5 hover:shadow-[0_8px_24px_rgba(245,158,11,0.08)]"
+              )}
+            >
+              <EwalletProviderIcon provider={provider} size="lg" />
+              <p className="mt-3 text-xs font-semibold text-foreground">{provider.label}</p>
             </Link>
-          }
-        >
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {EWALLET_PROVIDERS.map((provider) => (
-              <Link
-                key={provider.id}
-                to={`/dashboard/withdrawals/ewallet?provider=${provider.id}`}
-                className={cn(
-                  "group flex flex-col items-center rounded-xl border border-white/[0.06] bg-[#0a0a0c]/60 p-4 text-center transition-all duration-200",
-                  "hover:border-gold/30 hover:bg-white/[0.04] hover:shadow-[0_0_24px_rgba(201,162,39,0.08)]"
-                )}
-              >
-                <EwalletProviderIcon provider={provider} />
-                <p className="mt-2 text-xs font-medium text-foreground">{provider.label}</p>
-              </Link>
-            ))}
-          </div>
-        </SectionShell>
-      </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -237,26 +173,35 @@ export function WithdrawFundsShowcase() {
 export function WithdrawalProcessingTimeline() {
   const { t } = useTranslation();
 
-  const items = [
-    { label: t("withdrawals.cryptoTitle"), time: t("withdrawals.cryptoTiming"), accent: "text-emerald" },
-    { label: t("withdrawals.bankTitle"), time: t("withdrawals.bankTiming"), accent: "text-blue-400" },
-    { label: t("withdrawals.wireTitle"), time: t("withdrawals.wireTiming"), accent: "text-indigo-400" },
-    { label: t("withdrawals.ewalletTitle"), time: t("withdrawals.ewalletTiming"), accent: "text-gold" },
+  const items: Array<{ method: WithdrawMethodId; label: string; time: string }> = [
+    { method: "crypto", label: t("withdrawals.cryptoTitle"), time: t("withdrawals.cryptoTiming") },
+    { method: "bank", label: t("withdrawals.bankTitle"), time: t("withdrawals.bankTiming") },
+    { method: "wire", label: t("withdrawals.wireTitle"), time: t("withdrawals.wireTiming") },
+    { method: "ewallet", label: t("withdrawals.ewalletTitle"), time: t("withdrawals.ewalletTiming") },
   ];
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-      <h3 className="font-display text-sm font-semibold text-foreground">{t("withdrawals.processingTimes")}</h3>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {items.map((item) => (
-          <div
-            key={item.label}
-            className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.02] px-4 py-3"
-          >
-            <span className="text-sm text-muted">{item.label}</span>
-            <span className={cn("text-sm font-medium", item.accent)}>{item.time}</span>
-          </div>
-        ))}
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <Clock className="h-4 w-4 text-muted" />
+        <h3 className="font-display text-sm font-semibold text-foreground">{t("withdrawals.processingTimes")}</h3>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {items.map((item) => {
+          const s = getMethodStyles(item.method);
+          return (
+            <div
+              key={item.method}
+              className="flex items-center gap-3 rounded-xl border border-border bg-secondary/20 px-4 py-3"
+            >
+              <WithdrawMethodIcon method={item.method} size="sm" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">{item.label}</p>
+                <p className={cn("text-xs font-medium", s.text)}>{item.time}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

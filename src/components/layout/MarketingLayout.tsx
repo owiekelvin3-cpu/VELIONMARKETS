@@ -11,7 +11,7 @@ export function MarketingLayout() {
     <div className="relative min-h-screen overflow-x-hidden">
       <AnimatedBackground />
       <Header />
-      <main className="relative pt-28 sm:pt-32">
+      <main className="relative pt-16">
         <PageEnter key={location.pathname}>
           <Outlet />
         </PageEnter>

@@ -34,7 +34,7 @@ export default function DepositsPage() {
           iconRow={<GiftCardIconGrid size="sm" />}
         />
 
-        <div className="flex gap-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5">
+        <div className="flex gap-4 rounded-2xl border border-dashed border-border bg-secondary/50 p-5">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald/10">
             <Shield className="h-5 w-5 text-emerald" aria-hidden="true" />
           </div>

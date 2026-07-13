@@ -13,9 +13,12 @@ import {
   WithdrawalBalanceBanner,
   WithdrawalFormPanel,
   WithdrawalHistoryPanel,
+  WithdrawalAmountField,
+  WithdrawalAlert,
 } from "@/components/dashboard/WithdrawalUi";
 import { FadeIn } from "@/components/motion/Motion";
 import { CRYPTO_ASSETS } from "@/constants/deposit-assets";
+import { Coins } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 const cryptoFilter = "crypto" as const;
@@ -43,7 +46,7 @@ export default function CryptoWithdrawalPage() {
   }, [coinParam]);
 
   useEffect(() => {
-    if (user) load(user.id);
+    if (user) void load(user.id);
   }, [user, load]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,23 +78,29 @@ export default function CryptoWithdrawalPage() {
       <FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
 
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
-          {CRYPTO_ASSETS.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setSelected(c.id)}
-              className={cn(
-                "rounded-xl border p-3 text-center transition-all",
-                selected === c.id
-                  ? "border-emerald/40 bg-emerald/10"
-                  : "border-white/[0.06] bg-white/[0.02] hover:border-white/10"
-              )}
-            >
-              <CryptoBrandIcon asset={c} selected={selected === c.id} />
-              <span className="text-xs font-medium text-foreground">{c.symbol}</span>
-            </button>
-          ))}
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
+            <Coins className="h-3.5 w-3.5 text-emerald" />
+            {t("withdrawals.selectAsset")}
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {CRYPTO_ASSETS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setSelected(c.id)}
+                className={cn(
+                  "rounded-xl border p-3 text-center transition-all",
+                  selected === c.id
+                    ? "border-emerald/40 bg-emerald/10 ring-1 ring-emerald/20"
+                    : "border-border bg-secondary/20 hover:border-emerald/20"
+                )}
+              >
+                <CryptoBrandIcon asset={c} selected={selected === c.id} />
+                <span className="mt-1 block text-xs font-medium text-foreground">{c.symbol}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <WithdrawalFormPanel description={t("withdrawals.sendCryptoTo", { asset: crypto.label })}>
@@ -108,25 +117,18 @@ export default function CryptoWithdrawalPage() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="amount">{t("withdrawals.amountUsd")}</Label>
-              <Input
-                id="amount"
-                type="number"
-                min="10"
-                step="0.01"
-                max={balance}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                className="mt-2 h-11"
-              />
-            </div>
+            <WithdrawalAmountField
+              balance={balance}
+              amount={amount}
+              onChange={setAmount}
+              min={10}
+              hint={t("withdrawals.cryptoTiming")}
+            />
 
-            {message && <p className="text-sm text-red-400">{message}</p>}
-            {success && <p className="text-sm text-emerald">{t("withdrawals.submitSuccess")}</p>}
+            {message && <WithdrawalAlert type="error">{message}</WithdrawalAlert>}
+            {success && <WithdrawalAlert type="success">{t("withdrawals.submitSuccess")}</WithdrawalAlert>}
 
-            <Button type="submit" className="h-11 w-full" disabled={loading || parseFloat(amount) > balance}>
+            <Button type="submit" className="h-12 w-full text-base" disabled={loading || !amount || parseFloat(amount) > balance}>
               {loading ? t("withdrawals.submitting") : t("withdrawals.submitCrypto")}
             </Button>
           </form>

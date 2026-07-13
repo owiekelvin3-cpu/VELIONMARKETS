@@ -11,6 +11,8 @@ import {
   WithdrawalBalanceBanner,
   WithdrawalFormPanel,
   WithdrawalHistoryPanel,
+  WithdrawalAmountField,
+  WithdrawalAlert,
 } from "@/components/dashboard/WithdrawalUi";
 import { FadeIn } from "@/components/motion/Motion";
 
@@ -85,26 +87,18 @@ export default function WireWithdrawalPage() {
               <Label htmlFor="bankAddress">{t("withdrawals.bankAddress")}</Label>
               <Input id="bankAddress" value={bankAddress} onChange={(e) => setBankAddress(e.target.value)} required className="mt-2 h-11" />
             </div>
-            <div>
-              <Label htmlFor="amount">{t("withdrawals.amountUsd")}</Label>
-              <Input
-                id="amount"
-                type="number"
-                min="100"
-                step="0.01"
-                max={balance}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                className="mt-2 h-11"
-              />
-              <p className="mt-1.5 text-xs text-muted">{t("withdrawals.wireProcessing")}</p>
-            </div>
+            <WithdrawalAmountField
+              balance={balance}
+              amount={amount}
+              onChange={setAmount}
+              min={100}
+              hint={t("withdrawals.wireProcessing")}
+            />
 
-            {message && <p className="text-sm text-red-400">{message}</p>}
-            {success && <p className="text-sm text-emerald">{t("withdrawals.submitSuccess")}</p>}
+            {message && <WithdrawalAlert type="error">{message}</WithdrawalAlert>}
+            {success && <WithdrawalAlert type="success">{t("withdrawals.submitSuccess")}</WithdrawalAlert>}
 
-            <Button type="submit" className="h-11 w-full" disabled={loading || parseFloat(amount) > balance}>
+            <Button type="submit" className="h-12 w-full text-base" disabled={loading || !amount || parseFloat(amount) > balance}>
               {loading ? t("withdrawals.submitting") : t("withdrawals.submitWire")}
             </Button>
           </form>

@@ -15,7 +15,7 @@ export function DepositPageHeader({
     <FadeIn className="mb-8">
       <Link
         to={backTo}
-        className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.03] text-muted transition-colors hover:bg-white/[0.06] hover:text-foreground"
+        className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/40 text-muted transition-colors hover:bg-secondary hover:text-foreground"
         aria-label="Go back"
       >
         <ArrowLeft className="h-4 w-4" />

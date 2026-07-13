@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { ensureValidSession, isJwtExpiredError } from "@/lib/auth-session";
-import { autoEnablePushNotifications, setPushEnabledPreference } from "@/lib/push-notifications";
+import { ensureValidSession, isJwtExpiredError, onSessionExpired } from "@/lib/auth-session";
+import { syncUserLocation } from "@/lib/user-location";
 import type { Profile } from "@/types/database";
 
 interface AuthContextType {
@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setProfile(data);
+    void syncUserLocation(userId);
   }, []);
 
   const refreshProfile = async (userId?: string) => {
@@ -129,11 +130,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
     document.addEventListener("visibilitychange", onVisible);
+    const removeSessionListener = onSessionExpired(() => {
+      void handleSessionLoss(true);
+    });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
       document.removeEventListener("visibilitychange", onVisible);
+      removeSessionListener();
     };
   }, [fetchProfile, handleSessionLoss]);
 
@@ -151,8 +156,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (!error && data.user) {
       await supabase.from("profiles").update({ full_name: fullName }).eq("id", data.user.id);
-      setPushEnabledPreference(true);
-      void autoEnablePushNotifications(data.user.id);
       setSessionExpired(false);
     }
     return { error: error as Error | null, user: data.user ?? null };

@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://tradno.com/</loc><priority>1.0</priority></url>
-  <url><loc>https://tradno.com/about</loc><priority>0.8</priority></url>
-  <url><loc>https://tradno.com/services</loc><priority>0.8</priority></url>
-  <url><loc>https://tradno.com/reviews</loc><priority>0.7</priority></url>
-  <url><loc>https://tradno.com/faqs</loc><priority>0.7</priority></url>
-  <url><loc>https://tradno.com/payouts</loc><priority>0.6</priority></url>
-  <url><loc>https://tradno.com/security</loc><priority>0.7</priority></url>
-  <url><loc>https://tradno.com/trading-signals</loc><priority>0.6</priority></url>
-  <url><loc>https://tradno.com/holdings</loc><priority>0.6</priority></url>
-  <url><loc>https://tradno.com/trading-room</loc><priority>0.6</priority></url>
-  <url><loc>https://tradno.com/verify</loc><priority>0.5</priority></url>
-  <url><loc>https://tradno.com/privacy</loc><priority>0.4</priority></url>
-  <url><loc>https://tradno.com/terms</loc><priority>0.4</priority></url>
-  <url><loc>https://tradno.com/cookies</loc><priority>0.4</priority></url>
+  <url><loc>https://velionmarkets.com/</loc><priority>1.0</priority></url>
+  <url><loc>https://velionmarkets.com/about</loc><priority>0.8</priority></url>
+  <url><loc>https://velionmarkets.com/services</loc><priority>0.8</priority></url>
+  <url><loc>https://velionmarkets.com/reviews</loc><priority>0.7</priority></url>
+  <url><loc>https://velionmarkets.com/faqs</loc><priority>0.7</priority></url>
+  <url><loc>https://velionmarkets.com/payouts</loc><priority>0.6</priority></url>
+  <url><loc>https://velionmarkets.com/security</loc><priority>0.7</priority></url>
+  <url><loc>https://velionmarkets.com/trading-signals</loc><priority>0.6</priority></url>
+  <url><loc>https://velionmarkets.com/holdings</loc><priority>0.6</priority></url>
+  <url><loc>https://velionmarkets.com/trading-room</loc><priority>0.6</priority></url>
+  <url><loc>https://velionmarkets.com/world-economy</loc><priority>0.8</priority></url>
+  <url><loc>https://velionmarkets.com/world-economy/trends</loc><priority>0.7</priority></url>
+  <url><loc>https://velionmarkets.com/forex-news</loc><priority>0.7</priority></url>
+  <url><loc>https://velionmarkets.com/brokers</loc><priority>0.8</priority></url>
+  <url><loc>https://velionmarkets.com/verify</loc><priority>0.5</priority></url
+  <url><loc>https://velionmarkets.com/privacy</loc><priority>0.4</priority></url>
+  <url><loc>https://velionmarkets.com/terms</loc><priority>0.4</priority></url>
+  <url><loc>https://velionmarkets.com/cookies</loc><priority>0.4</priority></url>
 </urlset>

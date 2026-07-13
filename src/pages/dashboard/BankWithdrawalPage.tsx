@@ -11,6 +11,8 @@ import {
   WithdrawalBalanceBanner,
   WithdrawalFormPanel,
   WithdrawalHistoryPanel,
+  WithdrawalAmountField,
+  WithdrawalAlert,
 } from "@/components/dashboard/WithdrawalUi";
 import { FadeIn } from "@/components/motion/Motion";
 
@@ -79,26 +81,18 @@ export default function BankWithdrawalPage() {
                 <Input id="routing" value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} required className="mt-2 h-11" />
               </div>
             </div>
-            <div>
-              <Label htmlFor="amount">{t("withdrawals.amountUsd")}</Label>
-              <Input
-                id="amount"
-                type="number"
-                min="50"
-                step="0.01"
-                max={balance}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                className="mt-2 h-11"
-              />
-              <p className="mt-1.5 text-xs text-muted">{t("withdrawals.bankProcessing")}</p>
-            </div>
+            <WithdrawalAmountField
+              balance={balance}
+              amount={amount}
+              onChange={setAmount}
+              min={50}
+              hint={t("withdrawals.bankProcessing")}
+            />
 
-            {message && <p className="text-sm text-red-400">{message}</p>}
-            {success && <p className="text-sm text-emerald">{t("withdrawals.submitSuccess")}</p>}
+            {message && <WithdrawalAlert type="error">{message}</WithdrawalAlert>}
+            {success && <WithdrawalAlert type="success">{t("withdrawals.submitSuccess")}</WithdrawalAlert>}
 
-            <Button type="submit" className="h-11 w-full" disabled={loading || parseFloat(amount) > balance}>
+            <Button type="submit" className="h-12 w-full text-base" disabled={loading || !amount || parseFloat(amount) > balance}>
               {loading ? t("withdrawals.submitting") : t("withdrawals.submitBank")}
             </Button>
           </form>

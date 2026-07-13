@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { ProtectedRoute, AdminRoute, AdminProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MarketingLayout } from "@/components/layout/MarketingLayout";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -18,6 +19,10 @@ const SecurityPage = lazy(() => import("@/pages/marketing/SecurityPage"));
 const TradingSignalsPage = lazy(() => import("@/pages/marketing/TradingSignalsPage"));
 const HoldingsPage = lazy(() => import("@/pages/marketing/HoldingsPage"));
 const MarketingTradingRoomPage = lazy(() => import("@/pages/marketing/TradingRoomPage"));
+const WorldEconomyPage = lazy(() => import("@/pages/marketing/WorldEconomyPage"));
+const EconomyTrendsPage = lazy(() => import("@/pages/marketing/EconomyTrendsPage"));
+const ForexNewsPage = lazy(() => import("@/pages/marketing/ForexNewsPage"));
+const BrokersPage = lazy(() => import("@/pages/marketing/BrokersPage"));
 const VerifyPage = lazy(() => import("@/pages/marketing/VerifyPage"));
 const PrivacyPage = lazy(() => import("@/pages/marketing/LegalPages").then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import("@/pages/marketing/LegalPages").then(m => ({ default: m.TermsPage })));
@@ -38,6 +43,7 @@ const BankWithdrawalPage = lazy(() => import("@/pages/dashboard/BankWithdrawalPa
 const WireWithdrawalPage = lazy(() => import("@/pages/dashboard/WireWithdrawalPage"));
 const EwalletWithdrawalPage = lazy(() => import("@/pages/dashboard/EwalletWithdrawalPage"));
 const TradesPage = lazy(() => import("@/pages/dashboard/TradesPage"));
+const TransactionsPage = lazy(() => import("@/pages/dashboard/TransactionsPage"));
 const KYCPage = lazy(() => import("@/pages/dashboard/KYCPage"));
 const CopyTradingPage = lazy(() => import("@/pages/dashboard/CopyTradingPage"));
 const MiningPage = lazy(() => import("@/pages/dashboard/MiningPage"));
@@ -69,8 +75,9 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <BrowserRouter>
+        <ThemeProvider>
+          <AuthProvider>
+            <BrowserRouter>
             <Suspense fallback={<PageLoader />}>
               <Routes>
               <Route element={<MarketingLayout />}>
@@ -85,6 +92,10 @@ function App() {
                 <Route path="trading-signals" element={<TradingSignalsPage />} />
                 <Route path="holdings" element={<HoldingsPage />} />
                 <Route path="trading-room" element={<MarketingTradingRoomPage />} />
+                <Route path="world-economy" element={<WorldEconomyPage />} />
+                <Route path="world-economy/trends" element={<EconomyTrendsPage />} />
+                <Route path="forex-news" element={<ForexNewsPage />} />
+                <Route path="brokers" element={<BrokersPage />} />
                 <Route path="verify" element={<VerifyPage />} />
                 <Route path="privacy" element={<PrivacyPage />} />
                 <Route path="terms" element={<TermsPage />} />
@@ -105,6 +116,7 @@ function App() {
                 <Route path="dashboard/withdrawals/wire" element={<WireWithdrawalPage />} />
                 <Route path="dashboard/withdrawals/ewallet" element={<EwalletWithdrawalPage />} />
                 <Route path="dashboard/withdrawals" element={<WithdrawalsPage />} />
+                <Route path="dashboard/transactions" element={<TransactionsPage />} />
                 <Route path="dashboard/trades" element={<TradesPage />} />
                 <Route path="dashboard/ai-trading" element={<AITradingPage />} />
                 <Route path="dashboard/trading-room" element={<DashboardTradingRoomPage />} />
@@ -131,7 +143,8 @@ function App() {
               </Routes>
             </Suspense>
           </BrowserRouter>
-        </AuthProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

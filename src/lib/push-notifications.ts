@@ -20,7 +20,7 @@ export function hasBeenPromptedForPush(): boolean {
   return localStorage.getItem(PUSH_PROMPTED_KEY) === "true";
 }
 
-function markPushPrompted() {
+export function markPushPrompted() {
   localStorage.setItem(PUSH_PROMPTED_KEY, "true");
 }
 
@@ -40,8 +40,19 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   if (!("serviceWorker" in navigator)) return null;
 
   try {
-    return await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-  } catch {
+    const registration = await navigator.serviceWorker.register("/sw.js", {
+      scope: "/",
+      updateViaCache: "none",
+    });
+
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    }
+
+    await navigator.serviceWorker.ready;
+    return registration;
+  } catch (error) {
+    console.warn("[push] Service worker registration failed:", error);
     return null;
   }
 }
@@ -49,39 +60,43 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 export async function showBrowserNotification(
   title: string,
   body: string,
-  options?: { url?: string; tag?: string }
+  options?: { url?: string; tag?: string; silent?: boolean }
 ) {
   if (!isPushSupported() || Notification.permission !== "granted" || !getPushEnabledPreference()) {
     return;
   }
 
-  const registration = await navigator.serviceWorker.ready;
-
-  if (registration.active) {
-    registration.active.postMessage({
-      type: "SHOW_NOTIFICATION",
-      title,
-      body,
-      url: options?.url ?? "/dashboard",
-      tag: options?.tag,
-    });
-    return;
-  }
-
-  await registration.showNotification(title, {
+  const payload = {
     body,
     icon: "/logo.svg",
     badge: "/favicon.svg",
     tag: options?.tag ?? "velion-notification",
+    renotify: true,
+    silent: options?.silent ?? false,
+    vibrate: [100, 50, 100] as number[],
     data: { url: options?.url ?? "/dashboard" },
-  });
+  };
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    await registration.showNotification(title, payload);
+    return;
+  } catch {
+    /* fall through */
+  }
+
+  try {
+    new Notification(title, payload);
+  } catch (error) {
+    console.warn("[push] Could not show notification:", error);
+  }
 }
 
 async function savePushSubscription(userId: string, subscription: PushSubscription) {
   const json = subscription.toJSON();
   if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
 
-  await supabase.from("push_subscriptions").upsert(
+  const { error } = await supabase.from("push_subscriptions").upsert(
     {
       user_id: userId,
       endpoint: json.endpoint,
@@ -92,49 +107,76 @@ async function savePushSubscription(userId: string, subscription: PushSubscripti
     },
     { onConflict: "user_id,endpoint" }
   );
+
+  if (error) console.warn("[push] Failed to save subscription:", error.message);
 }
 
 async function removePushSubscriptions(userId: string) {
   await supabase.from("push_subscriptions").delete().eq("user_id", userId);
 }
 
-export async function enablePushNotifications(userId: string): Promise<NotificationPermission | "unsupported"> {
-  if (!isPushSupported()) return "unsupported";
+async function subscribeToWebPush(userId: string) {
+  const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+  if (!vapidPublicKey) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      });
+    }
+
+    if (subscription) {
+      await savePushSubscription(userId, subscription);
+    }
+  } catch (error) {
+    console.warn("[push] Web Push subscription skipped:", error);
+  }
+}
+
+/** Start permission prompt inside a user-gesture handler (do not await before calling). */
+export function beginPushPermissionRequest(): Promise<NotificationPermission> | null {
+  if (!isPushSupported()) return null;
 
   markPushPrompted();
-  await registerServiceWorker();
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") {
-    if (permission === "denied") {
-      setPushEnabledPreference(false);
-    }
-    return permission;
+  void registerServiceWorker();
+
+  if (Notification.permission !== "default") {
+    return Promise.resolve(Notification.permission);
   }
 
+  return Notification.requestPermission();
+}
+
+export async function completePushSetup(
+  userId: string,
+  permissionPromise?: Promise<NotificationPermission> | null
+): Promise<NotificationPermission | "unsupported"> {
+  if (!isPushSupported()) return "unsupported";
+
   setPushEnabledPreference(true);
+  await registerServiceWorker();
 
-  const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
-  if (vapidPublicKey) {
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      let subscription = await registration.pushManager.getSubscription();
+  const permission = permissionPromise ? await permissionPromise : Notification.permission;
 
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-        });
-      }
-
-      if (subscription) {
-        await savePushSubscription(userId, subscription);
-      }
-    } catch {
-      /* Web Push subscription optional — in-app + SW notifications still work */
-    }
+  if (permission === "granted") {
+    await subscribeToWebPush(userId);
+  } else if (permission === "denied") {
+    setPushEnabledPreference(false);
   }
 
   return permission;
+}
+
+export async function enablePushNotifications(userId: string): Promise<NotificationPermission | "unsupported"> {
+  if (!isPushSupported()) return "unsupported";
+
+  const permissionPromise = beginPushPermissionRequest();
+  return completePushSetup(userId, permissionPromise);
 }
 
 export async function disablePushNotifications(userId: string) {
@@ -156,33 +198,17 @@ export async function disablePushNotifications(userId: string) {
 export async function syncPushSubscription(userId: string) {
   if (!isPushSupported() || !getPushEnabledPreference() || Notification.permission !== "granted") return;
 
-  const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
-  if (!vapidPublicKey) return;
-
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    if (subscription) {
-      await savePushSubscription(userId, subscription);
-    }
-  } catch {
-    /* ignore */
-  }
+  await registerServiceWorker();
+  await subscribeToWebPush(userId);
 }
 
-/** Turn notifications on for new users — requests permission when still default. */
-export async function autoEnablePushNotifications(userId: string): Promise<void> {
+/** Register SW when permission already granted — does not prompt (browser requires user gesture). */
+export async function initPushNotifications(userId: string): Promise<void> {
   if (!isPushSupported() || !getPushEnabledPreference()) return;
 
-  setPushEnabledPreference(true);
   await registerServiceWorker();
 
   if (Notification.permission === "granted") {
     await syncPushSubscription(userId);
-    return;
-  }
-
-  if (Notification.permission === "default" && !hasBeenPromptedForPush()) {
-    await enablePushNotifications(userId);
   }
 }

@@ -1,31 +1,57 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  autoEnablePushNotifications,
+  completePushSetup,
+  getNotificationPermission,
   getPushEnabledPreference,
+  initPushNotifications,
   isPushSupported,
-  registerServiceWorker,
-  syncPushSubscription,
 } from "@/lib/push-notifications";
+import {
+  ensureNotificationDefaults,
+  prepareNotificationsOnUserGesture,
+} from "@/lib/notification-preferences";
 
-/** Auto-enables browser push for signed-in users (on by default after signup). */
+/** Registers SW, syncs push when granted, and auto-enables on first dashboard interaction. */
 export function PushNotificationInit() {
   const { user } = useAuth();
   const startedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user?.id || !isPushSupported()) return;
+    ensureNotificationDefaults();
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id || !isPushSupported() || !getPushEnabledPreference()) return;
     if (startedFor.current === user.id) return;
     startedFor.current = user.id;
 
-    if (!getPushEnabledPreference()) return;
+    const permission = getNotificationPermission();
 
-    if (Notification.permission === "granted") {
-      registerServiceWorker().then(() => syncPushSubscription(user.id));
+    if (permission === "granted") {
+      void initPushNotifications(user.id);
       return;
     }
 
-    void autoEnablePushNotifications(user.id);
+    if (permission === "denied") return;
+
+    const enableOnInteraction = () => {
+      cleanup();
+      const permissionPromise = prepareNotificationsOnUserGesture();
+      void completePushSetup(user.id, permissionPromise);
+    };
+
+    const cleanup = () => {
+      document.removeEventListener("click", enableOnInteraction, true);
+      document.removeEventListener("keydown", enableOnInteraction, true);
+      document.removeEventListener("touchstart", enableOnInteraction, true);
+    };
+
+    document.addEventListener("click", enableOnInteraction, { capture: true, once: true });
+    document.addEventListener("keydown", enableOnInteraction, { capture: true, once: true });
+    document.addEventListener("touchstart", enableOnInteraction, { capture: true, once: true });
+
+    return cleanup;
   }, [user?.id]);
 
   return null;

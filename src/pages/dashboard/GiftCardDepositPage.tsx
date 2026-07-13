@@ -23,7 +23,7 @@ export default function GiftCardDepositPage() {
             <Link
               key={brand.id}
               to={`/dashboard/deposits/gift-card/${brand.id}`}
-              className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-center transition-all hover:border-emerald/25 hover:bg-white/[0.04]"
+              className="rounded-xl border border-border bg-secondary/50 p-4 text-center transition-all hover:border-emerald/25 hover:bg-secondary/70"
             >
               <GiftCardBrandIcon brand={brand} />
               <span className="text-xs font-medium text-foreground">{brand.label}</span>

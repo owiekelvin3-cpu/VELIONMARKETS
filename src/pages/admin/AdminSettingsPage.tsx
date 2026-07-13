@@ -73,7 +73,7 @@ export default function AdminSettingsPage() {
         ) : (
           <div className="space-y-2">
             {Object.entries(settings).map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm">
+              <div key={k} className="flex justify-between gap-4 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm">
                 <span className="font-medium text-foreground">{k}</span>
                 <span className="text-muted">{v}</span>
               </div>

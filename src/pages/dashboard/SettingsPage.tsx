@@ -9,8 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import {
+  getNotificationSoundEnabled,
+  primeNotificationSound,
+  setNotificationSoundEnabled,
+} from "@/lib/notification-sound";
 import { UserAvatar } from "@/components/settings/UserAvatar";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
+import { ThemeSelector } from "@/components/layout/ThemeToggle";
 import { supabase } from "@/lib/supabase";
 import {
   uploadAvatar,
@@ -46,6 +52,7 @@ export default function SettingsPage() {
   const { t } = useTranslation();
   const { user, profile, refreshProfile } = useAuth();
   const push = usePushNotifications(user?.id);
+  const [soundEnabled, setSoundEnabled] = useState(() => getNotificationSoundEnabled());
 
   const [section, setSection] = useState<Section>("profile");
   const [fullName, setFullName] = useState("");
@@ -256,7 +263,7 @@ export default function SettingsPage() {
                 "flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
                 section === s.id
                   ? "bg-emerald/10 text-emerald"
-                  : "text-muted hover:bg-white/[0.04] hover:text-foreground"
+                  : "text-muted hover:bg-secondary/70 hover:text-foreground"
               )}
             >
               <s.icon className="h-4 w-4 shrink-0" />
@@ -267,7 +274,7 @@ export default function SettingsPage() {
 
         <div className="min-w-0 flex-1 space-y-6">
           {section === "profile" && (
-            <Card className="border-white/[0.06] bg-white/[0.02]">
+            <Card className="border-border bg-secondary/50">
               <CardHeader>
                 <CardTitle>{t("settingsPage.profileTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.profileDesc")}</CardDescription>
@@ -289,7 +296,7 @@ export default function SettingsPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="border-white/10"
+                        className="border-border"
                         onClick={handleRemoveAvatar}
                         disabled={uploadingAvatar}
                       >
@@ -307,7 +314,7 @@ export default function SettingsPage() {
                       id="fullName"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="border-white/10 bg-white/[0.03]"
+                      className="border-border bg-secondary/60"
                     />
                   </div>
                   <div className="space-y-2">
@@ -318,7 +325,7 @@ export default function SettingsPage() {
                         id="email"
                         value={profile?.email ?? ""}
                         disabled
-                        className="border-white/10 bg-white/[0.02] pl-10 opacity-70"
+                        className="border-border bg-secondary/50 pl-10 opacity-70"
                       />
                     </div>
                   </div>
@@ -329,7 +336,7 @@ export default function SettingsPage() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+1 555 000 0000"
-                      className="border-white/10 bg-white/[0.03]"
+                      className="border-border bg-secondary/60"
                     />
                   </div>
                   <div className="space-y-2">
@@ -355,7 +362,7 @@ export default function SettingsPage() {
                     onChange={(e) => setBio(e.target.value)}
                     rows={3}
                     placeholder={t("settingsPage.bioPlaceholder")}
-                    className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-emerald/30 focus:outline-none focus:ring-1 focus:ring-emerald/20"
+                    className="w-full rounded-lg border border-border bg-secondary/60 px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-emerald/30 focus:outline-none focus:ring-1 focus:ring-emerald/20"
                   />
                 </div>
 
@@ -375,7 +382,7 @@ export default function SettingsPage() {
           )}
 
           {section === "wallet" && (
-            <Card className="border-white/[0.06] bg-white/[0.02]">
+            <Card className="border-border bg-secondary/50">
               <CardHeader>
                 <CardTitle>{t("settingsPage.walletTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.walletDesc")}</CardDescription>
@@ -394,10 +401,10 @@ export default function SettingsPage() {
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-white/10" />
+                    <span className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-[#0a0a0c] px-2 text-muted">{t("settingsPage.orManual")}</span>
+                    <span className="bg-card px-2 text-muted">{t("settingsPage.orManual")}</span>
                   </div>
                 </div>
 
@@ -408,7 +415,7 @@ export default function SettingsPage() {
                     value={walletLabel}
                     onChange={(e) => setWalletLabel(e.target.value)}
                     placeholder="MetaMask, Trust Wallet…"
-                    className="border-white/10 bg-white/[0.03]"
+                    className="border-border bg-secondary/60"
                   />
                 </div>
                 <div className="space-y-2">
@@ -419,10 +426,10 @@ export default function SettingsPage() {
                       value={walletAddress}
                       onChange={(e) => setWalletAddress(e.target.value)}
                       placeholder="0x…"
-                      className="border-white/10 bg-white/[0.03] font-mono text-xs"
+                      className="border-border bg-secondary/60 font-mono text-xs"
                     />
                     {walletAddress && (
-                      <Button type="button" variant="outline" size="icon" className="shrink-0 border-white/10" onClick={copyWallet}>
+                      <Button type="button" variant="outline" size="icon" className="shrink-0 border-border" onClick={copyWallet}>
                         {copied ? <Check className="h-4 w-4 text-emerald" /> : <Copy className="h-4 w-4" />}
                       </Button>
                     )}
@@ -437,7 +444,7 @@ export default function SettingsPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="border-white/10"
+                      className="border-border"
                       onClick={handleDisconnectWallet}
                       disabled={saving}
                     >
@@ -450,7 +457,7 @@ export default function SettingsPage() {
           )}
 
           {section === "security" && (
-            <Card className="border-white/[0.06] bg-white/[0.02]">
+            <Card className="border-border bg-secondary/50">
               <CardHeader>
                 <CardTitle>{t("settingsPage.securityTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.securityDesc")}</CardDescription>
@@ -467,7 +474,7 @@ export default function SettingsPage() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         minLength={8}
-                        className="border-white/10 bg-white/[0.03] pl-10"
+                        className="border-border bg-secondary/60 pl-10"
                       />
                     </div>
                   </div>
@@ -481,7 +488,7 @@ export default function SettingsPage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         minLength={8}
-                        className="border-white/10 bg-white/[0.03] pl-10"
+                        className="border-border bg-secondary/60 pl-10"
                       />
                     </div>
                   </div>
@@ -490,7 +497,7 @@ export default function SettingsPage() {
                   </Button>
                 </form>
 
-                <div className="mt-8 rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                <div className="mt-8 rounded-lg border border-border bg-secondary/50 p-4">
                   <div className="flex items-start gap-3">
                     <FileCheck className="mt-0.5 h-5 w-5 text-emerald" />
                     <div>
@@ -507,13 +514,13 @@ export default function SettingsPage() {
           )}
 
           {section === "notifications" && (
-            <Card className="border-white/[0.06] bg-white/[0.02]">
+            <Card className="border-border bg-secondary/50">
               <CardHeader>
                 <CardTitle>{t("settingsPage.notificationsTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.notificationsDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/50 p-4">
                   <div>
                     <p className="text-sm font-medium">{t("settingsPage.pushNotifications")}</p>
                     <p className="text-xs text-muted">{t("settingsPage.pushNotificationsDesc")}</p>
@@ -526,7 +533,10 @@ export default function SettingsPage() {
                     role="switch"
                     aria-checked={push.enabled}
                     disabled={!push.supported || push.busy || push.permission === "denied"}
-                    onClick={() => push.toggle()}
+                    onClick={() => {
+                      primeNotificationSound();
+                      void push.toggle();
+                    }}
                     className={cn(
                       "relative h-7 w-12 shrink-0 rounded-full transition-colors",
                       push.enabled ? "bg-emerald" : "bg-white/15",
@@ -541,6 +551,34 @@ export default function SettingsPage() {
                     />
                   </button>
                 </div>
+                <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-4">
+                  <div>
+                    <p className="text-sm font-medium">{t("settingsPage.notificationSound")}</p>
+                    <p className="text-xs text-muted">{t("settingsPage.notificationSoundDesc")}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={soundEnabled}
+                    onClick={() => {
+                      const next = !soundEnabled;
+                      setSoundEnabled(next);
+                      setNotificationSoundEnabled(next);
+                      if (next) primeNotificationSound();
+                    }}
+                    className={cn(
+                      "relative h-6 w-11 rounded-full transition-colors",
+                      soundEnabled ? "bg-emerald" : "bg-white/15"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        soundEnabled ? "translate-x-5" : "translate-x-0.5"
+                      )}
+                    />
+                  </button>
+                </div>
                 {!push.supported && (
                   <p className="text-xs text-muted">{t("settingsPage.pushUnsupported")}</p>
                 )}
@@ -549,18 +587,25 @@ export default function SettingsPage() {
           )}
 
           {section === "preferences" && (
-            <Card className="border-white/[0.06] bg-white/[0.02]">
+            <Card className="border-border bg-secondary/50">
               <CardHeader>
                 <CardTitle>{t("settingsPage.preferencesTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.preferencesDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-4">
                   <div>
                     <p className="text-sm font-medium">{t("settingsPage.language")}</p>
                     <p className="text-xs text-muted">{t("settingsPage.languageDesc")}</p>
                   </div>
                   <LanguageSelector />
+                </div>
+                <div className="rounded-lg border border-border bg-secondary/30 p-4">
+                  <div className="mb-3">
+                    <p className="text-sm font-medium">{t("settingsPage.theme")}</p>
+                    <p className="text-xs text-muted">{t("settingsPage.themeDesc")}</p>
+                  </div>
+                  <ThemeSelector />
                 </div>
               </CardContent>
             </Card>

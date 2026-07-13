@@ -1,5 +1,55 @@
 import { supabase } from "@/lib/supabase";
-import type { TransactionStatus } from "@/types/database";
+import type { Profile, TransactionStatus } from "@/types/database";
+
+export interface AdminUserAuthInfo {
+  created_at: string | null;
+  last_sign_in_at: string | null;
+  email_confirmed_at: string | null;
+  phone: string | null;
+  has_password: boolean;
+  providers: string[];
+}
+
+export interface AdminUserStats {
+  deposits_count: number;
+  deposits_total: number;
+  withdrawals_count: number;
+  withdrawals_total: number;
+  trades_count: number;
+  active_trades: number;
+  ai_bots_active: number;
+}
+
+export interface AdminUserDetails {
+  profile: Profile;
+  balance: number;
+  auth: AdminUserAuthInfo;
+  stats: AdminUserStats;
+  recent_deposits: Array<{ id: string; amount: number; method: string; status: string; created_at: string }>;
+  recent_withdrawals: Array<{ id: string; amount: number; method: string; status: string; wallet_address: string | null; created_at: string }>;
+  kyc_submissions: Array<{ id: string; document_type: string; document_url: string | null; status: string; notes: string | null; created_at: string }>;
+}
+
+export async function fetchAdminUserDetails(userId: string): Promise<AdminUserDetails> {
+  const { data, error } = await supabase.rpc("admin_get_user_details", { p_user_id: userId });
+  if (error) throw error;
+  return data as AdminUserDetails;
+}
+
+export async function updateAdminUserProfile(
+  userId: string,
+  fields: Partial<Pick<Profile, "country" | "city" | "timezone" | "last_known_ip" | "last_known_location" | "full_name" | "phone" | "bio" | "kyc_status" | "role">>
+) {
+  const { error } = await supabase.from("profiles").update(fields).eq("id", userId);
+  if (error) throw error;
+}
+
+export async function sendUserPasswordReset(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/auth`,
+  });
+  if (error) throw error;
+}
 
 export async function approveDeposit(depositId: string, userId: string, amount: number) {
   const { error: depErr } = await supabase

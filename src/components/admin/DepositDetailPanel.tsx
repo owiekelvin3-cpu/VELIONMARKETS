@@ -45,13 +45,13 @@ function ImagePreview({ src, label, onZoom }: { src: string; label: string; onZo
     <button
       type="button"
       onClick={() => onZoom(src)}
-      className="group relative overflow-hidden rounded-xl border border-white/[0.08] bg-black/20 text-left"
+      className="group relative overflow-hidden rounded-xl border border-border bg-secondary/80 text-left"
     >
       <img src={src} alt={label} className="aspect-[4/3] w-full object-cover transition-transform group-hover:scale-105" />
       <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
         <ZoomIn className="h-6 w-6 text-white" />
       </div>
-      <p className="border-t border-white/[0.06] px-3 py-2 text-xs text-muted">{label}</p>
+      <p className="border-t border-border px-3 py-2 text-xs text-muted">{label}</p>
     </button>
   );
 }
@@ -70,7 +70,7 @@ export function DepositDetailPanel({ deposit, onClose, actions }: DepositDetailP
 
   return (
     <>
-      <div className="rounded-xl border border-emerald/20 bg-[#0a0a0c]/80 p-5">
+      <div className="rounded-xl border border-emerald/20 bg-card/80 p-5">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="font-display text-lg font-semibold text-foreground">{formatCurrency(deposit.amount)}</p>
@@ -81,7 +81,7 @@ export function DepositDetailPanel({ deposit, onClose, actions }: DepositDetailP
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-foreground"
+              className="rounded-lg p-1.5 text-muted hover:bg-secondary hover:text-foreground"
               aria-label={t("admin.closeDetails")}
             >
               <X className="h-4 w-4" />
@@ -127,7 +127,7 @@ export function DepositDetailPanel({ deposit, onClose, actions }: DepositDetailP
         </dl>
 
         {meta.type === "gift_card" && (meta.frontImageUrl || meta.backImageUrl) && (
-          <div className="mt-5 border-t border-white/[0.06] pt-5">
+          <div className="mt-5 border-t border-border pt-5">
             <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
               {t("admin.uploadedImages")}
             </h4>
@@ -149,7 +149,7 @@ export function DepositDetailPanel({ deposit, onClose, actions }: DepositDetailP
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {meta.frontImageUrl && (
-                <Button variant="outline" size="sm" className="border-white/10" asChild>
+                <Button variant="outline" size="sm" className="border-border" asChild>
                   <a href={meta.frontImageUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-3.5 w-3.5" />
                     {t("admin.openFrontImage")}
@@ -157,7 +157,7 @@ export function DepositDetailPanel({ deposit, onClose, actions }: DepositDetailP
                 </Button>
               )}
               {meta.backImageUrl && (
-                <Button variant="outline" size="sm" className="border-white/10" asChild>
+                <Button variant="outline" size="sm" className="border-border" asChild>
                   <a href={meta.backImageUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-3.5 w-3.5" />
                     {t("admin.openBackImage")}
@@ -168,7 +168,7 @@ export function DepositDetailPanel({ deposit, onClose, actions }: DepositDetailP
           </div>
         )}
 
-        {actions && <div className="mt-5 flex flex-wrap gap-2 border-t border-white/[0.06] pt-5">{actions}</div>}
+        {actions && <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5">{actions}</div>}
       </div>
 
       {lightbox && (

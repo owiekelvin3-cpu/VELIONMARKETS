@@ -1,90 +1,54 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Shield } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
+import { useWithdrawalData } from "@/hooks/useWithdrawals";
 import { FadeIn } from "@/components/motion/Motion";
-import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
-import { DepositMethodCard } from "@/components/dashboard/DepositMethodCard";
-import { WithdrawalBalanceBanner } from "@/components/dashboard/WithdrawalUi";
-import { WithdrawFundsShowcase, WithdrawalProcessingTimeline } from "@/components/dashboard/WithdrawFundsShowcase";
 import {
-  CryptoIconGrid,
-  BankWithdrawIcon,
-  WireWithdrawIcon,
-  EwalletIconGrid,
-} from "@/components/dashboard/WithdrawIcons";
+  WithdrawPageHeader,
+  WithdrawalBalanceBanner,
+  WithdrawalHistoryPanel,
+  WithdrawalSecurityCard,
+} from "@/components/dashboard/WithdrawalUi";
+import { WithdrawFundsShowcase, WithdrawalProcessingTimeline } from "@/components/dashboard/WithdrawFundsShowcase";
+import { WithdrawalHistory } from "@/components/dashboard/WithdrawalHistory";
 
 export default function WithdrawalsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [balance, setBalance] = useState(0);
+  const { withdrawals, balance, load } = useWithdrawalData();
 
   useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("balances")
-      .select("amount")
-      .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => setBalance(data?.amount ?? 0));
-  }, [user]);
+    if (user) void load(user.id);
+  }, [user, load]);
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <DepositPageHeader
+    <div className="mx-auto max-w-4xl">
+      <WithdrawPageHeader
         title={t("withdrawals.title")}
         subtitle={t("withdrawals.subtitle")}
         backTo="/dashboard"
       />
 
-      <FadeIn className="space-y-6">
+      <FadeIn className="space-y-8">
         <WithdrawalBalanceBanner balance={balance} />
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <DepositMethodCard
-            to="/dashboard/withdrawals/crypto"
-            title={t("withdrawals.cryptoTitle")}
-            description={t("withdrawals.cryptoDesc")}
-            iconGrid={<CryptoIconGrid size="lg" />}
-            iconRow={<CryptoIconGrid size="sm" />}
-          />
-
-          <DepositMethodCard
-            to="/dashboard/withdrawals/bank"
-            title={t("withdrawals.bankTitle")}
-            description={t("withdrawals.bankDesc")}
-            iconGrid={<BankWithdrawIcon />}
-            iconRow={<BankWithdrawIcon size="sm" />}
-          />
-
-          <DepositMethodCard
-            to="/dashboard/withdrawals/wire"
-            title={t("withdrawals.wireTitle")}
-            description={t("withdrawals.wireDesc")}
-            iconGrid={<WireWithdrawIcon />}
-            iconRow={<WireWithdrawIcon size="sm" />}
-          />
-
-          <DepositMethodCard
-            to="/dashboard/withdrawals/ewallet"
-            title={t("withdrawals.ewalletTitle")}
-            description={t("withdrawals.ewalletDesc")}
-            iconGrid={<EwalletIconGrid size="lg" />}
-            iconRow={<EwalletIconGrid size="sm" />}
-          />
-        </div>
-
-        <div className="flex gap-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald/10">
-            <Shield className="h-5 w-5 text-emerald" aria-hidden="true" />
-          </div>
-          <p className="text-sm leading-relaxed text-muted">{t("withdrawals.securityNote")}</p>
-        </div>
+        <WithdrawFundsShowcase />
 
         <WithdrawalProcessingTimeline />
 
-        <WithdrawFundsShowcase />
+        <WithdrawalSecurityCard />
+
+        <WithdrawalHistoryPanel>
+          <WithdrawalHistory withdrawals={withdrawals} />
+        </WithdrawalHistoryPanel>
+
+        <p className="pb-4 text-center text-xs text-muted">
+          {t("withdrawals.needHelp")}{" "}
+          <Link to="/dashboard/settings" className="font-medium text-emerald hover:underline">
+            {t("withdrawals.contactSupport")}
+          </Link>
+        </p>
       </FadeIn>
     </div>
   );

@@ -2,6 +2,8 @@ export interface AIBot {
   id: string;
   name: string;
   description: string;
+  simpleDescription: string;
+  beginnerFriendly?: boolean;
   winRate: number;
   monthlyReturn: string;
   hourlyReturn: string;
@@ -11,11 +13,15 @@ export interface AIBot {
   accent: string;
 }
 
+export const RECOMMENDED_BOT_ID = "nexus";
+
 export const AI_BOTS: AIBot[] = [
   {
     id: "nexus",
-    name: "Nexus AI",
-    description: "Steady crypto scanner with conservative entries. Best for longer runs and consistent hourly gains.",
+    name: "Velion Core",
+    description: "Conservative execution model focused on capital preservation and steady hourly accrual across major crypto pairs.",
+    simpleDescription: "Our recommended entry strategy — stable returns with lower volatility.",
+    beginnerFriendly: true,
     winRate: 100,
     monthlyReturn: "+18.4%",
     hourlyReturn: "+0.35%/hr",
@@ -26,8 +32,9 @@ export const AI_BOTS: AIBot[] = [
   },
   {
     id: "quantum",
-    name: "Quantum Flow",
-    description: "Balanced multi-coin engine. Higher power unlocks faster compounding across major crypto pairs.",
+    name: "Velion Momentum",
+    description: "Balanced cross-market engine that rotates exposure across liquid assets to optimize risk-adjusted compounding.",
+    simpleDescription: "A mid-tier strategy for investors seeking stronger throughput with moderate risk.",
     winRate: 100,
     monthlyReturn: "+31.2%",
     hourlyReturn: "+0.55%/hr",
@@ -38,8 +45,9 @@ export const AI_BOTS: AIBot[] = [
   },
   {
     id: "apex",
-    name: "Apex Neural",
-    description: "Maximum power multiplier. Aggressive crypto momentum — highest profit per dollar of bot power.",
+    name: "Velion Alpha",
+    description: "High-conviction momentum system engineered for maximum yield per unit of allocated capital.",
+    simpleDescription: "Our premium strategy for experienced investors comfortable with elevated volatility.",
     winRate: 100,
     monthlyReturn: "+47.8%",
     hourlyReturn: "+0.85%/hr",
@@ -50,6 +58,21 @@ export const AI_BOTS: AIBot[] = [
   },
 ];
 
+export function getBotById(botId: string): AIBot | undefined {
+  return AI_BOTS.find((b) => b.id === botId);
+}
+
+export function getBotName(botId: string): string {
+  return getBotById(botId)?.name ?? botId;
+}
+
+/** Simplified duration options shown first to beginners */
+export const BEGINNER_DURATIONS = [
+  { hours: 6, labelKey: "aiTrading.duration6h", shortLabel: "6h" },
+  { hours: 24, labelKey: "aiTrading.duration24h", shortLabel: "24h" },
+  { hours: 168, labelKey: "aiTrading.duration7d", shortLabel: "7d" },
+] as const;
+
 export const BOT_DURATIONS = [
   { hours: 6, label: "6 hours" },
   { hours: 12, label: "12 hours" },
@@ -57,6 +80,11 @@ export const BOT_DURATIONS = [
   { hours: 48, label: "48 hours" },
   { hours: 72, label: "72 hours" },
   { hours: 168, label: "7 days" },
+] as const;
+
+export const BEGINNER_CRYPTO = [
+  { id: "BTC", label: "Bitcoin", pair: "BTC/USDT", emoji: "₿" },
+  { id: "ETH", label: "Ethereum", pair: "ETH/USDT", emoji: "Ξ" },
 ] as const;
 
 export const CRYPTO_ASSETS = [
@@ -69,10 +97,10 @@ export const CRYPTO_ASSETS = [
 ] as const;
 
 export const LIVE_SIGNALS = [
-  { bot: "Nexus AI", asset: "BTC/USDT", action: "Long signal — accumulation zone confirmed", confidence: 96 },
-  { bot: "Quantum Flow", asset: "ETH/USDT", action: "Momentum breakout — profit target locked", confidence: 94 },
-  { bot: "Apex Neural", asset: "SOL/USDT", action: "Scalp complete — +3.2% on power allocation", confidence: 98 },
-  { bot: "Nexus AI", asset: "ETH/USDT", action: "RSI reversal — automated buy executed", confidence: 92 },
-  { bot: "Quantum Flow", asset: "BNB/USDT", action: "Order flow bullish — trade closed in profit", confidence: 95 },
-  { bot: "Apex Neural", asset: "DOGE/USDT", action: "Volatility spike captured — profit secured", confidence: 97 },
-];
+  { botId: "nexus", asset: "BTC/USDT", action: "Accumulation zone identified — long bias confirmed", confidence: 96 },
+  { botId: "quantum", asset: "ETH/USDT", action: "Momentum breakout validated — target engaged", confidence: 94 },
+  { botId: "apex", asset: "SOL/USDT", action: "Short-cycle execution closed — allocation credited", confidence: 98 },
+  { botId: "nexus", asset: "ETH/USDT", action: "Mean-reversion signal — automated entry executed", confidence: 92 },
+  { botId: "quantum", asset: "BNB/USDT", action: "Order-flow imbalance resolved — position closed", confidence: 95 },
+  { botId: "apex", asset: "DOGE/USDT", action: "Volatility capture complete — profit secured", confidence: 97 },
+] as const;

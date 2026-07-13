@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
-  Bot, Brain, Activity, TrendingUp, Zap, BarChart3, Clock,
-  ArrowRight, Sparkles, Wallet, ChevronRight, Coins, Timer, History,
+  Bot, ArrowRight, Wallet, ChevronRight, Clock, History,
+  CheckCircle, HelpCircle, Sparkles, Activity, BarChart3,
 } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -11,16 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FadeIn } from "@/components/motion/Motion";
-import { AI_BOTS, BOT_DURATIONS, CRYPTO_ASSETS, LIVE_SIGNALS } from "@/constants/ai-bots";
 import {
-  estimatePassiveProfit, estimateTotalProfit, estimateTradeProfit,
-  formatCountdown, getHourlyRate, getTradeRate,
+  AI_BOTS, BEGINNER_CRYPTO, BEGINNER_DURATIONS, CRYPTO_ASSETS, LIVE_SIGNALS, RECOMMENDED_BOT_ID, getBotName,
+} from "@/constants/ai-bots";
+import {
+  estimateTotalProfit, estimateTradeProfit, estimatePassiveProfit,
+  computeLiveProfit, getTradeRate, getHourlyRate, getProjectedPayout,
+  formatCountdown,
 } from "@/lib/ai-trading";
+import { AITradingProfitPanel } from "@/components/dashboard/AITradingProfitPanel";
 import { ensureValidSession } from "@/lib/auth-session";
+import { hasSeenWalkthrough } from "@/lib/ai-trading-onboarding";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import AITradingWalkthrough from "@/components/dashboard/AITradingWalkthrough";
 
 interface AISubscription {
   id: string;
@@ -31,7 +36,7 @@ interface AISubscription {
   expires_at: string | null;
   crypto_asset: string;
   profit_earned: number;
-  market: string;
+  last_sync_at: string | null;
   status: string;
   created_at: string;
 }
@@ -45,13 +50,35 @@ interface AIBotTrade {
   created_at: string;
 }
 
-const RISK_VARIANT = {
-  low: "success" as const,
-  medium: "warning" as const,
-  high: "destructive" as const,
-};
+type WizardStep = 1 | 2 | 3;
+type PageView = "start" | "mybot" | "history";
 
-type AITab = "bots" | "purchase" | "active" | "history";
+function StepPill({
+  n, label, active, done, onClick,
+}: { n: number; label: string; active: boolean; done: boolean; onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      className={cn(
+        "flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-left transition-all sm:justify-start sm:px-4",
+        active ? "border-emerald/40 bg-emerald/10" : "border-border bg-secondary/50",
+        onClick && !active && "hover:border-border"
+      )}
+    >
+      <span className={cn(
+        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+        done ? "bg-emerald text-black" : active ? "bg-emerald/20 text-emerald" : "bg-secondary text-muted"
+      )}>
+        {done ? <CheckCircle className="h-4 w-4" /> : n}
+      </span>
+      <span className={cn("hidden text-sm font-medium sm:inline", active ? "text-emerald" : "text-foreground")}>
+        {label}
+      </span>
+    </button>
+  );
+}
 
 export default function AITradingPage() {
   const { t } = useTranslation();
@@ -59,17 +86,20 @@ export default function AITradingPage() {
   const [balance, setBalance] = useState(0);
   const [subs, setSubs] = useState<AISubscription[]>([]);
   const [trades, setTrades] = useState<AIBotTrade[]>([]);
-  const [selectedBot, setSelectedBot] = useState(AI_BOTS[0].id);
+  const [selectedBot, setSelectedBot] = useState(RECOMMENDED_BOT_ID);
   const [durationHours, setDurationHours] = useState(24);
   const [cryptoAsset, setCryptoAsset] = useState("BTC");
   const [power, setPower] = useState("");
-  const [tradeAmount, setTradeAmount] = useState("");
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [feedIndex, setFeedIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<AITab>("bots");
+  const [wizardStep, setWizardStep] = useState<WizardStep>(1);
+  const [view, setView] = useState<PageView>("start");
   const [tick, setTick] = useState(0);
+  const [showAllCrypto, setShowAllCrypto] = useState(false);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [tradeAmount, setTradeAmount] = useState("");
+  const [signalIndex, setSignalIndex] = useState(0);
 
   const bot = AI_BOTS.find((b) => b.id === selectedBot)!;
   const powerNum = parseFloat(power) || 0;
@@ -89,7 +119,6 @@ export default function AITradingPage() {
       supabase.from("ai_bot_trades").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
     ]);
     if (balRes.error && balRes.error.code !== "PGRST116") setMessage(balRes.error.message);
-    if (subRes.error) setMessage(subRes.error.message);
     setBalance(balRes.data?.amount ?? 0);
     const loaded = (subRes.data as AISubscription[]) ?? [];
     setSubs(loaded);
@@ -99,38 +128,37 @@ export default function AITradingPage() {
   }, [user, syncBots, selectedSubId]);
 
   useEffect(() => { loadData(); }, [loadData]);
-
-  useEffect(() => {
-    const timer = setInterval(() => setFeedIndex((i) => (i + 1) % LIVE_SIGNALS.length), 4000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   useEffect(() => {
     if (!user) return;
-    const syncTimer = setInterval(() => { loadData(); }, 30000);
+    if (!hasSeenWalkthrough(user.id)) setShowWalkthrough(true);
+  }, [user]);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((x) => x + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    if (!user) return;
+    const syncTimer = setInterval(() => { loadData(); }, 10000);
     return () => clearInterval(syncTimer);
   }, [user, loadData]);
+  useEffect(() => {
+    const signalTimer = setInterval(() => {
+      setSignalIndex((i) => (i + 1) % LIVE_SIGNALS.length);
+    }, 4000);
+    return () => clearInterval(signalTimer);
+  }, []);
 
   const activeSubs = subs.filter((s) => s.status === "active");
   const completedSubs = subs.filter((s) => s.status === "completed");
   const selectedSub = subs.find((s) => s.id === selectedSubId) ?? activeSubs[0] ?? null;
-  const totalProfit = activeSubs.reduce((sum, s) => sum + (s.profit_earned ?? 0), 0);
-  const totalPower = activeSubs.reduce((sum, s) => sum + s.allocation, 0);
-  const signal = LIVE_SIGNALS[feedIndex];
-
+  const totalProfit = activeSubs.reduce((sum, s) => sum + computeLiveProfit(s), 0);
   const estimatedProfit = estimateTotalProfit(powerNum, bot, durationHours);
-  const passiveOnly = estimatePassiveProfit(powerNum, bot.id, durationHours);
+  const passiveEstimate = estimatePassiveProfit(powerNum, bot.id, durationHours);
+  const needsFunds = balance < bot.minPower;
+  const isSuccessMsg = message.includes("+") || message.includes("!") || message.toLowerCase().includes("success");
 
-  const selectBotToPurchase = (botId: string) => {
-    setSelectedBot(botId);
-    setActiveTab("purchase");
-    setMessage("");
-  };
+  const startWizard = () => { setView("start"); setWizardStep(1); setMessage(""); };
+  const goToMyBot = () => { setView("mybot"); setMessage(""); };
 
   const handlePurchase = async () => {
     if (!user) return;
@@ -142,7 +170,6 @@ export default function AITradingPage() {
       setMessage(t("aiTrading.insufficientBalance"));
       return;
     }
-
     setLoading(true);
     setMessage("");
     const { data, error } = await supabase.from("ai_trading_subscriptions").insert({
@@ -163,12 +190,40 @@ export default function AITradingPage() {
       setPower("");
       if (data) setSelectedSubId(data.id);
       await loadData();
-      setActiveTab("active");
+      setView("mybot");
+      setWizardStep(1);
     }
     setLoading(false);
   };
 
-  const handleTrade = async () => {
+  const handleQuickTrade = async (pct: number) => {
+    if (!selectedSub) return;
+    const amount = Math.floor(selectedSub.allocation * pct);
+    if (amount <= 0) return;
+    await executeTrade(amount);
+  };
+
+  const executeTrade = async (amount: number) => {
+    if (!selectedSub) return;
+    setLoading(true);
+    setMessage("");
+    await ensureValidSession();
+    const { error } = await supabase.rpc("execute_ai_bot_trade", {
+      p_subscription_id: selectedSub.id,
+      p_trade_amount: amount,
+    });
+    if (error) setMessage(error.message);
+    else {
+      setMessage(t("aiTrading.tradeSuccess", {
+        profit: formatCurrency(estimateTradeProfit(amount, selectedSub.bot_id ?? "nexus")),
+      }));
+      setTradeAmount("");
+      await loadData();
+    }
+    setLoading(false);
+  };
+
+  const handleManualTrade = async () => {
     if (!selectedSub) return;
     const amount = parseFloat(tradeAmount);
     if (!amount || amount <= 0) {
@@ -179,495 +234,575 @@ export default function AITradingPage() {
       setMessage(t("aiTrading.tradeExceedsPower"));
       return;
     }
-
-    setLoading(true);
-    setMessage("");
-    await ensureValidSession();
-    const { error } = await supabase.rpc("execute_ai_bot_trade", {
-      p_subscription_id: selectedSub.id,
-      p_trade_amount: amount,
-    });
-
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage(t("aiTrading.tradeSuccess", {
-        profit: formatCurrency(estimateTradeProfit(amount, selectedSub.bot_id ?? "nexus")),
-      }));
-      setTradeAmount("");
-      await loadData();
-    }
-    setLoading(false);
+    await executeTrade(amount);
   };
 
-  const subTrades = selectedSub
-    ? trades.filter((tr) => tr.subscription_id === selectedSub.id)
-    : [];
+  const selectedLiveProfit = selectedSub ? computeLiveProfit(selectedSub) : 0;
+  const selectedPayout = selectedSub ? getProjectedPayout(selectedSub) : 0;
+  const currentSignal = LIVE_SIGNALS[signalIndex];
+
+  const subTrades = selectedSub ? trades.filter((tr) => tr.subscription_id === selectedSub.id) : [];
+  const cryptoOptions = showAllCrypto ? CRYPTO_ASSETS : BEGINNER_CRYPTO;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <div className="mx-auto max-w-3xl space-y-6">
+      {user && (
+        <AITradingWalkthrough
+          userId={user.id}
+          open={showWalkthrough}
+          onClose={() => setShowWalkthrough(false)}
+          onComplete={() => { setView("start"); setWizardStep(1); }}
+        />
+      )}
+
+      {/* Header — plain language */}
       <FadeIn>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald/20 bg-emerald/10 px-3 py-1 text-xs font-medium text-emerald">
-              <Bot className="h-3.5 w-3.5" />
-              {t("aiTrading.badge")}
+        <div className="text-center sm:text-left">
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald/20 bg-emerald/10 px-3 py-1 text-xs font-medium text-emerald">
+              <Sparkles className="h-3.5 w-3.5" />
+              {t("aiTrading.badgeBeginner")}
             </div>
-            <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">{t("aiTrading.title")}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{t("aiTrading.subtitle")}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild className="border-white/10 bg-white/[0.03]">
-              <Link to="/dashboard/deposits">
-                <Wallet className="mr-2 h-4 w-4" />
-                {t("aiTrading.addFunds")}
-              </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border text-xs"
+              onClick={() => setShowWalkthrough(true)}
+            >
+              <HelpCircle className="mr-1.5 h-3.5 w-3.5" />
+              {t("aiTrading.walkthrough.replay")}
             </Button>
           </div>
+          <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">{t("aiTrading.titleSimple")}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{t("aiTrading.subtitleSimple")}</p>
         </div>
       </FadeIn>
 
-      <FadeIn className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-        <div className="flex flex-wrap gap-4 text-sm">
+      {/* Balance strip */}
+      <FadeIn className="rounded-2xl border border-border bg-secondary/50 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="text-muted">{t("aiTrading.availableBalance")}: </span>
-            <span className="font-semibold text-emerald">{formatCurrency(balance)}</span>
+            <p className="text-xs text-muted">{t("aiTrading.yourBalance")}</p>
+            <p className="font-display text-2xl font-bold text-emerald">{formatCurrency(balance)}</p>
           </div>
-          {activeSubs.length > 0 && (
-            <>
-              <div>
-                <span className="text-muted">{t("aiTrading.totalPower")}: </span>
-                <span className="font-semibold">{formatCurrency(totalPower)}</span>
-              </div>
-              <div>
-                <span className="text-muted">{t("aiTrading.liveProfit")}: </span>
-                <span className="font-semibold text-emerald">+{formatCurrency(totalProfit)}</span>
-              </div>
-            </>
-          )}
+          {needsFunds ? (
+            <Button asChild className="w-full sm:w-auto">
+              <Link to="/dashboard/deposits">
+                <Wallet className="mr-2 h-4 w-4" />
+                {t("aiTrading.addFundsFirst")}
+              </Link>
+            </Button>
+          ) : activeSubs.length > 0 ? (
+            <div className="text-right">
+              <p className="text-xs text-muted">{t("aiTrading.liveProfit")}</p>
+              <p className="font-display text-xl font-bold text-emerald">+{formatCurrency(totalProfit)}</p>
+            </div>
+          ) : null}
         </div>
-        {activeSubs.length > 0 && (
-          <button type="button" onClick={() => setActiveTab("active")} className="text-xs font-medium text-emerald hover:underline">
-            {t("aiTrading.viewActiveBots", { count: activeSubs.length })}
-          </button>
-        )}
       </FadeIn>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AITab)} className="space-y-6">
-        <div className="sticky top-16 z-20 -mx-4 border-b border-white/[0.06] bg-[#060608]/95 px-4 py-3 backdrop-blur-xl lg:static lg:mx-0 lg:rounded-2xl lg:border lg:bg-white/[0.02] lg:px-3">
-          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 rounded-xl bg-transparent p-0 lg:rounded-full lg:bg-white/[0.03] lg:p-1">
-            <TabsTrigger value="bots" className="gap-1.5 rounded-lg lg:rounded-full">
-              <Bot className="h-4 w-4" />
-              {t("aiTrading.nav.bots")}
-            </TabsTrigger>
-            <TabsTrigger value="purchase" className="gap-1.5 rounded-lg lg:rounded-full">
-              <Sparkles className="h-4 w-4" />
-              {t("aiTrading.nav.purchase")}
-            </TabsTrigger>
-            <TabsTrigger value="active" className="gap-1.5 rounded-lg lg:rounded-full">
-              <Zap className="h-4 w-4" />
-              {t("aiTrading.nav.trade")}
-              {activeSubs.length > 0 && (
-                <span className="ml-1 rounded-full bg-emerald/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald">
-                  {activeSubs.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="history" className="gap-1.5 rounded-lg lg:rounded-full">
-              <History className="h-4 w-4" />
-              {t("aiTrading.nav.history")}
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Live profit dashboard */}
+      {activeSubs.length > 0 && (
+        <FadeIn>
+          <AITradingProfitPanel subscriptions={activeSubs} tick={tick} />
+        </FadeIn>
+      )}
 
-        {/* Available bots */}
-        <TabsContent value="bots" className="mt-0 space-y-6 focus-visible:outline-none">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: t("aiTrading.availableBots"), value: AI_BOTS.length.toString(), icon: Bot },
-              { label: t("aiTrading.activeBots"), value: activeSubs.length.toString(), icon: Activity },
-              { label: t("aiTrading.totalPower"), value: formatCurrency(totalPower), icon: BarChart3 },
-              { label: t("aiTrading.liveProfit"), value: `+${formatCurrency(totalProfit)}`, icon: TrendingUp },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <div className="flex items-center gap-2 text-muted">
-                  <stat.icon className="h-4 w-4" />
-                  <span className="text-xs">{stat.label}</span>
-                </div>
-                <p className="mt-2 font-display text-xl font-bold text-foreground">{stat.value}</p>
-              </div>
-            ))}
+      {/* Main navigation */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={view === "start" ? "default" : "outline"}
+          size="sm"
+          className={view !== "start" ? "border-border" : ""}
+          onClick={startWizard}
+        >
+          {t("aiTrading.nav.start")}
+        </Button>
+        <Button
+          variant={view === "mybot" ? "default" : "outline"}
+          size="sm"
+          className={cn(view !== "mybot" && "border-border")}
+          onClick={goToMyBot}
+          disabled={activeSubs.length === 0}
+        >
+          {t("aiTrading.nav.myBot")}
+          {activeSubs.length > 0 && (
+            <span className="ml-1.5 rounded-full bg-emerald/20 px-1.5 text-[10px] font-bold">{activeSubs.length}</span>
+          )}
+        </Button>
+        <Button
+          variant={view === "history" ? "default" : "outline"}
+          size="sm"
+          className={cn(view !== "history" && "border-border")}
+          onClick={() => { setView("history"); setMessage(""); }}
+        >
+          <History className="mr-1.5 h-3.5 w-3.5" />
+          {t("aiTrading.nav.history")}
+        </Button>
+      </div>
+
+      {message && (
+        <p className={cn("rounded-xl border px-4 py-3 text-sm", isSuccessMsg
+          ? "border-emerald/30 bg-emerald/10 text-emerald"
+          : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+        )}>{message}</p>
+      )}
+
+      {/* ── START WIZARD ── */}
+      {view === "start" && (
+        <div className="space-y-6">
+          {/* Step pills */}
+          <div className="flex gap-2">
+            <StepPill n={1} label={t("aiTrading.step1Short")} active={wizardStep === 1} done={wizardStep > 1} onClick={() => wizardStep > 1 && setWizardStep(1)} />
+            <StepPill n={2} label={t("aiTrading.step2Short")} active={wizardStep === 2} done={wizardStep > 2} onClick={() => wizardStep > 2 && setWizardStep(2)} />
+            <StepPill n={3} label={t("aiTrading.step3Short")} active={wizardStep === 3} done={false} />
           </div>
 
-          <p className="text-sm text-muted">{t("aiTrading.selectBotHint")}</p>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {AI_BOTS.map((b) => (
-              <div key={b.id} className="flex flex-col rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: `${b.accent}20` }}>
-                    <span style={{ color: b.accent }}><Bot className="h-5 w-5" /></span>
-                  </div>
-                  <Badge variant={RISK_VARIANT[b.risk]}>{t(`aiTrading.risk.${b.risk}`)}</Badge>
-                </div>
-                <h3 className="font-display text-lg font-semibold text-foreground">{b.name}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{b.description}</p>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                  <div className="rounded-lg bg-white/[0.03] p-2.5">
-                    <p className="text-[10px] text-muted">{t("aiTrading.hourlyReturn")}</p>
-                    <p className="font-semibold text-emerald">{b.hourlyReturn}</p>
-                  </div>
-                  <div className="rounded-lg bg-white/[0.03] p-2.5">
-                    <p className="text-[10px] text-muted">{t("aiTrading.winLabel")}</p>
-                    <p className="font-semibold text-foreground">{b.winRate}%</p>
-                  </div>
-                </div>
-                <p className="mt-3 text-xs text-muted">
-                  {t("aiTrading.minPowerLabel")} {formatCurrency(b.minPower)}
+          {/* Step 1 — Pick a bot */}
+          {wizardStep === 1 && (
+            <FadeIn className="space-y-4">
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+                <h2 className="font-display text-lg font-semibold">{t("aiTrading.step1Title")}</h2>
+                <p className="mt-1 text-sm text-muted">
+                  {t("aiTrading.step1Desc", { bot: getBotName(RECOMMENDED_BOT_ID) })}
                 </p>
-                <Button className="mt-4 w-full" onClick={() => selectBotToPurchase(b.id)}>
-                  {t("aiTrading.purchaseBot")}
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">{t("aiTrading.howItWorks")}</h3>
-            <div className="grid gap-4 md:grid-cols-3">
-              {[
-                { step: "01", title: t("aiTrading.step1Title"), desc: t("aiTrading.step1Desc"), icon: Brain },
-                { step: "02", title: t("aiTrading.step2Title"), desc: t("aiTrading.step2Desc"), icon: Timer },
-                { step: "03", title: t("aiTrading.step3Title"), desc: t("aiTrading.step3Desc"), icon: Coins },
-              ].map((item) => (
-                <div key={item.step} className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4">
-                  <div className="mb-2 flex items-center gap-2">
-                    <item.icon className="h-4 w-4 text-emerald" />
-                    <span className="text-xs font-semibold text-emerald">{item.step}</span>
-                  </div>
-                  <h4 className="font-medium text-foreground">{item.title}</h4>
-                  <p className="mt-1 text-sm text-muted">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-            <div className="mb-3 flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald" />
-              </span>
-              <h3 className="text-sm font-semibold">{t("aiTrading.liveAnalysis")}</h3>
-            </div>
-            <div className="rounded-xl border border-white/[0.04] bg-black/20 p-4">
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <Badge variant="secondary">{signal.bot}</Badge>
-                <span className="font-mono text-emerald">{signal.asset}</span>
-                <span className="text-muted">{signal.confidence}% {t("aiTrading.confidence")}</span>
-              </div>
-              <p className="mt-2 text-sm">{signal.action}</p>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Purchase */}
-        <TabsContent value="purchase" className="mt-0 focus-visible:outline-none">
-          <div className="grid gap-6 lg:grid-cols-5">
-            <div className="lg:col-span-2 space-y-4">
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-                <p className="text-xs uppercase tracking-wider text-muted">{t("aiTrading.selectedBot")}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {AI_BOTS.map((b) => (
-                    <button
-                      key={b.id}
-                      type="button"
-                      onClick={() => setSelectedBot(b.id)}
-                      className={cn(
-                        "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                        selectedBot === b.id ? "border-emerald/40 bg-emerald/10 text-emerald" : "border-white/[0.06] text-muted"
-                      )}
-                    >
-                      {b.name}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-4 text-sm text-muted">{bot.description}</p>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                  <div className="rounded-lg bg-white/[0.03] p-3">
-                    <p className="text-xs text-muted">{t("aiTrading.hourlyReturn")}</p>
-                    <p className="font-semibold text-emerald">{bot.hourlyReturn}</p>
-                  </div>
-                  <div className="rounded-lg bg-white/[0.03] p-3">
-                    <p className="text-xs text-muted">{t("aiTrading.tradeProfitRate")}</p>
-                    <p className="font-semibold text-emerald">{getTradeRate(bot.id)}%/{t("aiTrading.perTrade")}</p>
-                  </div>
-                </div>
               </div>
 
-              {powerNum >= bot.minPower && (
-                <div className="rounded-2xl border border-emerald/20 bg-emerald/5 p-5">
-                  <p className="text-xs font-medium uppercase text-emerald">{t("aiTrading.estimatedProfit")}</p>
-                  <p className="mt-2 font-display text-2xl font-bold text-emerald">+{formatCurrency(estimatedProfit)}</p>
-                  <p className="mt-2 text-xs text-muted">
-                    {t("aiTrading.estimatedBreakdown", {
-                      passive: formatCurrency(passiveOnly),
-                      hours: durationHours,
-                    })}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="lg:col-span-3">
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6">
-                <h2 className="font-display text-lg font-semibold">{t("aiTrading.purchaseTitle")}</h2>
-                <p className="mt-1 text-sm text-muted">{t("aiTrading.purchaseDesc", { bot: bot.name })}</p>
-
-                <div className="mt-6 space-y-5">
-                  <div>
-                    <Label className="text-sm">{t("aiTrading.runDuration")}</Label>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {BOT_DURATIONS.map((d) => (
-                        <button
-                          key={d.hours}
-                          type="button"
-                          onClick={() => setDurationHours(d.hours)}
-                          className={cn(
-                            "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
-                            durationHours === d.hours
-                              ? "border-emerald/40 bg-emerald/10 text-emerald"
-                              : "border-white/[0.06] text-muted hover:text-foreground"
-                          )}
-                        >
-                          {d.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm">{t("aiTrading.cryptoAsset")}</Label>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {CRYPTO_ASSETS.map((c) => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => setCryptoAsset(c.id)}
-                          className={cn(
-                            "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
-                            cryptoAsset === c.id
-                              ? "border-emerald/40 bg-emerald/10 text-emerald"
-                              : "border-white/[0.06] text-muted hover:text-foreground"
-                          )}
-                        >
-                          {c.pair}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="power">{t("aiTrading.botPower")}</Label>
-                    <Input
-                      id="power"
-                      type="number"
-                      min={bot.minPower}
-                      step="0.01"
-                      value={power}
-                      onChange={(e) => setPower(e.target.value)}
-                      placeholder={bot.minPower.toString()}
-                      className="mt-2 h-12 text-base"
-                    />
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {[0.25, 0.5, 1].map((pct) => {
-                        const amt = Math.floor(balance * pct);
-                        if (amt < bot.minPower) return null;
-                        return (
-                          <button
-                            key={pct}
-                            type="button"
-                            onClick={() => setPower(amt.toString())}
-                            className="rounded-md border border-white/[0.06] px-2.5 py-1 text-xs text-muted hover:border-emerald/30 hover:text-emerald"
-                          >
-                            {pct === 1 ? t("aiTrading.max") : `${pct * 100}%`}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="mt-2 text-xs text-muted">
-                      {t("aiTrading.powerHint", { rate: getHourlyRate(bot.id) })}
-                    </p>
-                  </div>
-
-                  {message && (
-                    <p className={cn("text-sm", message.includes("+") || message.includes("purchased") || message.includes("success") ? "text-emerald" : "text-amber-400")}>
-                      {message}
-                    </p>
-                  )}
-
-                  <Button className="h-12 w-full text-base" onClick={handlePurchase} disabled={loading}>
-                    {loading ? t("aiTrading.purchasing") : t("aiTrading.purchaseNow", { amount: powerNum > 0 ? formatCurrency(powerNum) : "" })}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Active trading */}
-        <TabsContent value="active" className="mt-0 space-y-4 focus-visible:outline-none">
-          {activeSubs.length === 0 ? (
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] py-16 text-center">
-              <Bot className="mx-auto h-12 w-12 text-muted" />
-              <p className="mt-4 font-medium">{t("aiTrading.noActiveBots")}</p>
-              <p className="mt-1 text-sm text-muted">{t("aiTrading.noActiveBotsDesc")}</p>
-              <Button className="mt-6" onClick={() => setActiveTab("bots")}>
-                {t("aiTrading.browseBots")}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-wrap gap-2">
-                {activeSubs.map((s) => (
+              <div className="space-y-3">
+                {AI_BOTS.map((b) => (
                   <button
-                    key={s.id}
+                    key={b.id}
                     type="button"
-                    onClick={() => setSelectedSubId(s.id)}
+                    onClick={() => setSelectedBot(b.id)}
                     className={cn(
-                      "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
-                      selectedSub?.id === s.id ? "border-emerald/40 bg-emerald/10 text-emerald" : "border-white/[0.06] text-muted"
+                      "w-full rounded-2xl border p-5 text-left transition-all",
+                      selectedBot === b.id
+                        ? "border-emerald/50 bg-emerald/10 shadow-[0_0_24px_rgba(16,185,129,0.08)]"
+                        : "border-border bg-secondary/50 hover:border-border"
                     )}
                   >
-                    {s.bot_name} · {s.crypto_asset}
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${b.accent}20`, color: b.accent }}>
+                        <Bot className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-display font-semibold">{b.name}</h3>
+                          {b.beginnerFriendly && (
+                            <Badge variant="success" className="text-[10px]">{t("aiTrading.recommended")}</Badge>
+                          )}
+                        </div>
+                        <p className="mt-1 text-sm text-muted">{b.simpleDescription}</p>
+                        <p className="mt-2 text-xs text-muted">
+                          {t("aiTrading.startsAt")} {formatCurrency(b.minPower)} · {b.hourlyReturn} {t("aiTrading.perHour")}
+                        </p>
+                      </div>
+                      {selectedBot === b.id && <CheckCircle className="h-5 w-5 shrink-0 text-emerald" />}
+                    </div>
                   </button>
                 ))}
               </div>
 
-              {selectedSub && (
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-display text-lg font-semibold">{selectedSub.bot_name}</h3>
-                        <p className="text-sm text-muted">{selectedSub.crypto_asset}/USDT · {selectedSub.duration_hours}h run</p>
-                      </div>
-                      <Badge variant="success">{t("aiTrading.running")}</Badge>
-                    </div>
-
-                    <div className="mt-6 grid grid-cols-2 gap-3">
-                      <div className="rounded-xl bg-white/[0.03] p-4">
-                        <p className="text-xs text-muted">{t("aiTrading.botPower")}</p>
-                        <p className="mt-1 font-display text-xl font-bold">{formatCurrency(selectedSub.allocation)}</p>
-                      </div>
-                      <div className="rounded-xl bg-emerald/10 p-4">
-                        <p className="text-xs text-muted">{t("aiTrading.profitEarned")}</p>
-                        <p className="mt-1 font-display text-xl font-bold text-emerald">+{formatCurrency(selectedSub.profit_earned ?? 0)}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/[0.06] bg-black/20 px-4 py-3">
-                      <Clock className="h-5 w-5 text-emerald" />
-                      <div>
-                        <p className="text-xs text-muted">{t("aiTrading.timeRemaining")}</p>
-                        <p className="font-mono text-lg font-bold text-foreground" key={tick}>
-                          {selectedSub.expires_at ? formatCountdown(selectedSub.expires_at) : "—"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <p className="mt-4 text-xs text-muted">{t("aiTrading.payoutNote")}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-                    <h3 className="font-display text-lg font-semibold">{t("aiTrading.tradeCrypto")}</h3>
-                    <p className="mt-1 text-sm text-muted">{t("aiTrading.tradeCryptoDesc", {
-                      asset: selectedSub.crypto_asset,
-                      rate: getTradeRate(selectedSub.bot_id ?? "nexus"),
-                    })}</p>
-
-                    <div className="mt-5 space-y-4">
-                      <div>
-                        <Label htmlFor="tradeAmount">{t("aiTrading.tradeAmount")}</Label>
-                        <Input
-                          id="tradeAmount"
-                          type="number"
-                          min={1}
-                          max={selectedSub.allocation}
-                          value={tradeAmount}
-                          onChange={(e) => setTradeAmount(e.target.value)}
-                          placeholder={`Max ${formatCurrency(selectedSub.allocation)}`}
-                          className="mt-2 h-12"
-                        />
-                        {tradeAmount && parseFloat(tradeAmount) > 0 && (
-                          <p className="mt-2 text-sm text-emerald">
-                            {t("aiTrading.expectedTradeProfit")}: +{formatCurrency(
-                              estimateTradeProfit(parseFloat(tradeAmount), selectedSub.bot_id ?? "nexus")
-                            )}
-                          </p>
-                        )}
-                      </div>
-
-                      {message && (
-                        <p className={cn("text-sm", message.includes("+") || message.includes("success") ? "text-emerald" : "text-amber-400")}>
-                          {message}
-                        </p>
-                      )}
-
-                      <Button className="h-12 w-full" onClick={handleTrade} disabled={loading}>
-                        {loading ? t("aiTrading.trading") : t("aiTrading.executeTrade")}
-                      </Button>
-                    </div>
-
-                    {subTrades.length > 0 && (
-                      <div className="mt-6">
-                        <p className="mb-2 text-xs font-medium uppercase text-muted">{t("aiTrading.recentTrades")}</p>
-                        <div className="max-h-40 space-y-2 overflow-y-auto">
-                          {subTrades.map((tr) => (
-                            <div key={tr.id} className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2 text-sm">
-                              <span className="text-muted">{tr.crypto_asset} · {formatCurrency(tr.trade_amount)}</span>
-                              <span className="font-medium text-emerald">+{formatCurrency(tr.profit)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </>
+              <Button className="h-12 w-full text-base" onClick={() => setWizardStep(2)}>
+                {t("aiTrading.continue")}
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </FadeIn>
           )}
-        </TabsContent>
 
-        {/* History */}
-        <TabsContent value="history" className="mt-0 focus-visible:outline-none">
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-            <h2 className="font-display text-lg font-semibold">{t("aiTrading.historyTitle")}</h2>
-            {completedSubs.length === 0 ? (
-              <p className="mt-6 py-8 text-center text-sm text-muted">{t("aiTrading.noHistory")}</p>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {completedSubs.map((s) => (
-                  <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] px-4 py-4">
-                    <div>
-                      <p className="font-medium">{s.bot_name}</p>
-                      <p className="text-xs text-muted">
-                        {s.crypto_asset} · {s.duration_hours}h · {new Date(s.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted">{formatCurrency(s.allocation)} power</p>
-                      <p className="font-semibold text-emerald">+{formatCurrency(s.profit_earned ?? 0)} profit</p>
-                    </div>
-                    <Badge variant="secondary">{t("aiTrading.completed")}</Badge>
+          {/* Step 2 — Set your plan */}
+          {wizardStep === 2 && (
+            <FadeIn className="space-y-5">
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+                <h2 className="font-display text-lg font-semibold">{t("aiTrading.step2Title")}</h2>
+                <p className="mt-1 text-sm text-muted">{t("aiTrading.step2Desc")}</p>
+              </div>
+
+              {/* Duration */}
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+                <Label className="text-base font-medium">{t("aiTrading.howLong")}</Label>
+                <p className="mt-1 text-xs text-muted">{t("aiTrading.howLongHint")}</p>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {BEGINNER_DURATIONS.map((d) => (
+                    <button
+                      key={d.hours}
+                      type="button"
+                      onClick={() => setDurationHours(d.hours)}
+                      className={cn(
+                        "rounded-xl border py-4 text-center transition-colors",
+                        durationHours === d.hours
+                          ? "border-emerald/40 bg-emerald/10 text-emerald"
+                          : "border-border bg-secondary/50 text-foreground hover:border-border"
+                      )}
+                    >
+                      <p className="font-display text-lg font-bold">{d.shortLabel}</p>
+                      <p className="mt-0.5 text-[10px] text-muted">{t(d.labelKey)}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Crypto */}
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+                <Label className="text-base font-medium">{t("aiTrading.whichCoin")}</Label>
+                <p className="mt-1 text-xs text-muted">{t("aiTrading.whichCoinHint")}</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {cryptoOptions.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setCryptoAsset(c.id)}
+                      className={cn(
+                        "rounded-xl border py-4 text-center transition-colors",
+                        cryptoAsset === c.id
+                          ? "border-emerald/40 bg-emerald/10 text-emerald"
+                          : "border-border bg-secondary/50 hover:border-border"
+                      )}
+                    >
+                      <p className="font-display text-lg font-bold">{c.id}</p>
+                      <p className="mt-0.5 text-[10px] text-muted">{c.label}</p>
+                    </button>
+                  ))}
+                </div>
+                {!showAllCrypto && (
+                  <button type="button" onClick={() => setShowAllCrypto(true)} className="mt-2 text-xs text-emerald hover:underline">
+                    {t("aiTrading.showMoreCoins")}
+                  </button>
+                )}
+              </div>
+
+              {/* Amount */}
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+                <Label htmlFor="power" className="text-base font-medium">{t("aiTrading.howMuch")}</Label>
+                <p className="mt-1 text-xs text-muted">{t("aiTrading.howMuchHint", { min: formatCurrency(bot.minPower) })}</p>
+                <Input
+                  id="power"
+                  type="number"
+                  min={bot.minPower}
+                  value={power}
+                  onChange={(e) => setPower(e.target.value)}
+                  placeholder={formatCurrency(bot.minPower)}
+                  className="mt-3 h-14 text-center text-xl font-bold"
+                />
+                {powerNum >= bot.minPower && (
+                  <p className="mt-3 text-center text-xs text-emerald">
+                    {t("aiTrading.powerHint", { rate: getHourlyRate(bot.id) })}
+                    {" · "}
+                    +{formatCurrency(estimatePassiveProfit(powerNum, bot.id, durationHours))} {t("aiTrading.estimatedProfit").toLowerCase()}
+                  </p>
+                )}
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {[
+                    { label: t("aiTrading.amountLow"), pct: 0.25 },
+                    { label: t("aiTrading.amountMid"), pct: 0.5 },
+                    { label: t("aiTrading.amountMax"), pct: 1 },
+                  ].map(({ label, pct }) => {
+                    const amt = Math.floor(balance * pct);
+                    if (amt < bot.minPower) return null;
+                    return (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setPower(amt.toString())}
+                        className="rounded-xl border border-border bg-secondary/50 py-3 text-center hover:border-emerald/30"
+                      >
+                        <p className="text-xs text-muted">{label}</p>
+                        <p className="font-semibold text-emerald">{formatCurrency(amt)}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="h-12 flex-1 border-border" onClick={() => setWizardStep(1)}>
+                  {t("aiTrading.back")}
+                </Button>
+                <Button
+                  className="h-12 flex-[2] text-base"
+                  onClick={() => setWizardStep(3)}
+                  disabled={!powerNum || powerNum < bot.minPower}
+                >
+                  {t("aiTrading.continue")}
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </FadeIn>
+          )}
+
+          {/* Step 3 — Review & start */}
+          {wizardStep === 3 && (
+            <FadeIn className="space-y-5">
+              <div className="rounded-2xl border border-emerald/20 bg-emerald/5 p-5 text-center">
+                <p className="text-xs font-medium uppercase tracking-wider text-emerald">{t("aiTrading.estimatedProfit")}</p>
+                <p className="mt-2 font-display text-4xl font-bold text-emerald">
+                  +{formatCurrency(powerNum >= bot.minPower ? estimatedProfit : 0)}
+                </p>
+                <p className="mt-2 text-xs text-muted">
+                  {t("aiTrading.estimatedBreakdown", {
+                    passive: formatCurrency(passiveEstimate),
+                    hours: durationHours,
+                  })}
+                </p>
+                <p className="mt-1 text-xs text-muted">{t("aiTrading.profitDisclaimer")}</p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5 space-y-4">
+                <h2 className="font-display text-lg font-semibold">{t("aiTrading.reviewTitle")}</h2>
+                {[
+                  { label: t("aiTrading.reviewBot"), value: bot.name },
+                  { label: t("aiTrading.reviewDuration"), value: `${durationHours}h` },
+                  { label: t("aiTrading.reviewCoin"), value: cryptoAsset },
+                  { label: t("aiTrading.reviewAmount"), value: formatCurrency(powerNum) },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-center justify-between border-b border-border pb-3 text-sm last:border-0 last:pb-0">
+                    <span className="text-muted">{row.label}</span>
+                    <span className="font-medium">{row.value}</span>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+
+              <div className="flex items-start gap-3 rounded-xl border border-border bg-secondary/50 p-4">
+                <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted" />
+                <p className="text-xs leading-relaxed text-muted">{t("aiTrading.whatHappensNext")}</p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="h-12 flex-1 border-border" onClick={() => setWizardStep(2)}>
+                  {t("aiTrading.back")}
+                </Button>
+                <Button
+                  className="h-14 flex-[2] text-base"
+                  onClick={handlePurchase}
+                  disabled={loading || needsFunds || powerNum < bot.minPower}
+                >
+                  {loading ? t("aiTrading.purchasing") : t("aiTrading.startBot")}
+                  <Sparkles className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </FadeIn>
+          )}
+        </div>
+      )}
+
+      {/* ── MY BOT ── */}
+      {view === "mybot" && (
+        <FadeIn className="space-y-5">
+          {activeSubs.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-secondary/50 py-16 text-center">
+              <Bot className="mx-auto h-12 w-12 text-muted" />
+              <p className="mt-4 font-medium">{t("aiTrading.noActiveBots")}</p>
+              <p className="mt-1 text-sm text-muted">{t("aiTrading.noActiveBotsDesc")}</p>
+              <Button className="mt-6" onClick={startWizard}>
+                {t("aiTrading.startNow")}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          ) : selectedSub && (
+            <>
+              {/* Live analysis feed */}
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-emerald" />
+                  <h3 className="font-display text-sm font-semibold">{t("aiTrading.liveAnalysis")}</h3>
+                </div>
+                <div className="mt-3 rounded-xl border border-emerald/20 bg-emerald/5 px-4 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-emerald">{getBotName(currentSignal.botId)}</p>
+                    <Badge variant="success" className="text-[10px]">
+                      {currentSignal.confidence}% {t("aiTrading.confidence")}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm font-medium">{currentSignal.asset}</p>
+                  <p className="mt-1 text-xs text-muted">{currentSignal.action}</p>
+                </div>
+              </div>
+
+              {/* Bot status card */}
+              <div className="rounded-2xl border border-emerald/20 bg-emerald/5 p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted">{t("aiTrading.botRunning")}</p>
+                    <h2 className="font-display text-xl font-bold">{selectedSub.bot_name}</h2>
+                    <p className="mt-1 text-xs text-muted">{selectedSub.crypto_asset} · {getHourlyRate(selectedSub.bot_id ?? "nexus")}%/hr</p>
+                  </div>
+                  <Badge variant="success">{t("aiTrading.running")}</Badge>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="rounded-xl bg-secondary/80 p-4">
+                    <p className="text-xs text-muted">{t("aiTrading.liveProfit")}</p>
+                    <p className="mt-1 font-display text-xl font-bold text-emerald" key={tick}>
+                      +{formatCurrency(selectedLiveProfit)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-secondary/80 p-4">
+                    <p className="text-xs text-muted">{t("aiTrading.profitEarned")}</p>
+                    <p className="mt-1 font-display text-xl font-bold text-foreground">
+                      +{formatCurrency(selectedSub.profit_earned ?? 0)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-secondary/80 p-4">
+                    <p className="text-xs text-muted">{t("aiTrading.projectedPayout")}</p>
+                    <p className="mt-1 font-display text-xl font-bold text-foreground" key={`p-${tick}`}>
+                      {formatCurrency(selectedPayout)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-secondary/80 p-4">
+                    <div className="flex items-center gap-1.5 text-xs text-muted">
+                      <Clock className="h-3.5 w-3.5" />
+                      {t("aiTrading.timeRemaining")}
+                    </div>
+                    <p className="mt-1 font-mono text-xl font-bold" key={tick}>
+                      {selectedSub.expires_at ? formatCountdown(selectedSub.expires_at) : "—"}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-xs text-muted">{t("aiTrading.payoutNote")}</p>
+              </div>
+
+              {/* Manual trade */}
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-emerald" />
+                  <h3 className="font-display text-lg font-semibold">{t("aiTrading.tradeCrypto")}</h3>
+                </div>
+                <p className="mt-1 text-sm text-muted">
+                  {t("aiTrading.tradeCryptoDesc", {
+                    asset: selectedSub.crypto_asset,
+                    rate: getTradeRate(selectedSub.bot_id ?? "nexus"),
+                  })}
+                </p>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <div className="flex-1">
+                    <Label htmlFor="trade-amount" className="text-xs">{t("aiTrading.tradeAmount")}</Label>
+                    <Input
+                      id="trade-amount"
+                      type="number"
+                      min={1}
+                      max={selectedSub.allocation}
+                      value={tradeAmount}
+                      onChange={(e) => setTradeAmount(e.target.value)}
+                      placeholder={formatCurrency(Math.floor(selectedSub.allocation * 0.25))}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="flex flex-col justify-end sm:w-48">
+                    <p className="text-xs text-muted">{t("aiTrading.expectedTradeProfit")}</p>
+                    <p className="font-semibold text-emerald">
+                      +{formatCurrency(estimateTradeProfit(parseFloat(tradeAmount) || 0, selectedSub.bot_id ?? "nexus"))}
+                    </p>
+                  </div>
+                </div>
+                <Button className="mt-4 w-full" onClick={handleManualTrade} disabled={loading || !tradeAmount}>
+                  {loading ? t("aiTrading.trading") : t("aiTrading.executeTrade")}
+                </Button>
+              </div>
+
+              {/* Quick trade buttons */}
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+                <h3 className="font-display text-lg font-semibold">{t("aiTrading.makeProfit")}</h3>
+                <p className="mt-1 text-sm text-muted">{t("aiTrading.makeProfitDesc")}</p>
+                <p className="mt-2 rounded-lg bg-secondary/60 px-3 py-2 text-xs text-muted">
+                  {t("aiTrading.makeProfitExample", {
+                    amount: formatCurrency(selectedSub.allocation),
+                    small: formatCurrency(Math.floor(selectedSub.allocation * 0.25)),
+                    medium: formatCurrency(Math.floor(selectedSub.allocation * 0.5)),
+                    big: formatCurrency(selectedSub.allocation),
+                  })}
+                </p>
+
+                <div className="mt-5 grid grid-cols-3 gap-3">
+                  {[
+                    { label: t("aiTrading.tradeSmall"), pct: 0.25 },
+                    { label: t("aiTrading.tradeMedium"), pct: 0.5 },
+                    { label: t("aiTrading.tradeLarge"), pct: 1 },
+                  ].map(({ label, pct }) => {
+                    const amt = Math.floor(selectedSub.allocation * pct);
+                    const profit = estimateTradeProfit(amt, selectedSub.bot_id ?? "nexus");
+                    return (
+                      <button
+                        key={pct}
+                        type="button"
+                        disabled={loading || amt <= 0}
+                        onClick={() => handleQuickTrade(pct)}
+                        className="rounded-xl border border-border bg-secondary/50 py-4 text-center transition-colors hover:border-emerald/30 hover:bg-emerald/5 disabled:opacity-40"
+                      >
+                        <p className="text-xs font-medium text-foreground">{label}</p>
+                        <p className="mt-0.5 text-[10px] text-muted">
+                          {t("aiTrading.tradePctOfInvestment", { pct: Math.round(pct * 100) })}
+                        </p>
+                        <p className="mt-1 font-semibold text-foreground">{formatCurrency(amt)}</p>
+                        <p className="mt-1 text-xs font-medium text-emerald">+{formatCurrency(profit)}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {subTrades.length > 0 && (
+                  <div className="mt-6">
+                    <p className="mb-2 text-xs font-medium text-muted">{t("aiTrading.recentTrades")}</p>
+                    <div className="space-y-2">
+                      {subTrades.slice(0, 5).map((tr) => (
+                        <div key={tr.id} className="flex items-center justify-between rounded-lg bg-secondary/60 px-3 py-2 text-sm">
+                          <span className="text-muted">{tr.crypto_asset}</span>
+                          <span className="font-medium text-emerald">+{formatCurrency(tr.profit)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {activeSubs.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {activeSubs.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSelectedSubId(s.id)}
+                      className={cn(
+                        "rounded-lg border px-3 py-2 text-sm",
+                        selectedSub.id === s.id ? "border-emerald/40 bg-emerald/10 text-emerald" : "border-border text-muted"
+                      )}
+                    >
+                      {s.bot_name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <Button variant="outline" className="w-full border-border" onClick={startWizard}>
+                {t("aiTrading.buyAnother")}
+              </Button>
+            </>
+          )}
+        </FadeIn>
+      )}
+
+      {/* ── HISTORY ── */}
+      {view === "history" && (
+        <FadeIn className="rounded-2xl border border-border bg-secondary/50 p-5">
+          <h2 className="font-display text-lg font-semibold">{t("aiTrading.historyTitle")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("aiTrading.historyDesc")}</p>
+          {completedSubs.length === 0 ? (
+            <p className="mt-8 text-center text-sm text-muted">{t("aiTrading.noHistory")}</p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {completedSubs.map((s) => (
+                <div key={s.id} className="flex items-center justify-between rounded-xl border border-border bg-secondary/50 px-4 py-4">
+                  <div>
+                    <p className="font-medium">{s.bot_name}</p>
+                    <p className="text-xs text-muted">{s.crypto_asset} · {s.duration_hours}h</p>
+                  </div>
+                  <p className="font-semibold text-emerald">+{formatCurrency(s.profit_earned ?? 0)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </FadeIn>
+      )}
     </div>
   );
 }

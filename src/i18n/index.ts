@@ -34,6 +34,10 @@ i18n
     },
     fallbackLng: "en",
     supportedLngs: [...SUPPORTED_LANGUAGES],
+    nonExplicitSupportedLngs: true,
+    load: "languageOnly",
+    returnNull: false,
+    returnEmptyString: false,
     interpolation: {
       escapeValue: false,
       defaultVariables: {
@@ -45,6 +49,7 @@ i18n
       order: ["localStorage", "navigator"],
       lookupLocalStorage: STORAGE_KEY,
       caches: ["localStorage"],
+      convertDetectedLanguage: (lng) => lng.split("-")[0],
     },
     react: {
       useSuspense: false,
@@ -52,10 +57,11 @@ i18n
   });
 
 i18n.on("languageChanged", (lng) => {
-  localStorage.setItem(STORAGE_KEY, lng);
-  applyDocumentLanguage(lng);
+  const normalized = (lng || "en").split("-")[0];
+  localStorage.setItem(STORAGE_KEY, normalized);
+  applyDocumentLanguage(normalized);
 });
 
-applyDocumentLanguage(i18n.language || "en");
+applyDocumentLanguage((i18n.language || "en").split("-")[0]);
 
 export default i18n;
