@@ -1271,7 +1271,8 @@
       "gdpSub": "Am schnellsten wachsendes BIP in der G20.",
       "ratesTitle": "Leitzinsen",
       "ratesSub": "Leitzinsen in den Top-G20-Staaten."
-    }
+    },
+    "mapTitle": "Globale Inflationskarte"
   },
   "forexNews": {
     "badge": "Forex-Markt",
@@ -1396,5 +1397,14 @@
     "colInstrument": "Instrument",
     "colHeadline": "Schlagzeile",
     "colProvider": "Quelle"
+  },
+  "inflationMap": {
+    "economy": "Wirtschaft",
+    "title": "Globale Inflationskarte",
+    "subtitle": "Entdecken Sie globale Inflationstrends — Verbraucherpreisdaten der Weltbank.",
+    "seeMore": "Weitere globale Trends",
+    "loading": "Inflationskarte wird geladen…",
+    "sourceLive": "Quelle: Weltbank · FP.CPI.TOTL.ZG (aktuell verfügbar)",
+    "sourceFallback": "Zwischengespeicherter Stand — Livedaten nicht verfügbar"
   }
 }

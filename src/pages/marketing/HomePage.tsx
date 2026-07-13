@@ -7,6 +7,7 @@ import { ProductShowcase } from "@/components/marketing/ProductShowcase";
 import { ServicesGrid } from "@/components/marketing/ServicesGrid";
 import { InsightsRail } from "@/components/marketing/InsightsRail";
 import { HowItWorks } from "@/components/marketing/HowItWorks";
+import { GlobalInflationMap } from "@/components/marketing/GlobalInflationMap";
 import { CommunityPulse } from "@/components/marketing/CommunityPulse";
 import { FAQSection } from "@/components/marketing/FAQSection";
 
@@ -14,9 +15,10 @@ export default function HomePage() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.hash === "#markets") {
+    if (location.hash === "#markets" || location.hash === "#economy") {
+      const id = location.hash.slice(1);
       requestAnimationFrame(() => {
-        document.getElementById("markets")?.scrollIntoView({ behavior: "smooth" });
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
       });
     }
   }, [location.hash]);
@@ -26,6 +28,7 @@ export default function HomePage() {
       <Hero />
       <MarketTicker />
       <MarketSummary />
+      <GlobalInflationMap />
       <ProductShowcase />
       <ServicesGrid />
       <InsightsRail />

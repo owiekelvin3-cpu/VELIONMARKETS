@@ -1271,7 +1271,8 @@
       "gdpSub": "PIB de más rápido crecimiento en el G20.",
       "ratesTitle": "Tasas de interés clave",
       "ratesSub": "Tasas de interés clave en los principales países del G20."
-    }
+    },
+    "mapTitle": "Mapa global de inflación"
   },
   "forexNews": {
     "badge": "mercado de divisas",
@@ -1396,5 +1397,14 @@
     "colInstrument": "Instrumento",
     "colHeadline": "Titular",
     "colProvider": "Fuente"
+  },
+  "inflationMap": {
+    "economy": "Economía",
+    "title": "Mapa global de inflación",
+    "subtitle": "Explore las tendencias de inflación global — datos del Banco Mundial sobre precios al consumidor.",
+    "seeMore": "Ver más tendencias globales",
+    "loading": "Cargando mapa de inflación…",
+    "sourceLive": "Fuente: Banco Mundial · FP.CPI.TOTL.ZG (último disponible)",
+    "sourceFallback": "Mostrando captura en caché — datos en vivo no disponibles"
   }
 }

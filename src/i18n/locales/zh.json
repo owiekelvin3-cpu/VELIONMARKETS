@@ -1271,7 +1271,8 @@
       "gdpSub": "G20 国家中 GDP 增长最快。",
       "ratesTitle": "主要利率",
       "ratesSub": "G20 国家的关键利率。"
-    }
+    },
+    "mapTitle": "全球通胀地图"
   },
   "forexNews": {
     "badge": "外汇市场",
@@ -1396,5 +1397,14 @@
     "colInstrument": "品种",
     "colHeadline": "标题",
     "colProvider": "来源"
+  },
+  "inflationMap": {
+    "economy": "经济",
+    "title": "全球通胀地图",
+    "subtitle": "探索全球通胀趋势 — 世界银行消费者价格数据。",
+    "seeMore": "查看更多全球趋势",
+    "loading": "正在加载通胀地图…",
+    "sourceLive": "来源：世界银行 · FP.CPI.TOTL.ZG（最新可用）",
+    "sourceFallback": "显示缓存快照 — 实时数据不可用"
   }
 }

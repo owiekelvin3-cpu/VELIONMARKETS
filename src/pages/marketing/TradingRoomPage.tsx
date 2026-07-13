@@ -2,6 +2,11 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { PageHero } from "@/components/marketing/PageHero";
+import {
+  MarketingTrustBand,
+  MarketingTrustPillars,
+  MarketingFaqBlock,
+} from "@/components/marketing/MarketingTrust";
 import { Container } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/Motion";
@@ -16,11 +21,20 @@ const features = [
   { icon: Users, titleKey: "pages.roomFeat4Title", descKey: "pages.roomFeat4Desc" },
 ] as const;
 
+const workflow = [
+  { titleKey: "pages.roomStep1Title", descKey: "pages.roomStep1Desc" },
+  { titleKey: "pages.roomStep2Title", descKey: "pages.roomStep2Desc" },
+  { titleKey: "pages.roomStep3Title", descKey: "pages.roomStep3Desc" },
+  { titleKey: "pages.roomStep4Title", descKey: "pages.roomStep4Desc" },
+] as const;
+
+const risks = ["pages.roomRisk1", "pages.roomRisk2", "pages.roomRisk3"] as const;
+
 function SuperchartMock() {
   const { t } = useTranslation();
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-charcoal/50 ring-1 ring-white/5">
+    <div className="overflow-hidden rounded-2xl border border-border bg-charcoal/50 ring-1 ring-border/60">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-3">
           <span className="text-sm font-semibold">BTC / USD</span>
@@ -103,7 +117,9 @@ export default function TradingRoomPage() {
         cta={{ label: t("pages.roomCta"), href: "/auth?mode=register" }}
       />
 
-      <section className="pb-20 pt-10 md:pb-28">
+      <MarketingTrustBand />
+
+      <section className="pb-16 pt-12 md:pb-24 md:pt-16">
         <Container>
           <FadeIn>
             <SuperchartMock />
@@ -118,8 +134,71 @@ export default function TradingRoomPage() {
               </div>
             ))}
           </div>
+        </Container>
+      </section>
 
-          <div className="mt-12 flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-emerald/[0.04] p-6 sm:flex-row sm:items-center sm:p-8">
+      <section className="border-t border-border bg-secondary/15 py-14 md:py-20">
+        <Container>
+          <FadeIn className="mb-8 max-w-2xl">
+            <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+              {t("pages.roomWorkflowTitle")}
+            </h2>
+            <p className="mt-2 text-sm text-muted md:text-base">{t("pages.roomWorkflowSub")}</p>
+          </FadeIn>
+          <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {workflow.map((s, i) => (
+              <li key={s.titleKey} className="rounded-2xl border border-border bg-void/30 p-5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald/15 text-sm font-bold text-emerald">
+                  {i + 1}
+                </span>
+                <h3 className="mt-4 font-semibold text-foreground">{t(s.titleKey)}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{t(s.descKey)}</p>
+              </li>
+            ))}
+          </ol>
+        </Container>
+      </section>
+
+      <section className="py-14 md:py-20">
+        <Container>
+          <div className="grid gap-8 lg:grid-cols-2">
+            <FadeIn>
+              <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+                {t("pages.roomDataTitle")}
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted md:text-base">{t("pages.roomDataSub")}</p>
+            </FadeIn>
+            <FadeIn>
+              <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+                {t("pages.roomRiskTitle")}
+              </h2>
+              <ul className="mt-4 space-y-3">
+                {risks.map((key) => (
+                  <li key={key} className="flex gap-3 text-sm leading-relaxed text-muted">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald" aria-hidden="true" />
+                    {t(key)}
+                  </li>
+                ))}
+              </ul>
+            </FadeIn>
+          </div>
+        </Container>
+      </section>
+
+      <MarketingTrustPillars className="border-t border-border bg-secondary/10" />
+
+      <MarketingFaqBlock
+        titleKey="pages.roomFaqTitle"
+        items={[
+          { q: "pages.roomFaq1q", a: "pages.roomFaq1a" },
+          { q: "pages.roomFaq2q", a: "pages.roomFaq2a" },
+          { q: "pages.roomFaq3q", a: "pages.roomFaq3a" },
+        ]}
+      />
+
+      <section className="border-t border-border pb-20 pt-10">
+        <Container>
+          <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-emerald/[0.04] p-6 sm:flex-row sm:items-center sm:p-8">
             <div>
               <h2 className="font-display text-xl font-bold md:text-2xl">{t("pages.roomReadyTitle")}</h2>
               <p className="mt-1 text-sm text-muted">{t("pages.roomReadyDesc")}</p>

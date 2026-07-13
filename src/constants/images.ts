@@ -33,6 +33,10 @@ export const IMAGES = {
     mobile: unsplash("1563013544-824ae1b704d3", 800, 600),
     workspace: unsplash("1497366754035-f200968a6e72", 1200, 800),
   },
+  auth: {
+    /** Cinematic dark panel — TradingView-style left art */
+    panel: unsplash("1451187580459-43490279c0fa", 1400, 1600),
+  },
   avatars: {
     james: unsplash("1507003211169-0a1dd7228f2d", 256, 256),
     sarah: unsplash("1573496359142-b8d87734a5a2", 256, 256),

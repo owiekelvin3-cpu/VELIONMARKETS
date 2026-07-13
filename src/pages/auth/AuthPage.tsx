@@ -1,23 +1,26 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { completePushSetup } from "@/lib/push-notifications";
 import { prepareNotificationsOnUserGesture } from "@/lib/notification-preferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
-import { AuthBrandPanel, AuthFormHeader } from "@/components/auth/AuthBrandPanel";
-import { Shield } from "@/lib/icons";
+import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
+import { Logo } from "@/components/brand/Logo";
+import { IMAGES } from "@/constants/images";
+import { Mail, X } from "@/lib/icons";
+import { cn } from "@/lib/utils";
+
+type Mode = "login" | "register";
 
 export default function AuthPage() {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get("mode") === "register" ? "register" : "login";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const mode: Mode = searchParams.get("mode") === "register" ? "register" : "login";
   const { signIn, signUp, clearSessionExpired } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,11 +28,15 @@ export default function AuthPage() {
     (location.state as { sessionExpired?: boolean } | null)?.sessionExpired === true;
   const [error, setError] = useState(sessionExpired ? t("auth.sessionExpired") : "");
   const [loading, setLoading] = useState(false);
-  const [remember, setRemember] = useState(false);
 
   useEffect(() => {
     if (sessionExpired) clearSessionExpired();
   }, [sessionExpired, clearSessionExpired]);
+
+  function setMode(next: Mode) {
+    setError("");
+    setSearchParams(next === "register" ? { mode: "register" } : {}, { replace: true });
+  }
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,7 +48,9 @@ export default function AuthPage() {
     if (error) {
       setError(error.message);
     } else {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) await completePushSetup(user.id, permissionPromise);
       navigate("/dashboard");
     }
@@ -68,96 +77,171 @@ export default function AuthPage() {
     setLoading(false);
   };
 
+  const fieldClass =
+    "h-12 rounded-xl border-white/20 bg-transparent text-white placeholder:text-white/40 focus-visible:border-emerald/50 focus-visible:ring-emerald/20";
+
   return (
-    <div className="flex min-h-screen bg-void">
-      <AuthBrandPanel />
-
-      <div className="relative flex flex-1 flex-col">
-        <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
-          <LanguageSelector />
-        </div>
-
-        <div className="flex flex-1 items-center justify-center px-4 py-12 sm:px-8 lg:px-12 xl:px-16">
-          <motion.div
-            className="w-full max-w-md"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.45 }}
-          >
-            <AuthFormHeader />
-
-            <Tabs defaultValue={defaultTab}>
-              <TabsList className="mb-8 grid h-11 w-full grid-cols-2 rounded-xl bg-secondary/70 p-1">
-                <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-emerald/15 data-[state=active]:text-emerald">
-                  {t("auth.login")}
-                </TabsTrigger>
-                <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-emerald/15 data-[state=active]:text-emerald">
-                  {t("auth.register")}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-5">
-                  <div>
-                    <Label htmlFor="login-email">{t("common.email")}</Label>
-                    <Input id="login-email" name="email" type="email" required className="mt-2 h-11" />
-                  </div>
-                  <div>
-                    <Label htmlFor="login-password">{t("common.password")}</Label>
-                    <Input id="login-password" name="password" type="password" required minLength={6} className="mt-2 h-11" />
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <label className="flex cursor-pointer items-center gap-2 text-muted">
-                      <input
-                        type="checkbox"
-                        checked={remember}
-                        onChange={(e) => setRemember(e.target.checked)}
-                        className="rounded border-border bg-secondary text-emerald focus:ring-emerald/40"
-                      />
-                      {t("auth.rememberMe")}
-                    </label>
-                    <span className="text-emerald/80">{t("auth.forgotPassword")}</span>
-                  </div>
-                  {error && <p className="text-sm text-red-400">{error}</p>}
-                  <Button type="submit" size="lg" className="h-12 w-full" disabled={loading}>
-                    {loading ? t("auth.signingIn") : t("auth.signInSecurely")}
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="register">
-                <form onSubmit={handleRegister} className="space-y-5">
-                  <div>
-                    <Label htmlFor="reg-name">{t("common.fullName")}</Label>
-                    <Input id="reg-name" name="fullName" required className="mt-2 h-11" />
-                  </div>
-                  <div>
-                    <Label htmlFor="reg-email">{t("common.email")}</Label>
-                    <Input id="reg-email" name="email" type="email" required className="mt-2 h-11" />
-                  </div>
-                  <div>
-                    <Label htmlFor="reg-password">{t("common.password")}</Label>
-                    <Input id="reg-password" name="password" type="password" required minLength={6} className="mt-2 h-11" />
-                  </div>
-                  {error && <p className="text-sm text-red-400">{error}</p>}
-                  <Button type="submit" size="lg" className="h-12 w-full" disabled={loading}>
-                    {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-
-            <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted">
-              <Shield className="h-3.5 w-3.5 text-emerald" aria-hidden="true" />
-              {t("auth.securityNote")}
-            </div>
-
-            <p className="mt-6 text-center text-sm text-muted lg:hidden">
-              <Link to="/" className="text-emerald hover:underline">{t("common.backHome")}</Link>
-            </p>
-          </motion.div>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-black px-3 py-6 sm:px-6 sm:py-10">
+      <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+        <LanguageSelector />
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="relative flex w-full max-w-[980px] overflow-hidden rounded-3xl border border-white/10 bg-black shadow-2xl shadow-black/60"
+      >
+        <AuthBrandPanel />
+
+        <div className="relative flex w-full flex-col bg-black text-white lg:w-1/2">
+          {/* Mobile cinematic strip */}
+          <div className="relative h-36 overflow-hidden lg:hidden">
+            <img src={IMAGES.auth.panel} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30" />
+            <p className="relative z-10 flex h-full items-end justify-center px-6 pb-4 text-center font-display text-xl font-bold leading-tight text-white">
+              {t("auth.sloganLine1")} {t("auth.sloganLine2")}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-6">
+            <Logo
+              size="md"
+              wordmarkClassName="[&>span:first-child]:!text-white [&>span:last-child]:!text-emerald"
+            />
+            <Link
+              to="/"
+              aria-label={t("common.close")}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="flex flex-1 flex-col justify-center px-6 py-10 sm:px-12 sm:py-12">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={mode}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25 }}
+                className="mx-auto w-full max-w-[340px]"
+              >
+                <h1 className="mb-8 text-center font-display text-2xl font-bold tracking-tight text-white sm:text-[1.75rem]">
+                  {mode === "login" ? t("auth.signInTitle") : t("auth.signUpTitle")}
+                </h1>
+
+                {mode === "login" ? (
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="relative">
+                      <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+                      <Input
+                        id="login-email"
+                        name="email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        placeholder={t("common.email")}
+                        className={cn(fieldClass, "pl-10")}
+                      />
+                    </div>
+                    <Input
+                      id="login-password"
+                      name="password"
+                      type="password"
+                      required
+                      minLength={6}
+                      autoComplete="current-password"
+                      placeholder={t("common.password")}
+                      className={fieldClass}
+                    />
+                    {error ? <p className="text-sm text-red-400">{error}</p> : null}
+                    <Button
+                      type="submit"
+                      size="lg"
+                      disabled={loading}
+                      className="mt-2 h-12 w-full rounded-xl text-base"
+                    >
+                      {loading ? t("auth.signingIn") : t("auth.signInTitle")}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <Input
+                      id="reg-name"
+                      name="fullName"
+                      required
+                      autoComplete="name"
+                      placeholder={t("common.fullName")}
+                      className={fieldClass}
+                    />
+                    <div className="relative">
+                      <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+                      <Input
+                        id="reg-email"
+                        name="email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        placeholder={t("common.email")}
+                        className={cn(fieldClass, "pl-10")}
+                      />
+                    </div>
+                    <Input
+                      id="reg-password"
+                      name="password"
+                      type="password"
+                      required
+                      minLength={6}
+                      autoComplete="new-password"
+                      placeholder={t("common.password")}
+                      className={fieldClass}
+                    />
+                    {error ? <p className="text-sm text-red-400">{error}</p> : null}
+                    <Button
+                      type="submit"
+                      size="lg"
+                      disabled={loading}
+                      className="mt-2 h-12 w-full rounded-xl text-base"
+                    >
+                      {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
+                    </Button>
+                  </form>
+                )}
+
+                <p className="mt-5 text-center text-xs text-white/40">{t("auth.emailOnlyNote")}</p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <div className="border-t border-white/10 px-6 py-5 text-center sm:px-8">
+            {mode === "login" ? (
+              <p className="text-sm text-white/55">
+                {t("auth.noAccount")}{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("register")}
+                  className="font-semibold text-emerald hover:underline"
+                >
+                  {t("auth.signUpLink")}
+                </button>
+              </p>
+            ) : (
+              <p className="text-sm text-white/55">
+                {t("auth.hasAccount")}{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className="font-semibold text-emerald hover:underline"
+                >
+                  {t("auth.signInLink")}
+                </button>
+              </p>
+            )}
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -1271,7 +1271,8 @@
       "gdpSub": "Croissance du PIB la plus rapide du G20.",
       "ratesTitle": "Taux d'intérêt directeurs",
       "ratesSub": "Taux d’intérêt directeurs dans les principaux pays du G20."
-    }
+    },
+    "mapTitle": "Carte mondiale de l’inflation"
   },
   "forexNews": {
     "badge": "Marché des changes",
@@ -1396,5 +1397,14 @@
     "colInstrument": "Instrument",
     "colHeadline": "Titre",
     "colProvider": "Source"
+  },
+  "inflationMap": {
+    "economy": "Économie",
+    "title": "Carte mondiale de l’inflation",
+    "subtitle": "Explorez les tendances d’inflation mondiales — données Banque mondiale sur les prix à la consommation.",
+    "seeMore": "Voir plus de tendances mondiales",
+    "loading": "Chargement de la carte d’inflation…",
+    "sourceLive": "Source : Banque mondiale · FP.CPI.TOTL.ZG (dernière dispo)",
+    "sourceFallback": "Instantané en cache — données en direct indisponibles"
   }
 }

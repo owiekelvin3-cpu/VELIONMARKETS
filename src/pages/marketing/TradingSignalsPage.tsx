@@ -1,11 +1,16 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PageHero } from "@/components/marketing/PageHero";
+import {
+  MarketingTrustBand,
+  MarketingTrustPillars,
+  MarketingFaqBlock,
+} from "@/components/marketing/MarketingTrust";
 import { Container } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion/Motion";
 import { MARKET_INSIGHTS } from "@/constants/markets-demo";
-import { ArrowRight, TrendingDown, TrendingUp } from "@/lib/icons";
+import { AlertTriangle, ArrowRight, TrendingDown, TrendingUp } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 const signals = [
@@ -16,6 +21,13 @@ const signals = [
   { pair: "NDX", action: "BUY" as const, entry: "20120", target: "20580", stop: "19840", status: "active" },
   { pair: "ETH/USD", action: "SELL" as const, entry: "3620", target: "3480", stop: "3710", status: "active" },
 ];
+
+const method = [
+  { titleKey: "pages.signalsM1Title", descKey: "pages.signalsM1Desc" },
+  { titleKey: "pages.signalsM2Title", descKey: "pages.signalsM2Desc" },
+  { titleKey: "pages.signalsM3Title", descKey: "pages.signalsM3Desc" },
+  { titleKey: "pages.signalsM4Title", descKey: "pages.signalsM4Desc" },
+] as const;
 
 export default function TradingSignalsPage() {
   const { t } = useTranslation();
@@ -29,9 +41,10 @@ export default function TradingSignalsPage() {
         cta={{ label: t("pages.signalsCta"), href: "/auth?mode=register" }}
       />
 
-      <section className="pb-20 pt-10 md:pb-28">
+      <MarketingTrustBand />
+
+      <section className="pb-14 pt-12 md:pb-20 md:pt-16">
         <Container>
-          {/* Editors' picks — TradingView ideas style */}
           <FadeIn className="mb-10 flex items-end justify-between gap-4">
             <div>
               <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
@@ -78,7 +91,6 @@ export default function TradingSignalsPage() {
             ))}
           </StaggerContainer>
 
-          {/* Active signals table */}
           <FadeIn className="mb-5">
             <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
               {t("pages.signalsActiveTitle")}
@@ -130,10 +142,56 @@ export default function TradingSignalsPage() {
               </div>
             ))}
           </div>
+        </Container>
+      </section>
 
-          <div className="mt-10 flex flex-col items-start justify-between gap-4 rounded-2xl border border-border p-6 sm:flex-row sm:items-center">
-            <p className="text-sm text-muted">{t("pages.signalsUnlock")}</p>
-            <Button asChild>
+      <section className="border-t border-border bg-secondary/15 py-14 md:py-20">
+        <Container>
+          <FadeIn className="mb-8 max-w-2xl">
+            <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+              {t("pages.signalsMethodTitle")}
+            </h2>
+            <p className="mt-2 text-sm text-muted md:text-base">{t("pages.signalsMethodSub")}</p>
+          </FadeIn>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {method.map((m, i) => (
+              <div key={m.titleKey} className="rounded-2xl border border-border bg-void/30 p-5">
+                <span className="font-mono text-xs font-semibold text-emerald">0{i + 1}</span>
+                <h3 className="mt-3 font-semibold text-foreground">{t(m.titleKey)}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{t(m.descKey)}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] p-5">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" aria-hidden="true" />
+            <div>
+              <h3 className="font-semibold text-foreground">{t("pages.signalsDisclaimerTitle")}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted">{t("pages.signalsDisclaimer")}</p>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      <MarketingTrustPillars />
+
+      <MarketingFaqBlock
+        titleKey="pages.signalsFaqTitle"
+        items={[
+          { q: "pages.signalsFaq1q", a: "pages.signalsFaq1a" },
+          { q: "pages.signalsFaq2q", a: "pages.signalsFaq2a" },
+          { q: "pages.signalsFaq3q", a: "pages.signalsFaq3a" },
+        ]}
+      />
+
+      <section className="border-t border-border pb-20 pt-10">
+        <Container>
+          <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-emerald/[0.04] p-6 sm:flex-row sm:items-center sm:p-8">
+            <div>
+              <h2 className="font-display text-xl font-bold md:text-2xl">{t("pages.signalsCtaTitle")}</h2>
+              <p className="mt-1 text-sm text-muted">{t("pages.signalsCtaSub")}</p>
+            </div>
+            <Button asChild size="lg" className="shrink-0">
               <Link to="/auth">
                 {t("common.getStarted")} <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
