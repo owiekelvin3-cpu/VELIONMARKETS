@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AnimatePresence, motion } from "framer-motion";
 import { Bell, X } from "@/lib/icons";
 import type { Notification } from "@/types/database";
-import { cn } from "@/lib/utils";
 
 const EVENT_NAME = "velion:notification";
 
@@ -10,6 +10,7 @@ export function dispatchNotificationToast(notification: Notification) {
   window.dispatchEvent(new CustomEvent<Notification>(EVENT_NAME, { detail: notification }));
 }
 
+/** Apple-style banner: always drops in from the top so it never covers the keyboard. */
 export function NotificationToast() {
   const { t } = useTranslation();
   const [toast, setToast] = useState<Notification | null>(null);
@@ -21,7 +22,7 @@ export function NotificationToast() {
       const detail = (event as CustomEvent<Notification>).detail;
       setToast(detail);
       clearTimeout(timer);
-      timer = setTimeout(() => setToast(null), 6000);
+      timer = setTimeout(() => setToast(null), 5500);
     };
 
     window.addEventListener(EVENT_NAME, onNotify);
@@ -31,36 +32,42 @@ export function NotificationToast() {
     };
   }, []);
 
-  if (!toast) return null;
-
   return (
-    <div
-      className={cn(
-        "pointer-events-auto fixed bottom-4 right-4 z-[100] w-[min(100vw-2rem,22rem)]",
-        "animate-in slide-in-from-bottom-4 fade-in duration-300"
-      )}
-      role="status"
-    >
-      <div className="flex gap-3 rounded-xl border border-emerald/25 bg-card/95 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald/10 text-emerald">
-          <Bell className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground">{toast.title}</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-muted">{toast.message}</p>
-          <p className="mt-2 text-[10px] font-medium uppercase tracking-wider text-emerald/80">
-            {t("notifications.pushNew")}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setToast(null)}
-          className="shrink-0 rounded-lg p-1 text-muted hover:bg-secondary hover:text-foreground"
-          aria-label={t("notifications.dismissToast")}
+    <AnimatePresence>
+      {toast && (
+        <div
+          className="pointer-events-none fixed inset-x-0 top-0 z-[120] flex justify-center px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-4"
+          role="status"
+          aria-live="polite"
         >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
+          <motion.div
+            key={toast.id}
+            initial={{ y: -120, opacity: 0, scale: 0.96 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -120, opacity: 0, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 420, damping: 32 }}
+            className="pointer-events-auto w-full max-w-md"
+          >
+            <div className="flex gap-3 rounded-2xl border border-border/80 bg-card/95 p-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl ring-1 ring-white/5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald/10 text-emerald">
+                <Bell className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1 pt-0.5">
+                <p className="truncate text-sm font-semibold text-foreground">{toast.title}</p>
+                <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted">{toast.message}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setToast(null)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
+                aria-label={t("notifications.dismissToast")}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }
