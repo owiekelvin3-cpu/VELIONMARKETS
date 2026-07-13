@@ -61,6 +61,8 @@ const AdminDepositConfigPage = lazy(() => import("@/pages/admin/AdminDepositConf
 const AdminSettingsPage = lazy(() => import("@/pages/admin/AdminSettingsPage"));
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/AdminNotificationsPage"));
 const AdminEmailPage = lazy(() => import("@/pages/admin/AdminEmailPage"));
+const SupportPage = lazy(() => import("@/pages/dashboard/SupportPage"));
+const AdminSupportPage = lazy(() => import("@/pages/admin/AdminSupportPage"));
 
 const queryClient = new QueryClient();
 
@@ -125,6 +127,7 @@ function App() {
                 <Route path="dashboard/mining" element={<MiningPage />} />
                 <Route path="dashboard/signals" element={<SignalsPage />} />
                 <Route path="dashboard/settings" element={<SettingsPage />} />
+                <Route path="dashboard/support" element={<SupportPage />} />
                 <Route path="dashboard/kyc" element={<KYCPage />} />
                 <Route path="kyc" element={<KYCPage />} />
               </Route>
@@ -139,6 +142,7 @@ function App() {
                 <Route path="dashboard/admin/trades" element={<AdminTradesPage />} />
                 <Route path="dashboard/admin/settings" element={<AdminSettingsPage />} />
                 <Route path="dashboard/admin/notifications" element={<AdminNotificationsPage />} />
+                <Route path="dashboard/admin/support" element={<AdminSupportPage />} />
                 <Route path="dashboard/admin/email" element={<AdminEmailPage />} />
               </Route>
               </Routes>

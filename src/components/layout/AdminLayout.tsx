@@ -6,7 +6,7 @@ import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import {
   Users, FileCheck, ArrowDownToLine, ArrowUpFromLine, TrendingUp,
-  Settings, Bell, Mail, LogOut, Menu, LayoutDashboard, LayoutGrid, Coins,
+  Settings, Bell, Mail, LogOut, Menu, LayoutDashboard, LayoutGrid, Coins, MessageCircle,
 } from "@/lib/icons";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ const adminLinks = [
   { href: "/dashboard/admin/withdrawals", labelKey: "admin.withdrawals", icon: ArrowUpFromLine },
   { href: "/dashboard/admin/trades", labelKey: "admin.trades", icon: TrendingUp },
   { href: "/dashboard/admin/notifications", labelKey: "admin.notifications", icon: Bell },
+  { href: "/dashboard/admin/support", labelKey: "admin.support", icon: MessageCircle },
   { href: "/dashboard/admin/email", labelKey: "admin.emailCenter", icon: Mail },
   { href: "/dashboard/admin/settings", labelKey: "admin.settings", icon: Settings },
 ] as const;

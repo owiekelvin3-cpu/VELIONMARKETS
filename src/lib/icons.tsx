@@ -17,7 +17,14 @@ import {
   faBolt,
   faBrain,
   faBuilding,
-  faCamera,
+  faComments,
+  faFaceSmile,
+  faHeadset,
+  faPaperclip,
+  faPaperPlane,
+  faRotateLeft,
+  faThumbtack,
+  faBoxArchive,
   faCalendar,
   faChartColumn,
   faChartLine,
@@ -31,12 +38,14 @@ import {
   faClock,
   faClockRotateLeft,
   faCoins,
+  faComments,
   faCopy,
   faCreditCard,
   faEarthAmericas,
   faEnvelope,
   faEye,
   faEyeSlash,
+  faFaceSmile,
   faFileCircleCheck,
   faFileLines,
   faGaugeHigh,
@@ -44,6 +53,7 @@ import {
   faGift,
   faGlobe,
   faHammer,
+  faHeadset,
   faImage,
   faKey,
   faLandmark,
@@ -51,14 +61,18 @@ import {
   faMagnifyingGlass,
   faMagnifyingGlassPlus,
   faMoon,
+  faPaperclip,
+  faPaperPlane,
   faPlus,
   faRightFromBracket,
   faRobot,
+  faRotateLeft,
   faServer,
   faShieldHalved,
   faStar,
   faSun,
   faTableCellsLarge,
+  faThumbtack,
   faTowerBroadcast,
   faTrash,
   faTriangleExclamation,
@@ -68,6 +82,7 @@ import {
   faUsers,
   faWallet,
   faWandMagicSparkles,
+  faBoxArchive,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -154,4 +169,12 @@ export const XCircle = createIcon(faCircleXmark, "XCircle");
 export const Zap = createIcon(faBolt, "Zap");
 export const ZoomIn = createIcon(faMagnifyingGlassPlus, "ZoomIn");
 
+export const Archive = createIcon(faBoxArchive, "Archive");
+export const MessageCircle = createIcon(faComments, "MessageCircle");
+export const Headphones = createIcon(faHeadset, "Headphones");
+export const Paperclip = createIcon(faPaperclip, "Paperclip");
+export const Send = createIcon(faPaperPlane, "Send");
+export const Smile = createIcon(faFaceSmile, "Smile");
+export const Pin = createIcon(faThumbtack, "Pin");
+export const RotateCcw = createIcon(faRotateLeft, "RotateCcw");
 export const Paypal = createIcon(faPaypal, "Paypal");

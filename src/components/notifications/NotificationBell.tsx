@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Bell, CheckCheck } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,10 +15,25 @@ import {
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
+function supportPathForRole(isAdmin: boolean) {
+  return isAdmin ? "/dashboard/admin/support" : "/dashboard/support";
+}
+
+function isSupportNotification(title: string) {
+  const t = title.toLowerCase();
+  return (
+    t.includes("support") ||
+    t.includes("ticket") ||
+    t.includes("attachment")
+  );
+}
+
 export function NotificationBell() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const pushTargetPath = profile?.role === "admin" ? "/dashboard/admin" : "/dashboard";
+  const isAdmin = profile?.role === "admin";
+  const pushTargetPath = isAdmin ? "/dashboard/admin" : "/dashboard";
   const { notifications, unreadCount, loading, markRead, markAllRead } = useNotifications(user?.id, {
     pushTargetPath,
   });
@@ -64,6 +80,10 @@ export function NotificationBell() {
                 type="button"
                 onClick={() => {
                   if (!n.read) markRead(n.id);
+                  if (isSupportNotification(n.title)) {
+                    setOpen(false);
+                    navigate(supportPathForRole(!!isAdmin));
+                  }
                 }}
                 className={cn(
                   "w-full border-b border-border px-4 py-3 text-left transition-colors hover:bg-secondary/60",

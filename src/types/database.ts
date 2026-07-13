@@ -534,9 +534,156 @@ export interface Database {
           created_at?: string;
         };
       };
+      support_conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          subject: string;
+          status: SupportConversationStatus;
+          priority: SupportPriority;
+          assigned_admin_id: string | null;
+          pinned: boolean;
+          archived: boolean;
+          last_message_at: string;
+          last_message_preview: string | null;
+          user_last_read_at: string | null;
+          admin_last_read_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject?: string;
+          status?: SupportConversationStatus;
+          priority?: SupportPriority;
+          assigned_admin_id?: string | null;
+          pinned?: boolean;
+          archived?: boolean;
+          last_message_at?: string;
+          last_message_preview?: string | null;
+          user_last_read_at?: string | null;
+          admin_last_read_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          subject?: string;
+          status?: SupportConversationStatus;
+          priority?: SupportPriority;
+          assigned_admin_id?: string | null;
+          pinned?: boolean;
+          archived?: boolean;
+          last_message_at?: string;
+          last_message_preview?: string | null;
+          user_last_read_at?: string | null;
+          admin_last_read_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      support_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_id: string;
+          sender_role: SupportSenderRole;
+          body: string;
+          is_internal: boolean;
+          delivered_at: string | null;
+          read_at: string | null;
+          client_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          sender_id: string;
+          sender_role: SupportSenderRole;
+          body?: string;
+          is_internal?: boolean;
+          delivered_at?: string | null;
+          read_at?: string | null;
+          client_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          sender_id?: string;
+          sender_role?: SupportSenderRole;
+          body?: string;
+          is_internal?: boolean;
+          delivered_at?: string | null;
+          read_at?: string | null;
+          client_id?: string | null;
+          created_at?: string;
+        };
+      };
+      support_attachments: {
+        Row: {
+          id: string;
+          message_id: string;
+          conversation_id: string;
+          file_name: string;
+          file_path: string;
+          file_size: number;
+          mime_type: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          message_id: string;
+          conversation_id: string;
+          file_name: string;
+          file_path: string;
+          file_size?: number;
+          mime_type?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          message_id?: string;
+          conversation_id?: string;
+          file_name?: string;
+          file_path?: string;
+          file_size?: number;
+          mime_type?: string;
+          created_at?: string;
+        };
+      };
+      support_internal_notes: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          admin_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          admin_id: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          admin_id?: string;
+          body?: string;
+          created_at?: string;
+        };
+      };
     };
   };
 }
+
+export type SupportConversationStatus = "open" | "pending" | "resolved" | "archived";
+export type SupportPriority = "normal" | "high";
+export type SupportSenderRole = "user" | "admin" | "system";
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Deposit = Database["public"]["Tables"]["deposits"]["Row"];
@@ -544,3 +691,7 @@ export type Withdrawal = Database["public"]["Tables"]["withdrawals"]["Row"];
 export type Trade = Database["public"]["Tables"]["trades"]["Row"];
 export type Plan = Database["public"]["Tables"]["plans"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+export type SupportConversation = Database["public"]["Tables"]["support_conversations"]["Row"];
+export type SupportMessage = Database["public"]["Tables"]["support_messages"]["Row"];
+export type SupportAttachment = Database["public"]["Tables"]["support_attachments"]["Row"];
+export type SupportInternalNote = Database["public"]["Tables"]["support_internal_notes"]["Row"];

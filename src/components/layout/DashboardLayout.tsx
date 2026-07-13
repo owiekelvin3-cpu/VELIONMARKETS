@@ -5,7 +5,7 @@ import { Logo, LogoIcon } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, TrendingUp, History,
-  Copy, Pickaxe, Radio, FileCheck, LogOut, Menu, Shield, Search, CandlestickChart, Bot, Settings,
+  Copy, Pickaxe, Radio, FileCheck, LogOut, Menu, Shield, Search, CandlestickChart, Bot, Settings, MessageCircle,
 } from "@/lib/icons";
 import { UserAvatar } from "@/components/settings/UserAvatar";
 import { useState, useCallback, useEffect } from "react";
@@ -53,6 +53,7 @@ const navGroups: { labelKey: string; links: NavLink[] }[] = [
   {
     labelKey: "dashboard.navGroupAccount",
     links: [
+      { href: "/dashboard/support", labelKey: "dashboard.support", icon: MessageCircle },
       { href: "/dashboard/kyc", labelKey: "dashboard.kyc", icon: FileCheck },
     ],
   },
@@ -89,6 +90,7 @@ export function DashboardLayout() {
     else if (q.includes("min")) navigate("/dashboard/mining");
     else if (q.includes("signal")) navigate("/dashboard/signals");
     else if (q.includes("kyc") || q.includes("verify")) navigate("/dashboard/kyc");
+    else if (q.includes("support") || q.includes("help") || q.includes("ticket")) navigate("/dashboard/support");
     else if (q.includes("setting")) navigate("/dashboard/settings");
     else navigate("/dashboard/trades");
     setSidebarOpen(false);
