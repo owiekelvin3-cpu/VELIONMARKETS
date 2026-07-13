@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/section";
 
 const PLATFORM_VIDEO_SRC = "/videos/platform.mp4";
+const HERO_BG_SRC = "/images/hero-earth-orbit.png";
 
 function PlatformHeroVideo() {
   const { t } = useTranslation();
@@ -66,13 +67,17 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden pb-10 pt-6 md:pb-16 md:pt-10">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-hero" aria-hidden="true" />
-      <div
-        className="pointer-events-none absolute -right-24 top-10 h-[420px] w-[420px] rounded-full bg-emerald/10 blur-3xl"
-        aria-hidden="true"
-      />
+      {/* Earth-orbit backdrop — hero copy block only */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[min(100%,34rem)] md:h-[min(100%,38rem)]" aria-hidden="true">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('${HERO_BG_SRC}')` }}
+        />
+        <div className="absolute inset-0 bg-background/45 dark:bg-[#03040a]/55" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
+      </div>
 
-      <Container>
+      <Container className="relative z-10">
         <div className="mx-auto max-w-3xl text-center">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -125,7 +130,7 @@ export function Hero() {
         initial={{ opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="relative mt-10 md:mt-14"
+        className="relative z-10 mt-10 md:mt-14"
       >
         <Container className="px-0 sm:px-6 lg:px-8">
           <PlatformHeroVideo />

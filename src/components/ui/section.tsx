@@ -6,12 +6,14 @@ interface SectionProps {
   className?: string;
   id?: string;
   variant?: "default" | "elevated" | "gradient";
+  style?: React.CSSProperties;
 }
 
-export function Section({ children, className, id, variant = "default" }: SectionProps) {
+export function Section({ children, className, id, variant = "default", style }: SectionProps) {
   return (
     <section
       id={id}
+      style={style}
       className={cn(
         "section-padding relative overflow-hidden",
         variant === "elevated" && "bg-gradient-surface",

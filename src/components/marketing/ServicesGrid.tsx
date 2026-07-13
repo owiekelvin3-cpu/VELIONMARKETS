@@ -17,8 +17,23 @@ export function ServicesGrid() {
   const { t } = useTranslation();
 
   return (
-    <Section id="services" className="section-padding-sm !py-16 md:!py-20">
-      <Container>
+    <Section
+      id="services"
+      className="section-padding-sm !py-16 md:!py-20"
+      style={{
+        backgroundImage: "url('/images/services-nebula.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Keep copy readable over the nebula in light and dark themes */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-background/55 dark:bg-[#050508]/70"
+        aria-hidden="true"
+      />
+
+      <Container className="relative z-10">
         <div className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeader
             eyebrow={t("services.eyebrow")}
@@ -41,7 +56,7 @@ export function ServicesGrid() {
               <Link
                 key={s.titleKey}
                 to={s.href}
-                className="group min-w-[240px] shrink-0 rounded-xl border border-border/80 bg-transparent p-5 transition-colors hover:border-emerald/30 hover:bg-emerald/[0.04] sm:min-w-0"
+                className="group min-w-[240px] shrink-0 rounded-xl border border-border/80 bg-surface/70 p-5 backdrop-blur-sm transition-colors hover:border-emerald/30 hover:bg-emerald/[0.08] sm:min-w-0 dark:bg-black/35 dark:hover:bg-emerald/[0.08]"
               >
                 <s.icon className="mb-3 h-5 w-5 text-emerald" aria-hidden="true" />
                 <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-emerald">
