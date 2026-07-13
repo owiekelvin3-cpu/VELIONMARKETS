@@ -237,13 +237,17 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <PageHeader title={t("settingsPage.title")} subtitle={t("settingsPage.subtitle")} />
+    <div className="mx-auto max-w-5xl space-y-6">
+      <PageHeader
+        eyebrow={t("dashboard.navGroupAccount")}
+        title={t("settingsPage.title")}
+        subtitle={t("settingsPage.subtitle")}
+      />
 
       {(message || error) && (
         <div
           className={cn(
-            "mb-6 rounded-lg border px-4 py-3 text-sm",
+            "rounded-xl border px-4 py-3 text-sm",
             error
               ? "border-red-500/30 bg-red-500/10 text-red-300"
               : "border-emerald/30 bg-emerald/10 text-emerald"
@@ -254,17 +258,17 @@ export default function SettingsPage() {
       )}
 
       <div className="flex flex-col gap-6 lg:flex-row">
-        <nav className="flex shrink-0 gap-2 overflow-x-auto lg:w-56 lg:flex-col lg:overflow-visible">
+        <nav className="flex shrink-0 gap-1 overflow-x-auto rounded-xl border border-border bg-secondary/30 p-1 lg:w-52 lg:flex-col lg:overflow-visible">
           {sections.map((s) => (
             <button
               key={s.id}
               type="button"
               onClick={() => setSection(s.id)}
               className={cn(
-                "flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
                 section === s.id
-                  ? "bg-emerald/10 text-emerald"
-                  : "text-muted hover:bg-secondary/70 hover:text-foreground"
+                  ? "nav-item-active"
+                  : "text-muted hover:bg-secondary/50 hover:text-foreground"
               )}
             >
               <s.icon className="h-4 w-4 shrink-0" />

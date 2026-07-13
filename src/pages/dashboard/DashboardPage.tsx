@@ -7,10 +7,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { formatAuthError, withValidSession } from "@/lib/auth-session";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { formatCurrency } from "@/lib/utils";
 import {
   ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet,
-  ShieldCheck, Bot,
+  ShieldCheck, Bot, CandlestickChart,
 } from "@/lib/icons";
 import { RecentTransactionsCard } from "@/components/dashboard/TransactionList";
 import { TransactionReceiptPanel } from "@/components/dashboard/TransactionReceiptPanel";
@@ -60,7 +61,7 @@ export default function DashboardPage() {
       }
     };
     load();
-  }, [user]);
+  }, [user, t]);
 
   const totalDeposits = useMemo(
     () => allDeposits.filter((d) => d.status === "completed" || d.status === "approved").reduce((s, d) => s + Number(d.amount), 0),
@@ -95,71 +96,100 @@ export default function DashboardPage() {
     { labelKey: "dashboard.accountStatus", value: t(kycKey), icon: ShieldCheck },
   ] as const;
 
-  const quickActions = [
-    { href: "/dashboard/ai-trading", labelKey: "dashboard.aiTrading", icon: Bot },
-    { href: "/dashboard/trading-room", labelKey: "dashboard.tradingRoom", icon: TrendingUp },
-    { href: "/dashboard/deposits", labelKey: "dashboard.deposits", icon: ArrowDownToLine },
-    { href: "/dashboard/withdrawals", labelKey: "dashboard.withdrawals", icon: ArrowUpFromLine },
-  ] as const;
-
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm text-muted">{t("dashboard.welcomeBack", { name: profile?.full_name || t("common.investor") })}</p>
-        <h1 className="mt-1 font-display text-2xl font-bold text-foreground md:text-3xl">{t("dashboard.portfolioOverview")}</h1>
-      </div>
+      <PageHeader
+        eyebrow={t("dashboard.title")}
+        title={t("dashboard.welcomeBack", { name: profile?.full_name || t("common.investor") })}
+        subtitle={t("dashboard.portfolioOverview")}
+        actions={
+          <>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/dashboard/deposits">
+                <ArrowDownToLine className="h-3.5 w-3.5" />
+                {t("dashboard.deposits")}
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/dashboard/withdrawals">
+                <ArrowUpFromLine className="h-3.5 w-3.5" />
+                {t("dashboard.withdrawals")}
+              </Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link to="/dashboard/trading-room">
+                <CandlestickChart className="h-3.5 w-3.5" />
+                {t("dashboard.tradingRoom")}
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       {error && (
-        <p className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm text-red-400">{error}</p>
+        <p className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm text-red-400">{error}</p>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-secondary to-transparent">
-        <div className="grid gap-6 p-6 lg:grid-cols-2 lg:p-8">
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted">
-              <Wallet className="h-4 w-4 text-emerald" aria-hidden="true" />
+      <div className="surface-panel overflow-hidden">
+        <div className="grid gap-6 p-5 md:p-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
+          <div className="flex flex-col justify-center">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted">
+              <Wallet className="h-3.5 w-3.5 text-emerald" aria-hidden="true" />
               {t("dashboard.portfolioBalance")}
             </div>
-            <p className="mt-2 font-display text-4xl font-bold tracking-tight text-gradient-emerald md:text-5xl">
+            <p className="mt-2 font-display text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
               {formatCurrency(balance)}
             </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              {quickActions.map((action) => (
-                <Button key={action.href} variant="outline" size="sm" asChild className="border-border bg-secondary/60">
-                  <Link to={action.href}>
-                    <action.icon className="mr-2 h-4 w-4" />
-                    {t(action.labelKey)}
-                  </Link>
-                </Button>
-              ))}
+            <div className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2.5 py-1 text-xs text-muted">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald" />
+              {t(kycKey)}
+            </div>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Button size="sm" asChild>
+                <Link to="/dashboard/ai-trading">
+                  <Bot className="h-3.5 w-3.5" />
+                  {t("dashboard.aiTrading")}
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/dashboard/trading-room">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  {t("dashboard.tradingRoom")}
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/dashboard/deposits">
+                  <ArrowDownToLine className="h-3.5 w-3.5" />
+                  {t("dashboard.deposits")}
+                </Link>
+              </Button>
             </div>
           </div>
-          <div className="h-40 lg:h-auto lg:min-h-[160px]">
+          <div className="h-36 text-emerald lg:h-auto lg:min-h-[168px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="portfolioChart" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="0%" stopColor="currentColor" stopOpacity={0.28} />
+                    <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <Area type="monotone" dataKey="v" stroke="#10b981" strokeWidth={2} fill="url(#portfolioChart)" />
+                <Area type="monotone" dataKey="v" stroke="currentColor" strokeWidth={2} fill="url(#portfolioChart)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      <StaggerContainer className="grid gap-4 sm:grid-cols-3">
+      <StaggerContainer className="grid gap-3 sm:grid-cols-3">
         {stats.map((s) => (
           <StaggerItem key={s.labelKey}>
-            <div className="rounded-xl border border-border bg-secondary/50 p-5">
+            <div className="surface-muted p-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-muted">{t(s.labelKey)}</p>
-                <s.icon className="h-4 w-4 text-emerald/70" aria-hidden="true" />
+                <p className="text-xs font-medium uppercase tracking-wider text-muted">{t(s.labelKey)}</p>
+                <s.icon className="h-3.5 w-3.5 text-muted" aria-hidden="true" />
               </div>
-              <p className="mt-2 font-display text-2xl font-bold text-foreground">{s.value}</p>
+              <p className="mt-2 font-display text-xl font-semibold text-foreground">{s.value}</p>
             </div>
           </StaggerItem>
         ))}

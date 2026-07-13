@@ -1,7 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { Shield } from "@/lib/icons";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Shield } from "@/lib/icons";
 import { FadeIn } from "@/components/motion/Motion";
-import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { DepositMethodCard } from "@/components/dashboard/DepositMethodCard";
 import { DepositFundsShowcase } from "@/components/dashboard/DepositFundsShowcase";
 import { CryptoIconGrid, GiftCardIconGrid } from "@/components/dashboard/DepositIcons";
@@ -10,14 +12,22 @@ export default function DepositsPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <DepositPageHeader
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader
+        eyebrow={t("dashboard.navGroupCash")}
         title={t("deposits.title")}
         subtitle={t("deposits.subtitle")}
-        backTo="/dashboard"
+        actions={
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/dashboard">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {t("dashboard.overview")}
+            </Link>
+          </Button>
+        }
       />
 
-      <FadeIn className="space-y-6">
+      <FadeIn className="space-y-4">
         <DepositMethodCard
           to="/dashboard/deposits/crypto"
           title={t("deposits.cryptoTitle")}
@@ -34,9 +44,9 @@ export default function DepositsPage() {
           iconRow={<GiftCardIconGrid size="sm" />}
         />
 
-        <div className="flex gap-4 rounded-2xl border border-dashed border-border bg-secondary/50 p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald/10">
-            <Shield className="h-5 w-5 text-emerald" aria-hidden="true" />
+        <div className="surface-muted flex gap-4 p-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted">
+            <Shield className="h-4 w-4" aria-hidden="true" />
           </div>
           <p className="text-sm leading-relaxed text-muted">{t("deposits.verificationNote")}</p>
         </div>

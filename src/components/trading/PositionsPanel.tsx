@@ -14,15 +14,15 @@ export function PositionsPanel({ openTrades, historyTrades }: PositionsPanelProp
   const { t } = useTranslation();
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-secondary/50">
+    <div className="overflow-hidden surface-panel">
       <Tabs defaultValue="open">
-        <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="font-display text-lg font-semibold text-foreground">{t("trading.positions")}</h2>
-          <TabsList className="h-10 w-full rounded-xl bg-secondary p-1 sm:w-auto">
-            <TabsTrigger value="open" className="flex-1 rounded-lg text-xs sm:flex-none sm:px-4">
+        <div className="flex flex-col gap-3 border-b border-border px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-display text-base font-semibold text-foreground">{t("trading.positions")}</h2>
+          <TabsList className="h-9 w-full rounded-lg bg-secondary/60 p-0.5 sm:w-auto">
+            <TabsTrigger value="open" className="flex-1 rounded-md text-xs sm:flex-none sm:px-3">
               {t("trading.openTab")} ({openTrades.length})
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex-1 rounded-lg text-xs sm:flex-none sm:px-4">
+            <TabsTrigger value="history" className="flex-1 rounded-md text-xs sm:flex-none sm:px-3">
               {t("trading.historyTab")} ({historyTrades.length})
             </TabsTrigger>
           </TabsList>

@@ -15,7 +15,7 @@ import { TradingChart } from "@/components/trading/TradingChart";
 import { OrderPanel } from "@/components/trading/OrderPanel";
 import { PositionsPanel } from "@/components/trading/PositionsPanel";
 import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/motion/Motion";
+import { PageHeader } from "@/components/ui/page-header";
 import { formatCurrency } from "@/lib/utils";
 import { ensureValidSession } from "@/lib/auth-session";
 import { cn } from "@/lib/utils";
@@ -83,56 +83,47 @@ export default function TradingRoomPage() {
   const isSuccessMsg = message === t("trading.orderPlaced");
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-4">
-      {/* Page header */}
-      <FadeIn className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald/20 bg-emerald/10 px-3 py-1 text-xs font-medium text-emerald">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald" />
-            </span>
-            {t("trading.live")}
-          </div>
-          <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">{t("trading.title")}</h1>
-          <p className="mt-1 text-sm text-muted">{t("trading.subtitle")}</p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <div className="rounded-xl border border-border bg-secondary/50 px-4 py-2.5">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-muted">{t("trading.tradingBalance")}</p>
-            <p className="font-display text-lg font-bold text-emerald">{formatCurrency(balance)}</p>
-          </div>
-          {balance < 25 && (
-            <Button asChild size="sm" variant="outline" className="border-emerald/30 text-emerald">
-              <Link to="/dashboard/deposits">
-                <Wallet className="mr-1.5 h-3.5 w-3.5" />
-                {t("trading.addFunds")}
-              </Link>
+    <div className="space-y-4">
+      <PageHeader
+        eyebrow={t("trading.live")}
+        title={t("trading.title")}
+        subtitle={t("trading.subtitle")}
+        actions={
+          <>
+            <div className="surface-muted px-3 py-2">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted">{t("trading.tradingBalance")}</p>
+              <p className="font-display text-base font-semibold text-foreground">{formatCurrency(balance)}</p>
+            </div>
+            {balance < 25 && (
+              <Button asChild size="sm" variant="outline">
+                <Link to="/dashboard/deposits">
+                  <Wallet className="h-3.5 w-3.5" />
+                  {t("trading.addFunds")}
+                </Link>
+              </Button>
+            )}
+            <Button variant="outline" size="icon" onClick={refresh} aria-label={t("trading.refresh")}>
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             </Button>
-          )}
-          <Button variant="outline" size="icon" onClick={refresh} className="shrink-0 border-border" aria-label={t("trading.refresh")}>
-            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-          </Button>
-        </div>
-      </FadeIn>
+          </>
+        }
+      />
 
-      {/* Pair + interval toolbar */}
-      <FadeIn className="rounded-2xl border border-border bg-secondary/50 p-4">
+      <div className="surface-panel p-3 md:p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">{t("trading.selectPair")}</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               {TRADING_PAIRS.map((p) => (
                 <button
                   key={p.symbol}
                   type="button"
                   onClick={() => setSymbol(p.symbol)}
                   className={cn(
-                    "shrink-0 rounded-xl border px-4 py-2 text-sm font-medium transition-all",
+                    "shrink-0 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
                     symbol === p.symbol
-                      ? "border-emerald/40 bg-emerald/10 text-emerald shadow-[0_0_20px_rgba(16,185,129,0.08)]"
-                      : "border-border bg-secondary/50 text-muted hover:border-border hover:text-foreground"
+                      ? "border-border bg-secondary text-foreground"
+                      : "border-transparent text-muted hover:bg-secondary/50 hover:text-foreground"
                   )}
                 >
                   {p.label}
@@ -143,17 +134,17 @@ export default function TradingRoomPage() {
 
           <div className="shrink-0">
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">{t("trading.timeframe")}</p>
-            <div className="inline-flex gap-1 rounded-xl border border-border bg-secondary/80 p-1">
+            <div className="inline-flex gap-0.5 rounded-lg border border-border bg-secondary/40 p-0.5">
               {INTERVALS.map((iv) => (
                 <button
                   key={iv}
                   type="button"
                   onClick={() => setChartInterval(iv)}
                   className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                    "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                     chartInterval === iv
-                      ? "bg-emerald/15 text-emerald ring-1 ring-emerald/25"
-                      : "text-muted hover:bg-secondary/70 hover:text-foreground"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted hover:text-foreground"
                   )}
                 >
                   {iv}
@@ -162,49 +153,48 @@ export default function TradingRoomPage() {
             </div>
           </div>
         </div>
-      </FadeIn>
+      </div>
 
-      {/* Live price hero */}
-      <FadeIn className="rounded-2xl border border-border bg-gradient-to-br from-secondary to-transparent p-5">
+      <div className="surface-panel p-4 md:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted">{pair.label}</p>
             <div className="mt-1 flex flex-wrap items-baseline gap-3">
-              <span className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              <span className="font-display text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
                 {ticker ? `$${formatPrice(ticker.lastPrice, symbol)}` : "—"}
               </span>
               {ticker && (
                 <span className={cn(
-                  "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-sm font-semibold",
+                  "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm font-semibold",
                   isUp ? "bg-emerald/10 text-emerald" : "bg-red-500/10 text-red-400"
                 )}>
-                  {isUp ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                  {isUp ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                   {isUp ? "+" : ""}{ticker.priceChangePercent.toFixed(2)}%
                 </span>
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2">
             {[
               { label: t("trading.high"), value: ticker ? `$${formatPrice(ticker.highPrice, symbol)}` : "—" },
               { label: t("trading.low"), value: ticker ? `$${formatPrice(ticker.lowPrice, symbol)}` : "—" },
               { label: t("trading.volume"), value: ticker ? formatVolume(ticker.quoteVolume) : "—" },
               { label: t("trading.status"), value: loading ? "…" : t("trading.open247") },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-border bg-secondary/80 px-3 py-2.5">
+              <div key={item.label} className="surface-muted px-3 py-2">
                 <p className="text-[10px] uppercase tracking-wider text-muted">{item.label}</p>
                 <p className="mt-0.5 text-sm font-semibold text-foreground">{item.value}</p>
               </div>
             ))}
           </div>
         </div>
-      </FadeIn>
+      </div>
 
       {error && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
           <p className="text-sm text-red-400">{error}</p>
-          <Button variant="outline" size="sm" onClick={refresh} className="border-red-500/30 text-red-300">
+          <Button variant="outline" size="sm" onClick={refresh}>
             {t("trading.retry")}
           </Button>
         </div>
@@ -219,17 +209,16 @@ export default function TradingRoomPage() {
         )}>{message}</p>
       )}
 
-      {/* Chart + order */}
-      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-        <div className="min-w-0 space-y-3">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+        <div className="min-w-0 space-y-2">
           <div className="flex items-center gap-2 text-xs text-muted">
-            <Activity className="h-3.5 w-3.5 text-emerald" />
+            <Activity className="h-3.5 w-3.5" />
             {t("trading.chartLabel", { pair: pair.label, interval: chartInterval })}
           </div>
           <TradingChart candles={candles} symbol={symbol} loading={loading} />
         </div>
 
-        <div className="xl:sticky xl:top-24 xl:self-start">
+        <div className="xl:sticky xl:top-20 xl:self-start">
           <OrderPanel
             symbol={symbol}
             pairLabel={pair.label}

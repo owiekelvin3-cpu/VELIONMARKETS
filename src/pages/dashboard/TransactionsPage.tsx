@@ -54,20 +54,24 @@ export default function TransactionsPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={t("transactions.title")} subtitle={t("transactions.subtitle")} />
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow={t("dashboard.navGroupCash")}
+        title={t("transactions.title")}
+        subtitle={t("transactions.subtitle")}
+      />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="inline-flex flex-wrap gap-0.5 rounded-xl border border-border bg-secondary/30 p-1">
         {filters.map((f) => (
           <button
             key={f.id}
             type="button"
             onClick={() => setFilter(f.id)}
             className={cn(
-              "rounded-xl border px-4 py-2 text-sm font-medium transition-colors",
+              "rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
               filter === f.id
-                ? "border-emerald/40 bg-emerald/10 text-emerald"
-                : "border-border bg-secondary/30 text-muted hover:border-emerald/20 hover:text-foreground"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted hover:text-foreground"
             )}
           >
             {f.label}
@@ -75,7 +79,7 @@ export default function TransactionsPage() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="surface-panel p-4 md:p-5">
         {loading ? (
           <p className="text-sm text-muted">{t("common.loading")}…</p>
         ) : error ? (

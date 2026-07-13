@@ -4,29 +4,31 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50 focus-visible:ring-offset-2 focus-visible:ring-offset-void disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] overflow-hidden",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] overflow-hidden",
   {
     variants: {
       variant: {
         default:
-          "rounded-full bg-gradient-emerald text-white shadow-[0_4px_24px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.45)] hover:scale-[1.02]",
+          "rounded-xl bg-emerald text-white shadow-none hover:bg-emerald-glow",
         secondary:
-          "rounded-full glass text-foreground hover:border-emerald/25 hover:bg-gradient-emerald-subtle",
+          "rounded-xl border border-border bg-secondary/60 text-foreground hover:bg-secondary",
         outline:
-          "rounded-full border border-border bg-gradient-to-b from-secondary to-transparent text-foreground hover:border-emerald/35 hover:shadow-[0_0_24px_rgba(16,185,129,0.1)]",
+          "rounded-xl border border-border bg-transparent text-foreground hover:bg-secondary/50",
         ghost:
-          "rounded-full text-muted hover:text-foreground hover:bg-secondary/60",
+          "rounded-xl text-muted hover:text-foreground hover:bg-secondary/60",
         destructive:
-          "rounded-full bg-gradient-to-b from-red-500/15 to-red-500/5 text-red-500 border border-red-500/25",
-        link: "text-emerald underline-offset-4 hover:underline",
+          "rounded-xl border border-red-500/25 bg-red-500/10 text-red-500 hover:bg-red-500/15",
+        link: "rounded-none text-emerald underline-offset-4 hover:underline",
         gold:
-          "rounded-full bg-gradient-to-r from-gold-soft via-gold to-[#a68520] text-[#0f172a] shadow-[0_4px_24px_rgba(201,162,39,0.3)] hover:shadow-[0_8px_32px_rgba(201,162,39,0.4)] hover:scale-[1.02]",
+          "rounded-xl bg-gold text-[#0f172a] hover:bg-gold-soft",
+        pill:
+          "rounded-full bg-gradient-emerald text-white shadow-[0_4px_24px_rgba(16,185,129,0.35)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.45)]",
       },
       size: {
-        default: "h-12 px-8 text-sm",
-        sm: "h-10 px-5 text-sm",
-        lg: "h-14 px-10 text-base",
-        icon: "h-11 w-11 rounded-full",
+        default: "h-11 px-6 text-sm",
+        sm: "h-9 px-4 text-sm",
+        lg: "h-12 px-8 text-base",
+        icon: "h-10 w-10 rounded-xl",
       },
     },
     defaultVariants: {

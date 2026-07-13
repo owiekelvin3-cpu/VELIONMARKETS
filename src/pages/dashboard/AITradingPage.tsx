@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 import { FadeIn } from "@/components/motion/Motion";
 import {
   AI_BOTS, BEGINNER_CRYPTO, BEGINNER_DURATIONS, CRYPTO_ASSETS, LIVE_SIGNALS, RECOMMENDED_BOT_ID, getBotName,
@@ -62,18 +63,19 @@ function StepPill({
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        "flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-left transition-all sm:justify-start sm:px-4",
-        active ? "border-emerald/40 bg-emerald/10" : "border-border bg-secondary/50",
-        onClick && !active && "hover:border-border"
+        "flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors sm:justify-start sm:px-3.5",
+        active ? "border-border bg-secondary/70" : "border-transparent bg-secondary/30",
+        onClick && !active && "hover:bg-secondary/50",
+        done && !active && "text-muted"
       )}
     >
       <span className={cn(
-        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-        done ? "bg-emerald text-black" : active ? "bg-emerald/20 text-emerald" : "bg-secondary text-muted"
+        "flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold",
+        done ? "bg-emerald text-black" : active ? "bg-foreground text-background" : "bg-secondary text-muted"
       )}>
-        {done ? <CheckCircle className="h-4 w-4" /> : n}
+        {done ? <CheckCircle className="h-3.5 w-3.5" /> : n}
       </span>
-      <span className={cn("hidden text-sm font-medium sm:inline", active ? "text-emerald" : "text-foreground")}>
+      <span className={cn("hidden text-sm font-medium sm:inline", active ? "text-foreground" : "text-muted")}>
         {label}
       </span>
     </button>
@@ -245,7 +247,7 @@ export default function AITradingPage() {
   const cryptoOptions = showAllCrypto ? CRYPTO_ASSETS : BEGINNER_CRYPTO;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-5">
       {user && (
         <AITradingWalkthrough
           userId={user.id}
@@ -255,88 +257,80 @@ export default function AITradingPage() {
         />
       )}
 
-      {/* Header — plain language */}
-      <FadeIn>
-        <div className="text-center sm:text-left">
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald/20 bg-emerald/10 px-3 py-1 text-xs font-medium text-emerald">
-              <Sparkles className="h-3.5 w-3.5" />
-              {t("aiTrading.badgeBeginner")}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-border text-xs"
-              onClick={() => setShowWalkthrough(true)}
-            >
-              <HelpCircle className="mr-1.5 h-3.5 w-3.5" />
-              {t("aiTrading.walkthrough.replay")}
-            </Button>
-          </div>
-          <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">{t("aiTrading.titleSimple")}</h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted">{t("aiTrading.subtitleSimple")}</p>
-        </div>
-      </FadeIn>
+      <PageHeader
+        eyebrow={t("aiTrading.badgeBeginner")}
+        title={t("aiTrading.titleSimple")}
+        subtitle={t("aiTrading.subtitleSimple")}
+        actions={
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowWalkthrough(true)}
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+            {t("aiTrading.walkthrough.replay")}
+          </Button>
+        }
+      />
 
-      {/* Balance strip */}
-      <FadeIn className="rounded-2xl border border-border bg-secondary/50 p-4">
+      <div className="surface-panel p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs text-muted">{t("aiTrading.yourBalance")}</p>
-            <p className="font-display text-2xl font-bold text-emerald">{formatCurrency(balance)}</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted">{t("aiTrading.yourBalance")}</p>
+            <p className="font-display text-2xl font-semibold text-foreground">{formatCurrency(balance)}</p>
           </div>
           {needsFunds ? (
-            <Button asChild className="w-full sm:w-auto">
+            <Button asChild size="sm" className="w-full sm:w-auto">
               <Link to="/dashboard/deposits">
-                <Wallet className="mr-2 h-4 w-4" />
+                <Wallet className="h-4 w-4" />
                 {t("aiTrading.addFundsFirst")}
               </Link>
             </Button>
           ) : activeSubs.length > 0 ? (
-            <div className="text-right">
-              <p className="text-xs text-muted">{t("aiTrading.liveProfit")}</p>
-              <p className="font-display text-xl font-bold text-emerald">+{formatCurrency(totalProfit)}</p>
+            <div className="sm:text-right">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted">{t("aiTrading.liveProfit")}</p>
+              <p className="font-display text-xl font-semibold text-emerald">+{formatCurrency(totalProfit)}</p>
             </div>
-          ) : null}
+          ) : (
+            <Button size="sm" onClick={startWizard} className="w-full sm:w-auto">
+              <Sparkles className="h-3.5 w-3.5" />
+              {t("aiTrading.nav.start")}
+            </Button>
+          )}
         </div>
-      </FadeIn>
+      </div>
 
-      {/* Live profit dashboard */}
       {activeSubs.length > 0 && (
         <FadeIn>
           <AITradingProfitPanel subscriptions={activeSubs} tick={tick} />
         </FadeIn>
       )}
 
-      {/* Main navigation */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 rounded-xl border border-border bg-secondary/30 p-1">
         <Button
-          variant={view === "start" ? "default" : "outline"}
+          variant={view === "start" ? "secondary" : "ghost"}
           size="sm"
-          className={view !== "start" ? "border-border" : ""}
           onClick={startWizard}
         >
           {t("aiTrading.nav.start")}
         </Button>
         <Button
-          variant={view === "mybot" ? "default" : "outline"}
+          variant={view === "mybot" ? "secondary" : "ghost"}
           size="sm"
-          className={cn(view !== "mybot" && "border-border")}
           onClick={goToMyBot}
           disabled={activeSubs.length === 0}
         >
           {t("aiTrading.nav.myBot")}
           {activeSubs.length > 0 && (
-            <span className="ml-1.5 rounded-full bg-emerald/20 px-1.5 text-[10px] font-bold">{activeSubs.length}</span>
+            <span className="ml-1 rounded-md bg-emerald/15 px-1.5 text-[10px] font-bold text-emerald">{activeSubs.length}</span>
           )}
         </Button>
         <Button
-          variant={view === "history" ? "default" : "outline"}
+          variant={view === "history" ? "secondary" : "ghost"}
           size="sm"
-          className={cn(view !== "history" && "border-border")}
           onClick={() => { setView("history"); setMessage(""); }}
         >
-          <History className="mr-1.5 h-3.5 w-3.5" />
+          <History className="h-3.5 w-3.5" />
           {t("aiTrading.nav.history")}
         </Button>
       </div>

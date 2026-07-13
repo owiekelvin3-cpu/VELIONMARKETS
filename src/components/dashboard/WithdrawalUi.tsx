@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Wallet, ArrowDownToLine, ArrowUpFromLine, ArrowLeft, Shield, Clock, CheckCircle,
+  Wallet, ArrowDownToLine, ArrowLeft, Shield, Clock, CheckCircle,
 } from "@/lib/icons";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -20,25 +20,18 @@ export function WithdrawPageHeader({
   backTo?: string;
 }) {
   return (
-    <FadeIn className="mb-8">
+    <FadeIn className="mb-6 sm:mb-8">
       <Link
         to={backTo}
-        className="mb-5 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary/40">
           <ArrowLeft className="h-4 w-4" />
         </span>
         Back
       </Link>
-      <div className="flex items-start gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald to-emerald/70 text-white shadow-lg shadow-emerald/20">
-          <ArrowUpFromLine className="h-7 w-7" />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">{title}</h1>
-          {subtitle && <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-muted">{subtitle}</p>}
-        </div>
-      </div>
+      <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+      {subtitle && <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-muted">{subtitle}</p>}
     </FadeIn>
   );
 }
@@ -47,20 +40,17 @@ export function WithdrawalBalanceBanner({ balance }: { balance: number }) {
   const { t } = useTranslation();
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-emerald/25 bg-gradient-to-br from-emerald/15 via-card to-card p-6">
-      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-emerald/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-8 left-1/3 h-24 w-24 rounded-full bg-emerald/10 blur-2xl" />
-
-      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald/20 to-emerald/5 text-emerald ring-1 ring-emerald/25">
-            <Wallet className="h-7 w-7" aria-hidden="true" />
+    <div className="surface-panel p-5 md:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted">
+            <Wallet className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-emerald/80">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
               {t("withdrawals.availableBalance")}
             </p>
-            <p className="mt-1 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            <p className="mt-0.5 font-display text-3xl font-semibold tracking-tight text-foreground">
               {formatCurrency(balance)}
             </p>
           </div>
@@ -68,19 +58,19 @@ export function WithdrawalBalanceBanner({ balance }: { balance: number }) {
 
         {balance > 0 ? (
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald/30 bg-emerald/10 px-3 py-1.5 text-xs font-medium text-emerald">
-              <CheckCircle className="h-3.5 w-3.5" />
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2.5 py-1 text-xs text-muted">
+              <CheckCircle className="h-3.5 w-3.5 text-emerald" />
               {t("withdrawals.readyToWithdraw")}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2.5 py-1 text-xs text-muted">
               <Clock className="h-3.5 w-3.5" />
               {t("withdrawals.manualReview")}
             </span>
           </div>
         ) : (
-          <Button asChild className="w-fit shadow-lg shadow-emerald/10">
+          <Button asChild size="sm">
             <Link to="/dashboard/deposits">
-              <ArrowDownToLine className="mr-2 h-4 w-4" />
+              <ArrowDownToLine className="h-4 w-4" />
               {t("withdrawals.addFunds")}
             </Link>
           </Button>
@@ -94,12 +84,12 @@ export function WithdrawalSecurityCard() {
   const { t } = useTranslation();
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-dashed border-emerald/20 bg-emerald/[0.03] p-5">
-      <div className="flex gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald/10 text-emerald">
-          <Shield className="h-6 w-6" aria-hidden="true" />
+    <div className="surface-muted p-4 md:p-5">
+      <div className="flex gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted">
+          <Shield className="h-4 w-4" aria-hidden="true" />
         </div>
-        <div className="space-y-2 text-sm leading-relaxed text-muted">
+        <div className="space-y-1.5 text-sm leading-relaxed text-muted">
           <p className="font-medium text-foreground">{t("withdrawals.secureTitle")}</p>
           <p>{t("withdrawals.securityNote")}</p>
           <p>{t("withdrawals.processingNote")}</p>
@@ -119,8 +109,8 @@ export function WithdrawalFormPanel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-      {title && <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>}
+    <div className="surface-panel p-5 sm:p-6">
+      {title && <h2 className="font-display text-base font-semibold text-foreground">{title}</h2>}
       {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       <div className={title || description ? "mt-5 space-y-4" : "space-y-4"}>{children}</div>
     </div>
@@ -131,10 +121,10 @@ export function WithdrawalHistoryPanel({ children }: { children: React.ReactNode
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+    <div className="surface-panel p-5 sm:p-6">
       <div className="mb-4 flex items-center gap-2">
         <Clock className="h-4 w-4 text-muted" />
-        <h2 className="font-display text-lg font-semibold text-foreground">{t("withdrawals.recent")}</h2>
+        <h2 className="font-display text-base font-semibold text-foreground">{t("withdrawals.recent")}</h2>
       </div>
       {children}
     </div>

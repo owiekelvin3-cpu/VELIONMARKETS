@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { ArrowLeft } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useWithdrawalData } from "@/hooks/useWithdrawals";
 import { FadeIn } from "@/components/motion/Motion";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import {
-  WithdrawPageHeader,
   WithdrawalBalanceBanner,
   WithdrawalHistoryPanel,
   WithdrawalSecurityCard,
@@ -23,14 +25,22 @@ export default function WithdrawalsPage() {
   }, [user, load]);
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <WithdrawPageHeader
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHeader
+        eyebrow={t("dashboard.navGroupCash")}
         title={t("withdrawals.title")}
         subtitle={t("withdrawals.subtitle")}
-        backTo="/dashboard"
+        actions={
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/dashboard">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {t("dashboard.overview")}
+            </Link>
+          </Button>
+        }
       />
 
-      <FadeIn className="space-y-8">
+      <FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
 
         <WithdrawFundsShowcase />
@@ -43,9 +53,9 @@ export default function WithdrawalsPage() {
           <WithdrawalHistory withdrawals={withdrawals} />
         </WithdrawalHistoryPanel>
 
-        <p className="pb-4 text-center text-xs text-muted">
+        <p className="pb-2 text-center text-xs text-muted">
           {t("withdrawals.needHelp")}{" "}
-          <Link to="/dashboard/settings" className="font-medium text-emerald hover:underline">
+          <Link to="/dashboard/settings" className="font-medium text-foreground hover:text-emerald">
             {t("withdrawals.contactSupport")}
           </Link>
         </p>

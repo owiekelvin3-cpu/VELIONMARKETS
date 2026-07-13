@@ -231,6 +231,14 @@
     background-clip: text;
   }
 
+  /* Always-light gradient for copy on dark media / photo backdrops */
+  .text-gradient-on-media {
+    background: linear-gradient(135deg, #ffffff 0%, #e4e4e7 55%, #d4d4d8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   .text-gradient-emerald {
     background: linear-gradient(135deg, #6ee7b7 0%, #34d399 30%, #10b981 60%, #059669 100%);
     -webkit-background-clip: text;
@@ -351,12 +359,33 @@
   }
 
   /* Soft panel used across dashboard — works in both themes */
-  .surface-panel {
-    @apply rounded-2xl border border-border bg-card;
+  .surface-panel,
+  .panel-surface {
+    @apply rounded-xl border border-border bg-card;
   }
 
-  .surface-muted {
-    @apply rounded-xl border border-border bg-secondary/60;
+  .surface-muted,
+  .panel-muted {
+    @apply rounded-xl border border-border bg-secondary/40;
+  }
+
+  .dashboard-shell {
+    @apply mx-auto w-full max-w-[1400px] space-y-6;
+  }
+
+  .nav-item-active {
+    @apply relative bg-secondary/70 text-foreground;
+  }
+
+  .nav-item-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
+    width: 2px;
+    border-radius: 999px;
+    background: var(--color-emerald);
   }
 
   .select-input {
@@ -408,14 +437,6 @@
 
   .data-table tr {
     @apply border-b border-border transition-colors hover:bg-secondary/40;
-  }
-
-  .panel-surface {
-    @apply rounded-2xl border border-border bg-card;
-  }
-
-  .panel-muted {
-    @apply rounded-xl border border-border bg-secondary/40;
   }
 
   .divider-gradient {

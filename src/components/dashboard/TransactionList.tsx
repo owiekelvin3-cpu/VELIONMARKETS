@@ -57,10 +57,10 @@ export function TransactionList({ items, compact = false, emptyMessage, onItemCl
             type={onItemClick ? "button" : undefined}
             onClick={onItemClick ? () => onItemClick(raw) : undefined}
             className={cn(
-              "flex w-full items-center gap-3 rounded-xl border border-border bg-secondary/20 text-left transition-colors",
+              "flex w-full items-center gap-3 rounded-lg border border-transparent bg-secondary/30 text-left transition-colors",
               compact ? "px-3 py-2.5" : "px-4 py-3",
-              onItemClick && "group cursor-pointer hover:border-emerald/30 hover:bg-secondary/40",
-              isSelected && "border-emerald/40 bg-emerald/5 ring-1 ring-emerald/20"
+              onItemClick && "group cursor-pointer hover:border-border hover:bg-secondary/50",
+              isSelected && "border-border bg-secondary/60"
             )}
           >
             <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary/60", KIND_COLORS[tx.kind])}>
@@ -105,17 +105,17 @@ export function RecentTransactionsCard({ items, total, limit, onItemClick, selec
   const hasMore = total > limit;
 
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-5 py-4">
-        <h2 className="font-display font-semibold text-foreground">{t("dashboard.recentTransactions")}</h2>
+    <div className="surface-panel">
+      <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+        <h2 className="font-display text-sm font-semibold text-foreground">{t("dashboard.recentTransactions")}</h2>
         {hasMore && (
-          <Link to="/dashboard/transactions" className="flex items-center text-xs text-emerald hover:underline">
+          <Link to="/dashboard/transactions" className="flex items-center text-xs text-muted hover:text-emerald">
             {t("dashboard.viewAllTransactions", { count: total })}
             <ArrowRight className="ml-1 h-3 w-3" />
           </Link>
         )}
       </div>
-      <div className="p-5">
+      <div className="p-4 md:p-5">
         <TransactionList
           items={items}
           compact
@@ -126,7 +126,7 @@ export function RecentTransactionsCard({ items, total, limit, onItemClick, selec
         {!hasMore && total > 0 && (
           <Link
             to="/dashboard/transactions"
-            className="mt-4 inline-flex items-center text-xs text-emerald hover:underline"
+            className="mt-4 inline-flex items-center text-xs text-muted hover:text-emerald"
           >
             {t("dashboard.openTransactions")}
             <ArrowRight className="ml-1 h-3 w-3" />

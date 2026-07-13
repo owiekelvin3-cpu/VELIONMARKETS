@@ -46,8 +46,8 @@ export function OrderPanel({ symbol, pairLabel, price, balance, loading, onSubmi
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-secondary/50">
-      <div className="border-b border-border bg-secondary/50 px-4 py-4">
+    <div className="flex flex-col overflow-hidden surface-panel">
+      <div className="border-b border-border px-4 py-3.5">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">{t("trading.placeOrder")}</p>
         <Tabs value={orderType} onValueChange={(v) => setOrderType(v as "market" | "limit")}>
           <TabsList className="mb-3 grid h-10 w-full grid-cols-2 rounded-xl bg-secondary p-1">

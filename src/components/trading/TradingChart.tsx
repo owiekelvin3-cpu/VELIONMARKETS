@@ -138,7 +138,7 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
   }, [candles, symbol, isLight]);
 
   return (
-    <div className="relative min-h-[320px] overflow-hidden rounded-2xl border border-border bg-card sm:min-h-[420px]">
+    <div className="relative min-h-[320px] overflow-hidden surface-panel sm:min-h-[420px]">
       {loading && candles.length === 0 && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/90 text-sm text-muted">
           <span className="inline-flex items-center gap-2">
