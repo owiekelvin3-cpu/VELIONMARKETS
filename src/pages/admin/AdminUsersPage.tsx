@@ -80,14 +80,14 @@ export default function AdminUsersPage() {
               {filtered.map((u) => (
                 <div
                   key={u.id}
-                  className="rounded-xl border border-border bg-secondary/40 p-4"
+                  className="rounded-2xl border border-border bg-card/60 p-4 backdrop-blur-sm"
                 >
                   <button
                     type="button"
                     className="w-full min-w-0 text-left"
                     onClick={() => setSelectedUserId(u.id)}
                   >
-                    <p className="truncate font-medium text-foreground">{u.full_name || "—"}</p>
+                    <p className="truncate font-display text-[15px] font-semibold text-foreground">{u.full_name || "—"}</p>
                     <p className="mt-0.5 truncate text-sm text-muted">{u.email}</p>
                     <p className="mt-1 truncate text-xs text-muted">
                       {u.city && u.country ? `${u.city}, ${u.country}` : u.country || u.city || "—"}
@@ -98,12 +98,12 @@ export default function AdminUsersPage() {
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <StatusBadge status={u.role} />
                     <StatusBadge status={u.kyc_status} />
-                    <div className="ml-auto flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" className="border-border" onClick={() => setSelectedUserId(u.id)}>
+                    <div className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto">
+                      <Button variant="outline" size="sm" className="min-h-10 flex-1 rounded-xl border-border sm:flex-none" onClick={() => setSelectedUserId(u.id)}>
                         <Eye className="mr-1.5 h-3.5 w-3.5" />
                         {t("admin.userDetail.view")}
                       </Button>
-                      <Button variant="outline" size="sm" className="border-border" onClick={() => void toggleRole(u.id, u.role)}>
+                      <Button variant="outline" size="sm" className="min-h-10 flex-1 rounded-xl border-border sm:flex-none" onClick={() => void toggleRole(u.id, u.role)}>
                         {u.role === "admin" ? t("admin.demote") : t("admin.makeAdmin")}
                       </Button>
                     </div>

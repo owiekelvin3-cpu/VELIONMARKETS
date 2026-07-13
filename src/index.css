@@ -447,6 +447,59 @@
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   }
 
+  .admin-atmosphere {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 65% 40% at 0% -5%, color-mix(in oklab, var(--color-gold) 16%, transparent), transparent 55%),
+      radial-gradient(ellipse 50% 35% at 100% 0%, color-mix(in oklab, var(--color-emerald) 8%, transparent), transparent 50%),
+      radial-gradient(ellipse 55% 45% at 50% 120%, color-mix(in oklab, var(--color-gold) 6%, transparent), transparent 55%);
+  }
+
+  :root.light .admin-atmosphere {
+    background:
+      radial-gradient(ellipse 65% 40% at 0% -5%, rgba(201, 162, 39, 0.1), transparent 55%),
+      radial-gradient(ellipse 50% 35% at 100% 0%, rgba(16, 185, 129, 0.06), transparent 50%),
+      radial-gradient(ellipse 55% 45% at 50% 120%, rgba(201, 162, 39, 0.05), transparent 55%);
+  }
+
+  .admin-shell {
+    @apply relative z-[1] mx-auto w-full min-w-0 max-w-[1400px];
+  }
+
+  .admin-sidebar {
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--color-void) 90%, var(--color-gold) 10%) 0%, var(--color-void) 32%, var(--color-void) 100%);
+  }
+
+  :root.light .admin-sidebar {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  }
+
+  .admin-nav-active {
+    @apply relative bg-gold/12 text-gold;
+    box-shadow: inset 3px 0 0 var(--color-gold);
+  }
+
+  .admin-hero {
+    @apply relative rounded-2xl border border-border bg-card/80 shadow-[0_8px_40px_rgba(0,0,0,0.18)] backdrop-blur-xl;
+  }
+
+  :root.light .admin-hero {
+    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+  }
+
+  .admin-stat {
+    @apply rounded-2xl border border-border bg-card/70 p-4 backdrop-blur-sm transition-colors hover:border-gold/25 sm:p-5;
+  }
+
+  .admin-panel {
+    @apply rounded-2xl border border-border bg-card/70 backdrop-blur-sm;
+  }
+
   .nav-item-active {
     @apply relative bg-emerald/10 text-foreground;
   }

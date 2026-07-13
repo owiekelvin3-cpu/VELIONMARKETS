@@ -31,6 +31,13 @@ const adminLinks = [
   { href: "/dashboard/admin/settings", labelKey: "admin.settings", icon: Settings },
 ] as const;
 
+const mobileTabs = [
+  { href: "/dashboard/admin", labelKey: "admin.overview", icon: LayoutGrid, exact: true },
+  { href: "/dashboard/admin/users", labelKey: "admin.users", icon: Users },
+  { href: "/dashboard/admin/deposits", labelKey: "admin.deposits", icon: ArrowDownToLine },
+  { href: "/dashboard/admin/withdrawals", labelKey: "admin.withdrawals", icon: ArrowUpFromLine },
+] as const;
+
 export function AdminLayout() {
   const { t } = useTranslation();
   const { profile, signOut } = useAuth();
@@ -81,64 +88,69 @@ export function AdminLayout() {
   }, [sidebarOpen]);
 
   return (
-    <div className="flex min-h-dvh w-full max-w-[100vw] overflow-x-hidden bg-background">
+    <div className="relative flex min-h-dvh w-full max-w-[100vw] overflow-x-hidden bg-background">
+      <div className="admin-atmosphere" aria-hidden="true" />
+
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[min(18rem,88vw)] flex-col border-r border-border bg-void transition-transform duration-300 ease-out lg:static lg:w-64 lg:translate-x-0",
+          "admin-sidebar fixed inset-y-0 left-0 z-40 flex w-[min(19rem,90vw)] flex-col border-r border-border transition-transform duration-300 ease-out lg:static lg:w-64 lg:translate-x-0",
           sidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"
         )}
         aria-label={t("admin.navLabel")}
       >
-        <div className="flex h-16 items-center justify-between gap-2 border-b border-border px-4">
-          <Link to="/dashboard/admin" className="flex min-w-0 items-center gap-2" onClick={() => setSidebarOpen(false)}>
+        <div className="flex items-center justify-between gap-2 border-b border-border/80 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
+          <Link to="/dashboard/admin" className="flex min-w-0 items-center gap-2.5" onClick={() => setSidebarOpen(false)}>
             <Logo size="sm" wordmarkClassName="text-sm" />
-            <span className="rounded-md bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold">
+            <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-gold ring-1 ring-gold/25">
               Admin
             </span>
           </Link>
           <button
             type="button"
-            className="rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-muted hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(false)}
             aria-label={t("dashboard.closeSidebar")}
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
-          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+        <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3 [-webkit-overflow-scrolling:touch]">
+          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-gold/80">
             {t("admin.title")}
           </p>
-          {adminLinks.map((link) => (
-            <Link
-              key={link.href}
-              to={link.href}
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive(link.href, "exact" in link ? link.exact : false)
-                  ? "bg-gold/10 text-gold"
-                  : "text-muted hover:bg-secondary/70 hover:text-foreground"
-              )}
-            >
-              <link.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span className="truncate">{t(link.labelKey)}</span>
-            </Link>
-          ))}
+          {adminLinks.map((link) => {
+            const active = isActive(link.href, "exact" in link ? link.exact : false);
+            return (
+              <Link
+                key={link.href}
+                to={link.href}
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors",
+                  active
+                    ? "admin-nav-active"
+                    : "text-muted hover:bg-secondary/70 hover:text-foreground"
+                )}
+              >
+                <link.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="truncate">{t(link.labelKey)}</span>
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="border-t border-border p-3">
+        <div className="border-t border-border/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Link
             to="/dashboard"
             onClick={() => setSidebarOpen(false)}
-            className="mb-3 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-secondary/70 hover:text-foreground"
+            className="mb-3 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted transition-colors hover:bg-secondary/70 hover:text-foreground"
           >
             <LayoutDashboard className="h-4 w-4" />
             {t("admin.backToDashboard")}
           </Link>
-          <div className="mb-3 flex items-center gap-3 rounded-lg bg-secondary/60 px-3 py-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold/15 text-xs font-bold text-gold ring-1 ring-gold/20">
+          <div className="mb-3 flex items-center gap-3 rounded-2xl border border-border bg-secondary/40 px-3 py-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-xs font-bold text-gold ring-1 ring-gold/25">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
@@ -146,7 +158,7 @@ export function AdminLayout() {
               <p className="truncate text-xs text-muted">{profile?.email}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="w-full border-border bg-transparent" onClick={signOut}>
+          <Button variant="outline" size="sm" className="w-full rounded-xl border-border bg-transparent" onClick={signOut}>
             <LogOut className="mr-2 h-4 w-4" />
             {t("common.signOut")}
           </Button>
@@ -156,25 +168,25 @@ export function AdminLayout() {
       {sidebarOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/65 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-label={t("dashboard.closeSidebar")}
         />
       )}
 
-      <div className="flex min-w-0 w-full flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b border-border bg-background/90 px-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:gap-3 sm:px-4 md:px-6">
+      <div className="relative z-[1] flex min-w-0 w-full flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b border-border/80 bg-background/80 px-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:gap-3 sm:px-4 md:px-6">
           <button
             type="button"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-secondary lg:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label={t("dashboard.openSidebar")}
           >
             <Menu className="h-5 w-5" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-foreground">{BRAND.name}</p>
-            <p className="truncate text-xs text-muted">{t("admin.portalLabel")}</p>
+            <p className="truncate font-display text-sm font-semibold tracking-tight text-foreground">{BRAND.name}</p>
+            <p className="truncate text-[11px] font-medium uppercase tracking-[0.14em] text-gold/90">{t("admin.portalLabel")}</p>
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
             <ThemeToggle />
@@ -183,14 +195,57 @@ export function AdminLayout() {
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-8">
-          <div className="mx-auto w-full min-w-0 max-w-[1400px]">
+        <main className="min-w-0 flex-1 overflow-x-hidden p-3 pb-[calc(4.75rem+env(safe-area-inset-bottom))] sm:p-4 md:p-6 lg:p-8 lg:pb-8">
+          <div className="admin-shell">
             <PageEnter key={location.pathname}>
               <Outlet />
             </PageEnter>
           </div>
         </main>
+
+        {/* Mobile command bar */}
+        <nav
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-border/80 bg-background/90 px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 backdrop-blur-xl lg:hidden"
+          aria-label={t("admin.navLabel")}
+        >
+          <div className="mx-auto flex max-w-lg items-stretch justify-between gap-1">
+            {mobileTabs.map((tab) => {
+              const active = isActive(tab.href, "exact" in tab ? tab.exact : false);
+              return (
+                <Link
+                  key={tab.href}
+                  to={tab.href}
+                  className={cn(
+                    "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-2 text-[10px] font-semibold transition-colors",
+                    active ? "text-gold" : "text-muted hover:text-foreground"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
+                      active ? "bg-gold/15 text-gold ring-1 ring-gold/25" : "bg-transparent"
+                    )}
+                  >
+                    <tab.icon className="h-4 w-4" />
+                  </span>
+                  <span className="truncate">{t(tab.labelKey)}</span>
+                </Link>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-2 text-[10px] font-semibold text-muted hover:text-foreground"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl">
+                <Menu className="h-4 w-4" />
+              </span>
+              <span className="truncate">{t("dashboard.menu")}</span>
+            </button>
+          </div>
+        </nav>
       </div>
+
       <NotificationToast />
       <PushNotificationInit />
     </div>
