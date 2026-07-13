@@ -68,11 +68,24 @@ export default function AdminAuthPage() {
         setLoading(false);
         return;
       }
-      await refreshProfile(session.user.id);
-      await completePushSetup(session.user.id, permissionPromise);
+      const loaded = await refreshProfile(session.user.id);
+      if (loaded?.role !== "admin") {
+        await signOut();
+        setError(t("admin.authFailed"));
+        setLoading(false);
+        return;
+      }
+      try {
+        await completePushSetup(session.user.id, permissionPromise);
+      } catch {
+        // Push setup must not block admin access.
+      }
       navigate("/dashboard/admin", { replace: true });
-    } catch {
-      setError(t("admin.authFailed"));
+    } catch (err) {
+      const message = err instanceof Error && err.message ? err.message : t("admin.authFailed");
+      setError(message);
+      setLoading(false);
+      return;
     }
 
     setLoading(false);

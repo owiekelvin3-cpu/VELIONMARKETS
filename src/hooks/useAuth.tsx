@@ -14,7 +14,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null; user: User | null }>;
   signOut: () => Promise<void>;
-  refreshProfile: (userId?: string) => Promise<void>;
+  refreshProfile: (userId?: string) => Promise<Profile | null>;
   clearSessionExpired: () => void;
 }
 
@@ -38,21 +38,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const ok = await ensureValidSession();
       if (ok) {
         const retry = await supabase.from("profiles").select("*").eq("id", userId).single();
-        setProfile(retry.data);
-        return;
+        if (retry.data) setProfile(retry.data);
+        return retry.data ?? null;
       }
       setSessionExpired(true);
       await supabase.auth.signOut();
-      return;
+      return null;
+    }
+
+    if (error) {
+      console.error("Failed to load profile", error);
+      setProfile(null);
+      return null;
     }
 
     setProfile(data);
     void syncUserLocation(userId);
+    return data;
   }, []);
 
   const refreshProfile = async (userId?: string) => {
     const id = userId ?? user?.id;
-    if (id) await fetchProfile(id);
+    if (!id) return null;
+    return fetchProfile(id);
   };
 
   const clearSessionExpired = () => setSessionExpired(false);
@@ -143,8 +151,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile, handleSessionLoss]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) setSessionExpired(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // Sync React state immediately — onAuthStateChange can lag one tick and
+    // route guards would otherwise see user=null and bounce back to login.
+    if (!error && data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+      setSessionExpired(false);
+    }
     return { error: error as Error | null };
   };
 

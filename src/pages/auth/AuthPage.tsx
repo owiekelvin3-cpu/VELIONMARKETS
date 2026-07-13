@@ -53,7 +53,13 @@ export default function AuthPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (user) await completePushSetup(user.id, permissionPromise);
+      if (user) {
+        try {
+          await completePushSetup(user.id, permissionPromise);
+        } catch {
+          /* ignore */
+        }
+      }
       navigate("/dashboard");
     }
     setLoading(false);

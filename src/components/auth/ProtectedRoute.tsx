@@ -4,10 +4,10 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import type { ReactNode } from "react";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading, sessionExpired } = useAuth();
+  const { user, profile, loading, sessionExpired } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  if (loading || (user && !profile)) {
     return <LoadingScreen fullScreen />;
   }
 
@@ -25,13 +25,15 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 }
 
 export function AdminRoute({ children }: { children: ReactNode }) {
-  const { profile, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
-  if (loading) {
+  // Wait until profile is loaded — navigating right after sign-in can race
+  // ahead of setProfile and incorrectly bounce admins back to /admin-auth.
+  if (loading || (user && !profile)) {
     return <LoadingScreen fullScreen />;
   }
 
-  if (profile?.role !== "admin") {
+  if (!user || profile?.role !== "admin") {
     return <Navigate to="/admin-auth" replace />;
   }
 
@@ -39,9 +41,9 @@ export function AdminRoute({ children }: { children: ReactNode }) {
 }
 
 export function AdminProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading, sessionExpired } = useAuth();
+  const { user, profile, loading, sessionExpired } = useAuth();
 
-  if (loading) {
+  if (loading || (user && !profile)) {
     return <LoadingScreen fullScreen />;
   }
 
