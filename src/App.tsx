@@ -7,6 +7,9 @@ import { ProtectedRoute, AdminRoute, AdminProtectedRoute } from "@/components/au
 import { MarketingLayout } from "@/components/layout/MarketingLayout";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { LoadingScreen } from "@/components/ui/loading-screen";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
 
 const HomePage = lazy(() => import("@/pages/marketing/HomePage"));
 const AboutPage = lazy(() => import("@/pages/marketing/AboutPage"));
@@ -64,10 +67,16 @@ const AdminEmailPage = lazy(() => import("@/pages/admin/AdminEmailPage"));
 const SupportPage = lazy(() => import("@/pages/dashboard/SupportPage"));
 const AdminSupportPage = lazy(() => import("@/pages/admin/AdminSupportPage"));
 
-const queryClient = new QueryClient();
-
-import { LoadingScreen } from "@/components/ui/loading-screen";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function PageLoader() {
   return <LoadingScreen />;
@@ -147,6 +156,7 @@ function App() {
               </Route>
               </Routes>
             </Suspense>
+            <PwaInstallBanner />
           </BrowserRouter>
           </AuthProvider>
         </ThemeProvider>

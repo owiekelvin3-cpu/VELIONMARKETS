@@ -1726,5 +1726,10 @@
     "goHome": "Go to Homepage",
     "chunkLoad": "A new version of the site is available. Please reload the page.",
     "reload": "Reload Page"
+  },
+  "pwa": {
+    "installTitle": "Install VELION app",
+    "installDesc": "Open faster from your home screen — works like a native app.",
+    "install": "Install"
   }
 }

@@ -1,15 +1,147 @@
-/* VELION MARKETS — Web push service worker */
+/* VELION MARKETS — PWA + push service worker */
+const CACHE_VERSION = "velion-shell-v2";
+const SHELL_CACHE = `${CACHE_VERSION}-shell`;
+const ASSET_CACHE = `${CACHE_VERSION}-assets`;
+
+const PRECACHE_URLS = [
+  "/",
+  "/index.html",
+  "/manifest.webmanifest",
+  "/favicon.svg",
+  "/logo.svg",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/apple-touch-icon.png",
+  "/icons/icon.svg",
+];
+
+const ASSET_EXT = /\.(?:js|css|woff2?|png|jpg|jpeg|gif|svg|webp|avif|mp4|webm)$/i;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    caches
+      .open(SHELL_CACHE)
+      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .then(() => self.skipWaiting())
+      .catch(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key.startsWith("velion-") && key !== SHELL_CACHE && key !== ASSET_CACHE)
+            .map((key) => caches.delete(key))
+        )
+      )
+      .then(() => self.clients.claim())
+  );
+});
+
+function isNavigate(request) {
+  return request.mode === "navigate" || (request.method === "GET" && request.headers.get("accept")?.includes("text/html"));
+}
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+function shouldBypass(url) {
+  const path = url.pathname;
+  return (
+    path.startsWith("/api/") ||
+    path.includes("supabase") ||
+    path.endsWith("/sw.js") ||
+    path.includes("chrome-extension")
+  );
+}
+
+async function networkFirstNavigation(request) {
+  const cache = await caches.open(SHELL_CACHE);
+  try {
+    const fresh = await fetch(request);
+    if (fresh.ok) {
+      cache.put("/index.html", fresh.clone());
+    }
+    return fresh;
+  } catch {
+    return (
+      (await cache.match("/index.html")) ||
+      (await cache.match("/")) ||
+      Response.error()
+    );
+  }
+}
+
+async function cacheFirstAsset(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(ASSET_CACHE);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(SHELL_CACHE);
+  const cached = await cache.match(request);
+  const network = fetch(request)
+    .then((response) => {
+      if (response.ok) cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => cached);
+
+  return cached || network;
+}
+
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  if (request.method !== "GET") return;
+
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return;
+  }
+
+  if (!isSameOrigin(url) || shouldBypass(url)) return;
+
+  if (isNavigate(request)) {
+    event.respondWith(networkFirstNavigation(request));
+    return;
+  }
+
+  if (url.pathname.startsWith("/assets/") || ASSET_EXT.test(url.pathname)) {
+    event.respondWith(cacheFirstAsset(request));
+    return;
+  }
+
+  if (
+    url.pathname === "/manifest.webmanifest" ||
+    url.pathname.startsWith("/icons/") ||
+    url.pathname === "/favicon.svg" ||
+    url.pathname === "/logo.svg"
+  ) {
+    event.respondWith(staleWhileRevalidate(request));
+  }
 });
 
 self.addEventListener("push", (event) => {
-  let payload = { title: "VELION MARKETS", body: "You have a new notification.", url: "/dashboard", silent: false };
+  let payload = {
+    title: "VELION MARKETS",
+    body: "You have a new notification.",
+    url: "/dashboard",
+    silent: false,
+  };
 
   try {
     if (event.data) {
@@ -24,7 +156,7 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: "/logo.svg",
+      icon: "/icons/icon-192.png",
       badge: "/favicon.svg",
       tag: payload.tag || "velion-notification",
       renotify: true,
@@ -70,7 +202,7 @@ self.addEventListener("message", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: "/logo.svg",
+      icon: "/icons/icon-192.png",
       badge: "/favicon.svg",
       tag: tag || "velion-notification",
       renotify: true,

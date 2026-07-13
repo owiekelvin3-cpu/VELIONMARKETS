@@ -8,7 +8,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import i18n, { type SupportedLanguage } from "@/i18n";
+import i18n, { ensureLocaleLoaded, type SupportedLanguage } from "@/i18n";
 
 export const LANGUAGES = [
   { code: "en" as const, native: "English" },
@@ -32,7 +32,7 @@ export function LanguageSelector({ className, showLabel = false }: LanguageSelec
   const current = LANGUAGES.find((l) => l.code === locale) ?? LANGUAGES[0];
 
   const selectLocale = (code: LanguageCode) => {
-    void i18n.changeLanguage(code);
+    void ensureLocaleLoaded(code).then(() => i18n.changeLanguage(code));
   };
 
   return (

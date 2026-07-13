@@ -2,22 +2,49 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { BRAND } from "@/constants/brand";
-
 import en from "./locales/en.json";
-import es from "./locales/es.json";
-import fr from "./locales/fr.json";
-import de from "./locales/de.json";
-import ar from "./locales/ar.json";
-import zh from "./locales/zh.json";
 
 export const SUPPORTED_LANGUAGES = ["en", "es", "fr", "de", "ar", "zh"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 const STORAGE_KEY = "velion-locale";
 
+const localeLoaders: Record<Exclude<SupportedLanguage, "en">, () => Promise<{ default: Record<string, unknown> }>> = {
+  es: () => import("./locales/es.json"),
+  fr: () => import("./locales/fr.json"),
+  de: () => import("./locales/de.json"),
+  ar: () => import("./locales/ar.json"),
+  zh: () => import("./locales/zh.json"),
+};
+
+const loadingLocales = new Map<string, Promise<void>>();
+
 function applyDocumentLanguage(lng: string) {
   document.documentElement.lang = lng;
   document.documentElement.dir = lng === "ar" ? "rtl" : "ltr";
+}
+
+export async function ensureLocaleLoaded(lng: string) {
+  const code = (lng || "en").split("-")[0] as SupportedLanguage;
+  if (code === "en" || i18n.hasResourceBundle(code, "translation")) return;
+  if (!localeLoaders[code as Exclude<SupportedLanguage, "en">]) return;
+
+  const existing = loadingLocales.get(code);
+  if (existing) {
+    await existing;
+    return;
+  }
+
+  const load = localeLoaders[code as Exclude<SupportedLanguage, "en">]()
+    .then((mod) => {
+      i18n.addResourceBundle(code, "translation", mod.default, true, true);
+    })
+    .finally(() => {
+      loadingLocales.delete(code);
+    });
+
+  loadingLocales.set(code, load);
+  await load;
 }
 
 i18n
@@ -26,12 +53,8 @@ i18n
   .init({
     resources: {
       en: { translation: en },
-      es: { translation: es },
-      fr: { translation: fr },
-      de: { translation: de },
-      ar: { translation: ar },
-      zh: { translation: zh },
     },
+    partialBundledLanguages: true,
     fallbackLng: "en",
     supportedLngs: [...SUPPORTED_LANGUAGES],
     nonExplicitSupportedLngs: true,
@@ -63,5 +86,12 @@ i18n.on("languageChanged", (lng) => {
 });
 
 applyDocumentLanguage((i18n.language || "en").split("-")[0]);
+
+const initialLng = (i18n.language || "en").split("-")[0];
+if (initialLng !== "en") {
+  void ensureLocaleLoaded(initialLng).then(() => {
+    void i18n.changeLanguage(initialLng);
+  });
+}
 
 export default i18n;

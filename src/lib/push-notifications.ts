@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { registerServiceWorkerEarly } from "@/lib/pwa";
 
 const PUSH_ENABLED_KEY = "velion-push-enabled";
 const PUSH_PROMPTED_KEY = "velion-push-prompted";
@@ -37,24 +38,7 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-  if (!("serviceWorker" in navigator)) return null;
-
-  try {
-    const registration = await navigator.serviceWorker.register("/sw.js", {
-      scope: "/",
-      updateViaCache: "none",
-    });
-
-    if (registration.waiting) {
-      registration.waiting.postMessage({ type: "SKIP_WAITING" });
-    }
-
-    await navigator.serviceWorker.ready;
-    return registration;
-  } catch (error) {
-    console.warn("[push] Service worker registration failed:", error);
-    return null;
-  }
+  return registerServiceWorkerEarly();
 }
 
 export async function showBrowserNotification(
@@ -68,7 +52,7 @@ export async function showBrowserNotification(
 
   const payload = {
     body,
-    icon: "/logo.svg",
+    icon: "/icons/icon-192.png",
     badge: "/favicon.svg",
     tag: options?.tag ?? "velion-notification",
     renotify: true,
