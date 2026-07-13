@@ -51,16 +51,16 @@ export default function AdminSettingsPage() {
       {error && <p className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">{error}</p>}
 
       <AdminPanel title={t("admin.addSetting")}>
-        <form onSubmit={handleSave} className="flex flex-wrap items-end gap-4">
-          <div className="min-w-[160px] flex-1">
+        <form onSubmit={handleSave} className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div className="min-w-0">
             <Label>{t("admin.key")}</Label>
             <Input value={key} onChange={(e) => setKey(e.target.value)} required className="mt-2" />
           </div>
-          <div className="min-w-[160px] flex-1">
+          <div className="min-w-0">
             <Label>{t("admin.value")}</Label>
             <Input value={value} onChange={(e) => setValue(e.target.value)} required className="mt-2" />
           </div>
-          <Button type="submit">{t("admin.save")}</Button>
+          <Button type="submit" className="w-full sm:w-auto">{t("admin.save")}</Button>
         </form>
         {message && <p className="mt-3 text-sm text-emerald">{message}</p>}
       </AdminPanel>
@@ -73,9 +73,9 @@ export default function AdminSettingsPage() {
         ) : (
           <div className="space-y-2">
             {Object.entries(settings).map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-4 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm">
-                <span className="font-medium text-foreground">{k}</span>
-                <span className="text-muted">{v}</span>
+              <div key={k} className="flex flex-col gap-1 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm sm:flex-row sm:justify-between sm:gap-4">
+                <span className="shrink-0 font-medium text-foreground">{k}</span>
+                <span className="min-w-0 break-all text-muted sm:text-right">{v}</span>
               </div>
             ))}
           </div>

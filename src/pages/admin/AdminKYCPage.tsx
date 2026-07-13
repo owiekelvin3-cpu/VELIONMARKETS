@@ -68,17 +68,17 @@ export default function AdminKYCPage() {
         ) : (
           <div className="space-y-3">
             {submissions.map((s) => (
-              <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 p-4">
-                <div>
-                  <p className="font-medium text-foreground">{s.profiles?.full_name || s.profiles?.email}</p>
-                  <p className="text-sm text-muted">{s.document_type} · {formatDate(s.created_at)}</p>
+              <div key={s.id} className="flex flex-col gap-3 rounded-xl border border-border bg-secondary/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-foreground">{s.profiles?.full_name || s.profiles?.email}</p>
+                  <p className="truncate text-sm text-muted">{s.document_type} · {formatDate(s.created_at)}</p>
                   {s.document_url && (
                     <a href={s.document_url} target="_blank" rel="noopener noreferrer" className="text-sm text-emerald hover:underline">
                       {t("admin.viewDocument")}
                     </a>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={s.status} />
                   {s.status === "pending" && (
                     <>

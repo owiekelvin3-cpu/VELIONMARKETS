@@ -66,12 +66,12 @@ export default function AdminWithdrawalsPage() {
         ) : (
           <div className="space-y-3">
             {withdrawals.map((w) => (
-              <div key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 p-4">
-                <div>
+              <div key={w.id} className="flex flex-col gap-3 rounded-xl border border-border bg-secondary/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-foreground">{formatCurrency(w.amount)}</p>
-                  <p className="text-sm text-muted">{w.method} · {formatDate(w.created_at)}</p>
+                  <p className="truncate text-sm text-muted">{w.method} · {formatDate(w.created_at)}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={w.status} />
                   {isPending(w.status) && (
                     <>

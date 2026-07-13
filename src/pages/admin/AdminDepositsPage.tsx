@@ -84,14 +84,14 @@ export default function AdminDepositsPage() {
         title={t("admin.allDeposits")}
         description={pendingCount > 0 ? t("admin.pendingDepositsCount", { count: pendingCount }) : undefined}
         action={
-          <div className="flex gap-1 rounded-lg border border-border bg-secondary/50 p-1">
+          <div className="flex max-w-full gap-1 overflow-x-auto rounded-lg border border-border bg-secondary/50 p-1 scrollbar-none">
             {(["all", "pending", "completed"] as const).map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                  "min-h-9 shrink-0 rounded-md px-3 py-2 text-xs font-medium capitalize transition-colors",
                   filter === f ? "bg-emerald/10 text-emerald" : "text-muted hover:text-foreground"
                 )}
               >
@@ -125,7 +125,7 @@ export default function AdminDepositsPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-muted">
+                      <p className="truncate text-sm text-muted">
                         {formatDepositMethod(d.method)} · {d.profiles?.email || d.user_id}
                       </p>
                       <p className="text-xs text-muted">{formatDate(d.created_at)}</p>

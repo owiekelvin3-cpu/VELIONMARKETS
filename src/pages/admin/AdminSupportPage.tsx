@@ -324,14 +324,14 @@ export default function AdminSupportPage() {
         <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</p>
       )}
 
-      <div className={cn("flex flex-wrap gap-1 rounded-xl border border-border bg-secondary/30 p-1", showThread && "hidden xl:flex")}>
+      <div className={cn("flex gap-1 overflow-x-auto rounded-xl border border-border bg-secondary/30 p-1 scrollbar-none", showThread && "hidden xl:flex")}>
         {FILTERS.map((f) => (
           <button
             key={f}
             type="button"
             onClick={() => setFilter(f)}
             className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+              "min-h-9 shrink-0 rounded-lg px-3 py-2 text-xs font-medium capitalize transition-colors",
               filter === f ? "bg-card text-foreground shadow-sm" : "text-muted hover:text-foreground"
             )}
           >

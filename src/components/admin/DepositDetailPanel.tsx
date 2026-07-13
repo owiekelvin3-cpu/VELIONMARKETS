@@ -33,7 +33,7 @@ function CopyableValue({ value }: { value: string }) {
   return (
     <span className="inline-flex items-center gap-2">
       <span className="font-mono text-xs">{value}</span>
-      <button type="button" onClick={copy} className="text-muted hover:text-emerald" aria-label="Copy">
+      <button type="button" onClick={copy} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-secondary hover:text-emerald" aria-label="Copy">
         {copied ? <Check className="h-3.5 w-3.5 text-emerald" /> : <Copy className="h-3.5 w-3.5" />}
       </button>
     </span>

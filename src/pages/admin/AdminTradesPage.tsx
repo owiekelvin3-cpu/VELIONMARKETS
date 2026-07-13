@@ -101,11 +101,11 @@ export default function AdminTradesPage() {
         ) : (
           <div className="space-y-2">
             {trades.map((trade) => (
-              <div key={trade.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm">
-                <span className="font-medium">
+              <div key={trade.id} className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <span className="min-w-0 break-words font-medium">
                   {trade.type.toUpperCase()} {trade.asset} — {trade.amount} @ {formatCurrency(trade.price)}
                 </span>
-                <span className="flex items-center gap-2 text-muted">
+                <span className="flex flex-wrap items-center gap-2 text-muted">
                   <StatusBadge status={trade.status} />
                   {formatDate(trade.created_at)}
                 </span>

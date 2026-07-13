@@ -45,10 +45,10 @@ function PartnerEditor({
 
   return (
     <div className="rounded-xl border border-border bg-secondary/50 p-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold text-white"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
             style={{ backgroundColor: partner.color || "#2563EB" }}
           >
             {partner.logoUrl ? (
@@ -67,7 +67,7 @@ function PartnerEditor({
             {t("admin.partnerEnabled")}
           </label>
         </div>
-        <Button type="button" variant="outline" size="sm" className="border-red-500/20 text-red-400" onClick={onRemove}>
+        <Button type="button" variant="outline" size="sm" className="w-full border-red-500/20 text-red-400 sm:w-auto" onClick={onRemove}>
           <Trash2 className="mr-1.5 h-3.5 w-3.5" />
           {t("admin.removePartner")}
         </Button>
@@ -201,18 +201,18 @@ export default function AdminDepositConfigPage() {
       {success && <p className="rounded-lg border border-emerald/20 bg-emerald/5 px-4 py-3 text-sm text-emerald">{success}</p>}
 
       <Tabs defaultValue="wallets" className="space-y-6">
-        <TabsList className="grid w-full max-w-xl grid-cols-3 bg-secondary/60">
-          <TabsTrigger value="wallets" className="gap-2">
-            <Coins className="h-4 w-4" />
-            {t("admin.cryptoWallets")}
+        <TabsList className="flex h-auto w-full max-w-xl flex-col gap-1 bg-secondary/60 p-1 sm:grid sm:grid-cols-3 sm:gap-0">
+          <TabsTrigger value="wallets" className="w-full justify-start gap-2 whitespace-normal sm:justify-center sm:whitespace-nowrap">
+            <Coins className="h-4 w-4 shrink-0" />
+            <span className="truncate">{t("admin.cryptoWallets")}</span>
           </TabsTrigger>
-          <TabsTrigger value="crypto-sites" className="gap-2">
-            <ExternalLink className="h-4 w-4" />
-            {t("admin.buyCryptoSites")}
+          <TabsTrigger value="crypto-sites" className="w-full justify-start gap-2 whitespace-normal sm:justify-center sm:whitespace-nowrap">
+            <ExternalLink className="h-4 w-4 shrink-0" />
+            <span className="truncate">{t("admin.buyCryptoSites")}</span>
           </TabsTrigger>
-          <TabsTrigger value="gift-sites" className="gap-2">
-            <Gift className="h-4 w-4" />
-            {t("admin.buyGiftCardSites")}
+          <TabsTrigger value="gift-sites" className="w-full justify-start gap-2 whitespace-normal sm:justify-center sm:whitespace-nowrap">
+            <Gift className="h-4 w-4 shrink-0" />
+            <span className="truncate">{t("admin.buyGiftCardSites")}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -220,11 +220,11 @@ export default function AdminDepositConfigPage() {
           <AdminPanel title={t("admin.cryptoWallets")} description={t("admin.cryptoWalletsDesc")}>
             <div className="space-y-4">
               {CRYPTO_ASSETS.map((asset) => (
-                <div key={asset.id} className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center sm:gap-4">
-                  <div className="flex items-center gap-3">
-                    <img src={asset.iconUrl} alt="" className="h-8 w-8 rounded-full" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{asset.label}</p>
+                <div key={asset.id} className="grid gap-2 sm:grid-cols-[minmax(0,180px)_1fr] sm:items-center sm:gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <img src={asset.iconUrl} alt="" className="h-8 w-8 shrink-0 rounded-full" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">{asset.label}</p>
                       <p className="text-xs text-muted">{asset.symbol}</p>
                     </div>
                   </div>

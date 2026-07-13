@@ -146,7 +146,7 @@ export function AdminLayout() {
         <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/90 px-3 backdrop-blur-xl sm:gap-3 sm:px-4 md:px-6">
           <button
             type="button"
-            className="shrink-0 rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label={t("dashboard.openSidebar")}
           >

@@ -74,46 +74,86 @@ export default function AdminUsersPage() {
         ) : filtered.length === 0 ? (
           <p className="text-sm text-muted">{t("admin.noUsers")}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table w-full">
-              <thead>
-                <tr>
-                  <th>{t("admin.name")}</th>
-                  <th>{t("admin.email")}</th>
-                  <th>{t("admin.userDetail.locationShort")}</th>
-                  <th>{t("admin.role")}</th>
-                  <th>{t("admin.kyc")}</th>
-                  <th>{t("admin.userDetail.joined")}</th>
-                  <th>{t("admin.actions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((u) => (
-                  <tr key={u.id} className="cursor-pointer hover:bg-secondary/50" onClick={() => setSelectedUserId(u.id)}>
-                    <td className="font-medium">{u.full_name || "—"}</td>
-                    <td className="text-muted">{u.email}</td>
-                    <td className="text-sm text-muted">
+          <>
+            {/* Mobile cards */}
+            <div className="space-y-3 md:hidden">
+              {filtered.map((u) => (
+                <div
+                  key={u.id}
+                  className="rounded-xl border border-border bg-secondary/40 p-4"
+                >
+                  <button
+                    type="button"
+                    className="w-full min-w-0 text-left"
+                    onClick={() => setSelectedUserId(u.id)}
+                  >
+                    <p className="truncate font-medium text-foreground">{u.full_name || "—"}</p>
+                    <p className="mt-0.5 truncate text-sm text-muted">{u.email}</p>
+                    <p className="mt-1 truncate text-xs text-muted">
                       {u.city && u.country ? `${u.city}, ${u.country}` : u.country || u.city || "—"}
-                    </td>
-                    <td><StatusBadge status={u.role} /></td>
-                    <td><StatusBadge status={u.kyc_status} /></td>
-                    <td className="text-sm text-muted">{new Date(u.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="outline" size="sm" className="border-border" onClick={() => setSelectedUserId(u.id)}>
-                          <Eye className="mr-1.5 h-3.5 w-3.5" />
-                          {t("admin.userDetail.view")}
-                        </Button>
-                        <Button variant="outline" size="sm" className="border-border" onClick={() => toggleRole(u.id, u.role)}>
-                          {u.role === "admin" ? t("admin.demote") : t("admin.makeAdmin")}
-                        </Button>
-                      </div>
-                    </td>
+                      {" · "}
+                      {new Date(u.created_at).toLocaleDateString()}
+                    </p>
+                  </button>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <StatusBadge status={u.role} />
+                    <StatusBadge status={u.kyc_status} />
+                    <div className="ml-auto flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" className="border-border" onClick={() => setSelectedUserId(u.id)}>
+                        <Eye className="mr-1.5 h-3.5 w-3.5" />
+                        {t("admin.userDetail.view")}
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-border" onClick={() => void toggleRole(u.id, u.role)}>
+                        {u.role === "admin" ? t("admin.demote") : t("admin.makeAdmin")}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto md:block">
+              <table className="data-table w-full min-w-[720px]">
+                <thead>
+                  <tr>
+                    <th>{t("admin.name")}</th>
+                    <th>{t("admin.email")}</th>
+                    <th>{t("admin.userDetail.locationShort")}</th>
+                    <th>{t("admin.role")}</th>
+                    <th>{t("admin.kyc")}</th>
+                    <th>{t("admin.userDetail.joined")}</th>
+                    <th>{t("admin.actions")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.map((u) => (
+                    <tr key={u.id} className="cursor-pointer hover:bg-secondary/50" onClick={() => setSelectedUserId(u.id)}>
+                      <td className="max-w-[140px] truncate font-medium">{u.full_name || "—"}</td>
+                      <td className="max-w-[180px] truncate text-muted">{u.email}</td>
+                      <td className="max-w-[140px] truncate text-sm text-muted">
+                        {u.city && u.country ? `${u.city}, ${u.country}` : u.country || u.city || "—"}
+                      </td>
+                      <td><StatusBadge status={u.role} /></td>
+                      <td><StatusBadge status={u.kyc_status} /></td>
+                      <td className="whitespace-nowrap text-sm text-muted">{new Date(u.created_at).toLocaleDateString()}</td>
+                      <td>
+                        <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="outline" size="sm" className="border-border" onClick={() => setSelectedUserId(u.id)}>
+                            <Eye className="mr-1.5 h-3.5 w-3.5" />
+                            {t("admin.userDetail.view")}
+                          </Button>
+                          <Button variant="outline" size="sm" className="border-border" onClick={() => void toggleRole(u.id, u.role)}>
+                            {u.role === "admin" ? t("admin.demote") : t("admin.makeAdmin")}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </AdminPanel>
 

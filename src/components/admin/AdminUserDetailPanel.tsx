@@ -479,9 +479,9 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
                   <h3 className="mb-3 font-display text-sm font-semibold">{t("admin.userDetail.recentDeposits")}</h3>
                   <div className="space-y-2">
                     {data.recent_deposits.map((d) => (
-                      <div key={d.id} className="flex items-center justify-between rounded-lg bg-secondary/80 px-3 py-2 text-sm">
-                        <span className="text-muted">{d.method} · {formatDate(d.created_at)}</span>
-                        <div className="flex items-center gap-2">
+                      <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg bg-secondary/80 px-3 py-2 text-sm">
+                        <span className="min-w-0 truncate text-muted">{d.method} · {formatDate(d.created_at)}</span>
+                        <div className="flex shrink-0 items-center gap-2">
                           <span className="font-medium">{formatCurrency(d.amount)}</span>
                           <Badge variant={d.status === "completed" ? "success" : "secondary"} className="text-[10px]">{d.status}</Badge>
                         </div>
@@ -496,9 +496,9 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
                   <h3 className="mb-3 font-display text-sm font-semibold">{t("admin.userDetail.kycDocs")}</h3>
                   <div className="space-y-2">
                     {data.kyc_submissions.map((k) => (
-                      <div key={k.id} className="flex items-center justify-between rounded-lg bg-secondary/80 px-3 py-2 text-sm">
-                        <span>{k.document_type}</span>
-                        <div className="flex items-center gap-2">
+                      <div key={k.id} className="flex items-center justify-between gap-3 rounded-lg bg-secondary/80 px-3 py-2 text-sm">
+                        <span className="min-w-0 truncate">{k.document_type}</span>
+                        <div className="flex shrink-0 items-center gap-2">
                           <StatusBadge status={k.status} />
                           {k.document_url && (
                             <a href={k.document_url} target="_blank" rel="noopener noreferrer" className="text-emerald hover:underline">
