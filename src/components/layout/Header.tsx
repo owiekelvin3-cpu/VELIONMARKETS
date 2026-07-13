@@ -160,7 +160,7 @@ export function Header() {
           aria-label={t("nav.mainNav")}
         >
           <Link to="/" className="group shrink-0" aria-label={`${BRAND.name} home`}>
-            <Logo className="transition-opacity group-hover:opacity-90" wordmarkClassName="hidden sm:inline" />
+            <Logo className="transition-opacity group-hover:opacity-90" wordmarkClassName="hidden sm:inline-flex" />
           </Link>
 
           <div className="hidden items-center gap-0.5 lg:flex">
@@ -254,7 +254,7 @@ export function Header() {
               className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-void shadow-2xl"
             >
               <div className="flex h-14 items-center justify-between border-b border-border px-4">
-                <Logo wordmarkClassName="inline" />
+                <Logo wordmarkClassName="inline-flex" />
                 <button
                   type="button"
                   className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-secondary"
