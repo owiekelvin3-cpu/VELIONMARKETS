@@ -189,7 +189,6 @@ export default function SupportPage() {
                 loading={support.loadingMessages}
                 hasMore={support.hasMore}
                 onLoadMore={support.loadOlder}
-                typing={support.typing}
               />
               {active.status === "resolved" ? (
                 <div className="border-t border-border p-4 text-center text-sm text-muted">

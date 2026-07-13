@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
-  Check, CheckCheck, FileText, ImageIcon, Paperclip, Send, Smile, X,
+  FileText, ImageIcon, Paperclip, Send, Smile, X,
 } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -117,18 +117,6 @@ export function SupportMessageBubble({
   message: SupportMessageWithAttachments;
   isOwn: boolean;
 }) {
-  const statusIcon = message.failed ? (
-    <span className="text-[10px] text-red-400">!</span>
-  ) : message.pending ? (
-    <span className="text-[10px] text-muted">…</span>
-  ) : message.read_at ? (
-    <CheckCheck className="h-3 w-3 text-sky-400" />
-  ) : message.delivered_at ? (
-    <CheckCheck className="h-3 w-3 text-muted" />
-  ) : (
-    <Check className="h-3 w-3 text-muted" />
-  );
-
   return (
     <motion.div
       layout
@@ -153,36 +141,11 @@ export function SupportMessageBubble({
         {message.attachments?.map((att) => <AttachmentChip key={att.id} att={att} />)}
         <div className={cn("mt-1 flex items-center justify-end gap-1.5 text-[10px]", isOwn ? "text-white/75" : "text-muted")}>
           <span>{formatTime(message.created_at)}</span>
-          {isOwn && !message.is_internal && statusIcon}
+          {message.failed && <span className="text-red-300">!</span>}
+          {message.pending && <span>…</span>}
         </div>
       </div>
     </motion.div>
-  );
-}
-
-export function SupportTypingIndicator({ visible }: { visible: boolean }) {
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          className="flex justify-start px-1"
-        >
-          <div className="inline-flex items-center gap-1 rounded-2xl rounded-bl-md border border-border bg-card px-3 py-2 dark:bg-secondary/80">
-            {[0, 1, 2].map((i) => (
-              <motion.span
-                key={i}
-                className="h-1.5 w-1.5 rounded-full bg-muted"
-                animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
-              />
-            ))}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 
@@ -192,22 +155,19 @@ export function SupportMessageList({
   loading,
   hasMore,
   onLoadMore,
-  typing,
 }: {
   messages: SupportMessageWithAttachments[];
   currentUserId: string;
   loading?: boolean;
   hasMore?: boolean;
   onLoadMore?: () => void;
-  typing?: boolean;
 }) {
   const { t } = useTranslation();
   const bottomRef = useRef<HTMLDivElement>(null);
-  const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, typing]);
+  }, [messages.length]);
 
   const items = useMemo(() => {
     const out: Array<{ type: "day"; key: string; label: string } | { type: "msg"; key: string; message: SupportMessageWithAttachments }> = [];
@@ -226,7 +186,7 @@ export function SupportMessageList({
   if (loading && messages.length === 0) return <SupportChatSkeleton />;
 
   return (
-    <div ref={scrollerRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4 sm:px-4">
+    <div className="flex-1 space-y-3 overflow-y-auto px-3 py-4 sm:px-4">
       {hasMore && (
         <div className="flex justify-center">
           <Button variant="ghost" size="sm" onClick={onLoadMore} disabled={loading}>
@@ -249,7 +209,6 @@ export function SupportMessageList({
           />
         )
       )}
-      <SupportTypingIndicator visible={!!typing} />
       <div ref={bottomRef} />
     </div>
   );

@@ -52,7 +52,6 @@ export default function AdminSupportPage() {
   const [hasMore, setHasMore] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
   const [error, setError] = useState("");
-  const [typing, setTyping] = useState(false);
 
   const active = conversations.find((c) => c.id === activeId) ?? null;
 
@@ -123,10 +122,6 @@ export default function AdminSupportPage() {
           setMessages((prev) => {
             if (prev.some((m) => m.id === row.id || (row.client_id && m.client_id === row.client_id))) {
               return prev.map((m) => (m.client_id === row.client_id ? { ...row, attachments: m.attachments } : m));
-            }
-            if (row.sender_role === "user") {
-              setTyping(true);
-              setTimeout(() => setTyping(false), 700);
             }
             return [...prev, { ...row, attachments: [] }];
           });
@@ -311,7 +306,6 @@ export default function AdminSupportPage() {
                 loading={loadingMessages}
                 hasMore={hasMore}
                 onLoadMore={() => activeId && void loadThread(activeId, false)}
-                typing={typing}
               />
               <SupportComposer onSend={send} placeholder={t("admin.replyPlaceholder")} />
             </>
