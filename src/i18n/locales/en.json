@@ -286,7 +286,8 @@
     "step4Title": "Start Investing",
     "step4Desc": "Access our full suite of wealth and trading tools.",
     "step": "Step {{n}}",
-    "laptopAlt": "Client reviewing investment portfolio on a laptop"
+    "laptopAlt": "Client reviewing investment portfolio on a laptop",
+    "videoLabel": "Portfolio review"
   },
   "testimonials": {
     "eyebrow": "Testimonials",

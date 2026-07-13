@@ -9,7 +9,7 @@
       "destination": "https://data-api.binance.vision/api/v3/:path*"
     },
     {
-      "source": "/((?!api/|assets/|videos/|icons/|sw\\.js|manifest\\.webmanifest|robots\\.txt|sitemap\\.xml|favicon\\.svg|logo\\.svg|icons\\.svg|logo-lockup\\.png).*)",
+      "source": "/((?!api/|assets/|videos/|images/|icons/|sw\\.js|manifest\\.webmanifest|robots\\.txt|sitemap\\.xml|favicon\\.svg|logo\\.svg|icons\\.svg|logo-lockup\\.png).*)",
       "destination": "/index.html"
     }
   ],

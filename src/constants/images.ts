@@ -29,7 +29,7 @@ export const IMAGES = {
     encryption: unsplash("1563986768609-322da13575f3", 1200, 800),
   },
   lifestyle: {
-    laptop: unsplash("1517245386807-bb43d82bedb8", 1000, 700),
+    laptop: "/images/how-it-works-laptop-poster.png",
     mobile: unsplash("1563013544-824ae1b704d3", 800, 600),
     workspace: unsplash("1497366754035-f200968a6e72", 1200, 800),
   },
