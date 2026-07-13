@@ -8,6 +8,7 @@ import { completePushSetup } from "@/lib/push-notifications";
 import { prepareNotificationsOnUserGesture } from "@/lib/notification-preferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
@@ -145,10 +146,9 @@ export default function AuthPage() {
                         className={cn(fieldClass, "pl-10")}
                       />
                     </div>
-                    <Input
+                    <PasswordInput
                       id="login-password"
                       name="password"
-                      type="password"
                       required
                       minLength={6}
                       autoComplete="current-password"
@@ -187,10 +187,9 @@ export default function AuthPage() {
                         className={cn(fieldClass, "pl-10")}
                       />
                     </div>
-                    <Input
+                    <PasswordInput
                       id="reg-password"
                       name="password"
-                      type="password"
                       required
                       minLength={6}
                       autoComplete="new-password"

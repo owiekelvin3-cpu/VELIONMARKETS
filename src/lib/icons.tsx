@@ -36,6 +36,7 @@ import {
   faEarthAmericas,
   faEnvelope,
   faEye,
+  faEyeSlash,
   faFileCircleCheck,
   faFileLines,
   faGaugeHigh,
@@ -110,6 +111,7 @@ export const Copy = createIcon(faCopy, "Copy");
 export const CreditCard = createIcon(faCreditCard, "CreditCard");
 export const ExternalLink = createIcon(faArrowUpRightFromSquare, "ExternalLink");
 export const Eye = createIcon(faEye, "Eye");
+export const EyeOff = createIcon(faEyeSlash, "EyeOff");
 export const FileCheck = createIcon(faFileCircleCheck, "FileCheck");
 export const FileText = createIcon(faFileLines, "FileText");
 export const Gift = createIcon(faGift, "Gift");

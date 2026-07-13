@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -467,10 +468,9 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Label htmlFor="newPassword">{t("settingsPage.newPassword")}</Label>
                     <div className="relative">
-                      <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                      <Input
+                      <Key className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
+                      <PasswordInput
                         id="newPassword"
-                        type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         minLength={8}
@@ -481,10 +481,9 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">{t("settingsPage.confirmPassword")}</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                      <Input
+                      <Lock className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
+                      <PasswordInput
                         id="confirmPassword"
-                        type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         minLength={8}

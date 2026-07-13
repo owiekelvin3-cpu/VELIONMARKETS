@@ -9,6 +9,7 @@ import { prepareNotificationsOnUserGesture } from "@/lib/notification-preference
 import { fetchAdminProfile } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
 import { AdminBrandPanel } from "@/components/admin/AdminBrandPanel";
@@ -118,10 +119,9 @@ export default function AdminAuthPage() {
             </div>
             <div>
               <Label htmlFor="password">{t("common.password")}</Label>
-              <Input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 autoComplete="current-password"
                 required
                 className="mt-2 h-12"
