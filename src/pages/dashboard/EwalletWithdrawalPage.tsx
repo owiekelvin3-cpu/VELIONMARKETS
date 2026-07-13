@@ -15,6 +15,7 @@ import {
   WithdrawalHistoryPanel,
   WithdrawalAmountField,
   WithdrawalAlert,
+  OutstandingFeesPanel,
 } from "@/components/dashboard/WithdrawalUi";
 import { FadeIn } from "@/components/motion/Motion";
 import { EWALLET_PROVIDERS } from "@/constants/withdrawal-methods";
@@ -30,8 +31,8 @@ export default function EwalletWithdrawalPage() {
   const providerParam = searchParams.get("provider");
   const validProvider = EWALLET_PROVIDERS.some((p) => p.id === providerParam) ? providerParam! : "paypal";
 
-  const { withdrawals, balance, load } = useWithdrawalData(ewalletFilter);
-  const { loading, message, success, submit } = useWithdrawalForm(user?.id, load);
+  const { withdrawals, balance, outstandingFees, hasOutstandingFees, load } = useWithdrawalData(ewalletFilter);
+  const { loading, message, success, submit } = useWithdrawalForm(user?.id, load, hasOutstandingFees);
 
   const [selected, setSelected] = useState(validProvider);
   const [amount, setAmount] = useState("");
@@ -73,6 +74,15 @@ export default function EwalletWithdrawalPage() {
       <FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
 
+        {user && (
+          <OutstandingFeesPanel
+            fees={outstandingFees}
+            balance={balance}
+            onPaid={() => load(user.id)}
+          />
+        )}
+
+        {!hasOutstandingFees && (
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
             <Wallet className="h-3.5 w-3.5 text-amber-400" />
@@ -97,7 +107,9 @@ export default function EwalletWithdrawalPage() {
           ))}
           </div>
         </div>
+        )}
 
+        {!hasOutstandingFees && (
         <WithdrawalFormPanel description={t("withdrawals.ewalletAccount", { provider: provider.label })}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -129,6 +141,7 @@ export default function EwalletWithdrawalPage() {
             </Button>
           </form>
         </WithdrawalFormPanel>
+        )}
 
         <WithdrawalHistoryPanel>
           <WithdrawalHistory withdrawals={withdrawals} />

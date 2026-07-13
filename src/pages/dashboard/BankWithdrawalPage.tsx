@@ -13,6 +13,7 @@ import {
   WithdrawalHistoryPanel,
   WithdrawalAmountField,
   WithdrawalAlert,
+  OutstandingFeesPanel,
 } from "@/components/dashboard/WithdrawalUi";
 import { FadeIn } from "@/components/motion/Motion";
 
@@ -21,8 +22,8 @@ const bankFilter = "bank_transfer" as const;
 export default function BankWithdrawalPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { withdrawals, balance, load } = useWithdrawalData(bankFilter);
-  const { loading, message, success, submit } = useWithdrawalForm(user?.id, load);
+  const { withdrawals, balance, outstandingFees, hasOutstandingFees, load } = useWithdrawalData(bankFilter);
+  const { loading, message, success, submit } = useWithdrawalForm(user?.id, load, hasOutstandingFees);
 
   const [amount, setAmount] = useState("");
   const [accountName, setAccountName] = useState("");
@@ -61,6 +62,15 @@ export default function BankWithdrawalPage() {
       <FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
 
+        {user && (
+          <OutstandingFeesPanel
+            fees={outstandingFees}
+            balance={balance}
+            onPaid={() => load(user.id)}
+          />
+        )}
+
+        {!hasOutstandingFees && (
         <WithdrawalFormPanel title={t("withdrawals.bankFormTitle")}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -97,6 +107,7 @@ export default function BankWithdrawalPage() {
             </Button>
           </form>
         </WithdrawalFormPanel>
+        )}
 
         <WithdrawalHistoryPanel>
           <WithdrawalHistory withdrawals={withdrawals} />

@@ -3,18 +3,23 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
   X, Mail, Globe2, Wallet, Shield, Clock, Key, Globe,
-  Copy, Check, ExternalLink, RefreshCw,
+  Copy, Check, ExternalLink, RefreshCw, Coins, Plus,
 } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import {
   fetchAdminUserDetails, sendUserPasswordReset,
+  assignUserFee, updateUserFeeStatus,
   type AdminUserDetails,
 } from "@/lib/admin-api";
+import { FEE_TYPES, type FeeTypeId } from "@/constants/fee-types";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import type { UserFeeStatus } from "@/types/database";
 
 interface AdminUserDetailPanelProps {
   userId: string | null;
@@ -61,6 +66,11 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
+  const [feeType, setFeeType] = useState<FeeTypeId>("kyc_aml");
+  const [customLabel, setCustomLabel] = useState("");
+  const [feeAmount, setFeeAmount] = useState("");
+  const [feeNotes, setFeeNotes] = useState("");
+  const [feeBusy, setFeeBusy] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!userId) return;
@@ -99,6 +109,8 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
   const profile = data?.profile;
   const auth = data?.auth;
   const stats = data?.stats;
+  const fees = data?.fees ?? [];
+  const outstandingTotal = Number(data?.outstanding_fees_total ?? 0);
   const locationReady = profile ? hasLocationData(profile) : false;
   const displayLocation = profile?.last_known_location
     || [profile?.city, profile?.country].filter(Boolean).join(", ")
@@ -119,6 +131,62 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
       setMessage(t("admin.userDetail.resetSent", { email: profile.email }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Reset failed");
+    }
+  };
+
+  const selectedFeeMeta = FEE_TYPES.find((f) => f.id === feeType)!;
+
+  const handleAssignFee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) return;
+    const amount = parseFloat(feeAmount);
+    if (!amount || amount <= 0) {
+      setError(t("admin.userDetail.feeInvalidAmount"));
+      return;
+    }
+    const label = feeType === "custom"
+      ? customLabel.trim()
+      : selectedFeeMeta.label;
+    if (!label) {
+      setError(t("admin.userDetail.feeLabelRequired"));
+      return;
+    }
+
+    setFeeBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await assignUserFee({
+        userId,
+        feeType,
+        label,
+        amount,
+        notes: feeNotes.trim() || undefined,
+      });
+      setFeeAmount("");
+      setFeeNotes("");
+      setCustomLabel("");
+      setMessage(t("admin.userDetail.feeAssigned"));
+      await load(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("admin.userDetail.feeAssignFailed"));
+    } finally {
+      setFeeBusy(false);
+    }
+  };
+
+  const handleFeeStatus = async (feeId: string, status: Extract<UserFeeStatus, "paid" | "waived" | "cancelled">) => {
+    setFeeBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await updateUserFeeStatus(feeId, status);
+      setMessage(t(`admin.userDetail.feeStatus.${status}`));
+      await load(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("admin.userDetail.feeUpdateFailed"));
+    } finally {
+      setFeeBusy(false);
     }
   };
 
@@ -163,9 +231,118 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
                     <p className="mt-1 font-display text-lg font-bold text-emerald">{formatCurrency(data.balance)}</p>
                   </div>
                   <div className="rounded-lg bg-secondary/80 p-3">
-                    <p className="text-xs text-muted">{t("admin.userDetail.memberSince")}</p>
-                    <p className="mt-1 text-sm font-medium">{formatDate(profile.created_at)}</p>
+                    <p className="text-xs text-muted">{t("admin.userDetail.outstandingFees")}</p>
+                    <p className={cn(
+                      "mt-1 font-display text-lg font-bold",
+                      outstandingTotal > 0 ? "text-amber-400" : "text-foreground"
+                    )}>
+                      {formatCurrency(outstandingTotal)}
+                    </p>
                   </div>
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold">
+                  <Coins className="h-4 w-4 text-emerald" />
+                  {t("admin.userDetail.withdrawalFees")}
+                </h3>
+                <p className="mb-4 text-xs leading-relaxed text-muted">
+                  {t("admin.userDetail.withdrawalFeesDesc")}
+                </p>
+
+                <form onSubmit={handleAssignFee} className="space-y-3 rounded-lg border border-border bg-secondary/80 p-3">
+                  <div>
+                    <Label htmlFor="fee-type">{t("admin.userDetail.feeType")}</Label>
+                    <select
+                      id="fee-type"
+                      value={feeType}
+                      onChange={(e) => setFeeType(e.target.value as FeeTypeId)}
+                      className="mt-1.5 flex h-10 w-full rounded-xl border border-border bg-void px-3 text-sm text-foreground"
+                    >
+                      {FEE_TYPES.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{t(opt.i18nKey, { defaultValue: opt.label })}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {feeType === "custom" && (
+                    <div>
+                      <Label htmlFor="fee-label">{t("admin.userDetail.feeCustomLabel")}</Label>
+                      <Input
+                        id="fee-label"
+                        value={customLabel}
+                        onChange={(e) => setCustomLabel(e.target.value)}
+                        className="mt-1.5"
+                        placeholder={t("admin.userDetail.feeCustomPlaceholder")}
+                        required
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <Label htmlFor="fee-amount">{t("admin.userDetail.feeAmount")}</Label>
+                    <Input
+                      id="fee-amount"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={feeAmount}
+                      onChange={(e) => setFeeAmount(e.target.value)}
+                      className="mt-1.5"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="fee-notes">{t("admin.notes")}</Label>
+                    <Input
+                      id="fee-notes"
+                      value={feeNotes}
+                      onChange={(e) => setFeeNotes(e.target.value)}
+                      className="mt-1.5"
+                      placeholder={t("admin.userDetail.feeNotesPlaceholder")}
+                    />
+                  </div>
+                  <Button type="submit" size="sm" variant="gold" disabled={feeBusy} className="w-full">
+                    <Plus className="mr-2 h-3.5 w-3.5" />
+                    {feeBusy ? t("admin.userDetail.assigningFee") : t("admin.userDetail.assignFee")}
+                  </Button>
+                </form>
+
+                <div className="mt-4 space-y-2">
+                  {fees.length === 0 ? (
+                    <p className="text-sm text-muted">{t("admin.userDetail.noFees")}</p>
+                  ) : (
+                    fees.map((fee) => (
+                      <div key={fee.id} className="rounded-lg bg-secondary/80 px-3 py-3 text-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground">{fee.label}</p>
+                            <p className="mt-0.5 text-xs text-muted">{formatDate(fee.created_at)}</p>
+                            {fee.notes && <p className="mt-1 text-xs text-muted">{fee.notes}</p>}
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="font-medium">{formatCurrency(Number(fee.amount))}</p>
+                            <div className="mt-1 flex justify-end">
+                              <StatusBadge status={fee.status} />
+                            </div>
+                          </div>
+                        </div>
+                        {fee.status === "pending" && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button type="button" size="sm" variant="outline" disabled={feeBusy} onClick={() => void handleFeeStatus(fee.id, "paid")}>
+                              {t("admin.userDetail.markPaid")}
+                            </Button>
+                            <Button type="button" size="sm" variant="outline" disabled={feeBusy} onClick={() => void handleFeeStatus(fee.id, "waived")}>
+                              {t("admin.userDetail.waive")}
+                            </Button>
+                            <Button type="button" size="sm" variant="ghost" disabled={feeBusy} onClick={() => void handleFeeStatus(fee.id, "cancelled")}>
+                              {t("admin.userDetail.cancelFee")}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </section>
 

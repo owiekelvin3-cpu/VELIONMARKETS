@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { ensureValidSession } from "@/lib/auth-session";
-import type { Withdrawal } from "@/types/database";
+import { fetchOutstandingFees, sumOutstandingFees } from "@/lib/fees";
+import type { UserFee, Withdrawal } from "@/types/database";
 
 export type WithdrawalFilter = "crypto" | "bank_transfer" | "wire_transfer" | "ewallet";
 
@@ -15,22 +16,32 @@ function matchesFilter(method: string, filter?: WithdrawalFilter) {
 export function useWithdrawalData(filter?: WithdrawalFilter) {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [balance, setBalance] = useState(0);
+  const [outstandingFees, setOutstandingFees] = useState<UserFee[]>([]);
 
   const load = useCallback(async (userId: string) => {
     await ensureValidSession();
-    const [wRes, bRes] = await Promise.all([
+    const [wRes, bRes, fees] = await Promise.all([
       supabase.from("withdrawals").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(10),
       supabase.from("balances").select("amount").eq("user_id", userId).single(),
+      fetchOutstandingFees(userId).catch(() => [] as UserFee[]),
     ]);
     const all = wRes.data ?? [];
     setWithdrawals(filter ? all.filter((w) => matchesFilter(w.method, filter)) : all);
     setBalance(bRes.data?.amount ?? 0);
+    setOutstandingFees(fees);
   }, [filter]);
 
-  return { withdrawals, balance, load };
+  const outstandingTotal = sumOutstandingFees(outstandingFees);
+  const hasOutstandingFees = outstandingFees.length > 0;
+
+  return { withdrawals, balance, outstandingFees, outstandingTotal, hasOutstandingFees, load };
 }
 
-export function useWithdrawalForm(userId: string | undefined, load: (id: string) => Promise<void>) {
+export function useWithdrawalForm(
+  userId: string | undefined,
+  load: (id: string) => Promise<void>,
+  hasOutstandingFees = false
+) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
@@ -42,6 +53,10 @@ export function useWithdrawalForm(userId: string | undefined, load: (id: string)
     notes?: string | null;
   }) => {
     if (!userId) return false;
+    if (hasOutstandingFees) {
+      setMessage("Outstanding fees must be paid before withdrawing");
+      return false;
+    }
     if (!data.amount || data.amount <= 0) {
       setMessage("Invalid amount");
       return false;

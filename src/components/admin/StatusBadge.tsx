@@ -5,8 +5,11 @@ const VARIANT: Record<string, "success" | "warning" | "destructive" | "secondary
   completed: "success",
   approved: "success",
   active: "success",
+  paid: "success",
   pending: "warning",
   rejected: "destructive",
+  cancelled: "secondary",
+  waived: "secondary",
   none: "secondary",
 };
 

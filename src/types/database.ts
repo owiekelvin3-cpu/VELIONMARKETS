@@ -9,6 +9,7 @@ export type Json =
 export type UserRole = "user" | "admin";
 export type KycStatus = "none" | "pending" | "approved" | "rejected";
 export type TransactionStatus = "pending" | "approved" | "rejected" | "completed";
+export type UserFeeStatus = "pending" | "paid" | "waived" | "cancelled";
 
 export interface Database {
   public: {
@@ -677,6 +678,50 @@ export interface Database {
           created_at?: string;
         };
       };
+      user_fees: {
+        Row: {
+          id: string;
+          user_id: string;
+          fee_type: string;
+          label: string;
+          amount: number;
+          currency: string;
+          status: UserFeeStatus;
+          notes: string | null;
+          assigned_by: string | null;
+          paid_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          fee_type: string;
+          label: string;
+          amount: number;
+          currency?: string;
+          status?: UserFeeStatus;
+          notes?: string | null;
+          assigned_by?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          fee_type?: string;
+          label?: string;
+          amount?: number;
+          currency?: string;
+          status?: UserFeeStatus;
+          notes?: string | null;
+          assigned_by?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 }
@@ -695,3 +740,4 @@ export type SupportConversation = Database["public"]["Tables"]["support_conversa
 export type SupportMessage = Database["public"]["Tables"]["support_messages"]["Row"];
 export type SupportAttachment = Database["public"]["Tables"]["support_attachments"]["Row"];
 export type SupportInternalNote = Database["public"]["Tables"]["support_internal_notes"]["Row"];
+export type UserFee = Database["public"]["Tables"]["user_fees"]["Row"];

@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Wallet, ArrowDownToLine, ArrowLeft, Shield, Clock, CheckCircle,
+  Wallet, ArrowDownToLine, ArrowLeft, Shield, Clock, CheckCircle, AlertTriangle, Coins,
 } from "@/lib/icons";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { FadeIn } from "@/components/motion/Motion";
+import { payAllOutstandingFees, payUserFee } from "@/lib/fees";
+import type { UserFee } from "@/types/database";
 
 export function WithdrawPageHeader({
   title,
@@ -75,6 +78,126 @@ export function WithdrawalBalanceBanner({ balance }: { balance: number }) {
             </Link>
           </Button>
         )}
+      </div>
+    </div>
+  );
+}
+
+export function OutstandingFeesPanel({
+  fees,
+  balance,
+  onPaid,
+}: {
+  fees: UserFee[];
+  balance: number;
+  onPaid: () => void | Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const [busyId, setBusyId] = useState<string | "all" | null>(null);
+  const [error, setError] = useState("");
+  const total = fees.reduce((sum, f) => sum + Number(f.amount), 0);
+
+  if (fees.length === 0) return null;
+
+  const payOne = async (feeId: string) => {
+    setBusyId(feeId);
+    setError("");
+    try {
+      await payUserFee(feeId);
+      await onPaid();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("withdrawals.feePayFailed"));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const payAll = async () => {
+    setBusyId("all");
+    setError("");
+    try {
+      await payAllOutstandingFees(fees);
+      await onPaid();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("withdrawals.feePayFailed"));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400">
+          <AlertTriangle className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-base font-semibold text-foreground">
+            {t("withdrawals.feesRequiredTitle")}
+          </h2>
+          <p className="mt-1 text-sm text-muted">{t("withdrawals.feesRequiredDesc")}</p>
+          <p className="mt-2 text-sm font-medium text-amber-300">
+            {t("withdrawals.feesOutstandingTotal", { amount: formatCurrency(total) })}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {fees.map((fee) => (
+          <div
+            key={fee.id}
+            className="flex flex-col gap-3 rounded-lg border border-border bg-secondary/40 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Coins className="h-3.5 w-3.5 text-muted" />
+                {fee.label}
+              </p>
+              {fee.notes && <p className="mt-1 text-xs text-muted">{fee.notes}</p>}
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-foreground">{formatCurrency(Number(fee.amount))}</span>
+              <Button
+                type="button"
+                size="sm"
+                disabled={busyId !== null || balance < Number(fee.amount)}
+                onClick={() => void payOne(fee.id)}
+              >
+                {busyId === fee.id ? t("withdrawals.payingFee") : t("withdrawals.payFee")}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {error && (
+        <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-sm text-red-400">
+          {error}
+        </p>
+      )}
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-muted">
+          {balance < total
+            ? t("withdrawals.feesNeedDeposit")
+            : t("withdrawals.feesPayHint")}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {balance < total && (
+            <Button asChild size="sm" variant="outline">
+              <Link to="/dashboard/deposits">{t("withdrawals.addFunds")}</Link>
+            </Button>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="gold"
+            disabled={busyId !== null || balance < total}
+            onClick={() => void payAll()}
+          >
+            {busyId === "all" ? t("withdrawals.payingFee") : t("withdrawals.payAllFees")}
+          </Button>
+        </div>
       </div>
     </div>
   );

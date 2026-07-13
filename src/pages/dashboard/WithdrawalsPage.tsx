@@ -11,6 +11,7 @@ import {
   WithdrawalBalanceBanner,
   WithdrawalHistoryPanel,
   WithdrawalSecurityCard,
+  OutstandingFeesPanel,
 } from "@/components/dashboard/WithdrawalUi";
 import { WithdrawFundsShowcase, WithdrawalProcessingTimeline } from "@/components/dashboard/WithdrawFundsShowcase";
 import { WithdrawalHistory } from "@/components/dashboard/WithdrawalHistory";
@@ -18,7 +19,7 @@ import { WithdrawalHistory } from "@/components/dashboard/WithdrawalHistory";
 export default function WithdrawalsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { withdrawals, balance, load } = useWithdrawalData();
+  const { withdrawals, balance, outstandingFees, hasOutstandingFees, load } = useWithdrawalData();
 
   useEffect(() => {
     if (user) void load(user.id);
@@ -43,9 +44,17 @@ export default function WithdrawalsPage() {
       <FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
 
-        <WithdrawFundsShowcase />
+        {user && (
+          <OutstandingFeesPanel
+            fees={outstandingFees}
+            balance={balance}
+            onPaid={() => load(user.id)}
+          />
+        )}
 
-        <WithdrawalProcessingTimeline />
+        {!hasOutstandingFees && <WithdrawFundsShowcase />}
+
+        {!hasOutstandingFees && <WithdrawalProcessingTimeline />}
 
         <WithdrawalSecurityCard />
 

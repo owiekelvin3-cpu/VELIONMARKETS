@@ -15,6 +15,7 @@ import {
   WithdrawalHistoryPanel,
   WithdrawalAmountField,
   WithdrawalAlert,
+  OutstandingFeesPanel,
 } from "@/components/dashboard/WithdrawalUi";
 import { FadeIn } from "@/components/motion/Motion";
 import { CRYPTO_ASSETS } from "@/constants/deposit-assets";
@@ -30,8 +31,8 @@ export default function CryptoWithdrawalPage() {
   const coinParam = searchParams.get("coin");
   const validCoin = CRYPTO_ASSETS.some((c) => c.id === coinParam) ? coinParam! : "bitcoin";
 
-  const { withdrawals, balance, load } = useWithdrawalData(cryptoFilter);
-  const { loading, message, success, submit, setMessage } = useWithdrawalForm(user?.id, load);
+  const { withdrawals, balance, outstandingFees, hasOutstandingFees, load } = useWithdrawalData(cryptoFilter);
+  const { loading, message, success, submit, setMessage } = useWithdrawalForm(user?.id, load, hasOutstandingFees);
 
   const [selected, setSelected] = useState(validCoin);
   const [amount, setAmount] = useState("");
@@ -78,6 +79,15 @@ export default function CryptoWithdrawalPage() {
       <FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
 
+        {user && (
+          <OutstandingFeesPanel
+            fees={outstandingFees}
+            balance={balance}
+            onPaid={() => load(user.id)}
+          />
+        )}
+
+        {!hasOutstandingFees && (
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
             <Coins className="h-3.5 w-3.5 text-emerald" />
@@ -102,7 +112,9 @@ export default function CryptoWithdrawalPage() {
             ))}
           </div>
         </div>
+        )}
 
+        {!hasOutstandingFees && (
         <WithdrawalFormPanel description={t("withdrawals.sendCryptoTo", { asset: crypto.label })}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -133,6 +145,7 @@ export default function CryptoWithdrawalPage() {
             </Button>
           </form>
         </WithdrawalFormPanel>
+        )}
 
         <WithdrawalHistoryPanel>
           <WithdrawalHistory withdrawals={withdrawals} />
