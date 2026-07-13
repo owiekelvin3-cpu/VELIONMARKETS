@@ -6,9 +6,9 @@ import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import {
   Users, FileCheck, ArrowDownToLine, ArrowUpFromLine, TrendingUp,
-  Settings, Bell, Mail, LogOut, Menu, LayoutDashboard, LayoutGrid, Coins, MessageCircle,
+  Settings, Bell, Mail, LogOut, Menu, LayoutDashboard, LayoutGrid, Coins, MessageCircle, X,
 } from "@/lib/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -47,25 +47,46 @@ export function AdminLayout() {
   const isActive = (href: string, exact?: boolean) =>
     exact ? location.pathname === href : location.pathname === href || location.pathname.startsWith(`${href}/`);
 
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [sidebarOpen]);
+
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-background">
+    <div className="flex min-h-dvh w-full max-w-[100vw] overflow-x-hidden bg-background">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-void transition-transform duration-300 lg:static lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-40 flex w-[min(18rem,88vw)] flex-col border-r border-border bg-void transition-transform duration-300 ease-out lg:static lg:w-64 lg:translate-x-0",
+          sidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"
         )}
         aria-label={t("admin.navLabel")}
       >
-        <div className="flex h-16 items-center border-b border-border px-5">
-          <Link to="/dashboard/admin" className="flex items-center gap-2">
+        <div className="flex h-16 items-center justify-between gap-2 border-b border-border px-4">
+          <Link to="/dashboard/admin" className="flex min-w-0 items-center gap-2" onClick={() => setSidebarOpen(false)}>
             <Logo size="sm" wordmarkClassName="text-sm" />
             <span className="rounded-md bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold">
               Admin
             </span>
           </Link>
+          <button
+            type="button"
+            className="rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-label={t("dashboard.closeSidebar")}
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
           <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
             {t("admin.title")}
           </p>
@@ -82,7 +103,7 @@ export function AdminLayout() {
               )}
             >
               <link.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {t(link.labelKey)}
+              <span className="truncate">{t(link.labelKey)}</span>
             </Link>
           ))}
         </nav>
@@ -90,6 +111,7 @@ export function AdminLayout() {
         <div className="border-t border-border p-3">
           <Link
             to="/dashboard"
+            onClick={() => setSidebarOpen(false)}
             className="mb-3 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-secondary/70 hover:text-foreground"
           >
             <LayoutDashboard className="h-4 w-4" />
@@ -120,11 +142,11 @@ export function AdminLayout() {
         />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-background/90 px-4 backdrop-blur-xl md:px-6">
+      <div className="flex min-w-0 w-full flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/90 px-3 backdrop-blur-xl sm:gap-3 sm:px-4 md:px-6">
           <button
             type="button"
-            className="rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
+            className="shrink-0 rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label={t("dashboard.openSidebar")}
           >
@@ -132,17 +154,21 @@ export function AdminLayout() {
           </button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-foreground">{BRAND.name}</p>
-            <p className="text-xs text-muted">{t("admin.portalLabel")}</p>
+            <p className="truncate text-xs text-muted">{t("admin.portalLabel")}</p>
           </div>
-          <ThemeToggle />
-          <LanguageSelector />
-          <NotificationBell />
+          <div className="flex shrink-0 items-center gap-0.5">
+            <ThemeToggle />
+            <LanguageSelector />
+            <NotificationBell />
+          </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
-          <PageEnter key={location.pathname}>
-            <Outlet />
-          </PageEnter>
+        <main className="min-w-0 flex-1 overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-8">
+          <div className="mx-auto w-full min-w-0 max-w-[1400px]">
+            <PageEnter key={location.pathname}>
+              <Outlet />
+            </PageEnter>
+          </div>
         </main>
       </div>
       <NotificationToast />
