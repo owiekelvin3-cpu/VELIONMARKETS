@@ -129,7 +129,7 @@ export default function TradingRoomPage() {
       </div>
 
       {/* Pair + live price in one block */}
-      <div className="surface-panel p-4">
+      <div className="surface-panel overflow-hidden rounded-3xl p-3 sm:p-4">
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">{t("trading.selectPair")}</p>
         <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {TRADING_PAIRS.map((p) => (

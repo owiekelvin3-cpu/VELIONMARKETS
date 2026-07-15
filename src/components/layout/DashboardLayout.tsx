@@ -1,7 +1,7 @@
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Logo, LogoIcon } from "@/components/brand/Logo";
+import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, TrendingUp, History,
@@ -16,6 +16,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { NotificationToast } from "@/components/notifications/NotificationToast";
 import { PushNotificationInit } from "@/components/notifications/PushNotificationInit";
 import { PageEnter } from "@/components/motion/Motion";
+import { DashboardDock, shouldHideDashboardDock } from "@/components/dashboard/DashboardDock";
 import { syncUserLocation } from "@/lib/user-location";
 
 type NavLink = {
@@ -76,6 +77,8 @@ export function DashboardLayout() {
   const navigate = useNavigate();
 
   const settingsActive = location.pathname === "/dashboard/settings";
+  const hideDock = shouldHideDashboardDock(location.pathname);
+  const isOverview = location.pathname === "/dashboard";
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -153,7 +156,7 @@ export function DashboardLayout() {
         )}
         aria-label={t("dashboard.navLabel")}
       >
-        <div className="flex items-start justify-between gap-2 border-b border-border/80 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
+        <div className="flex items-start justify-between gap-2 border-b border-border/60 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <div className="min-w-0">
             <Link to="/dashboard" className="block" onClick={() => setSidebarOpen(false)}>
               <Logo size="sm" wordmarkClassName="text-sm" />
@@ -164,7 +167,7 @@ export function DashboardLayout() {
           </div>
           <button
             type="button"
-            className="rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(false)}
             aria-label={t("dashboard.closeSidebar")}
           >
@@ -172,7 +175,7 @@ export function DashboardLayout() {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-2.5 py-4 [-webkit-overflow-scrolling:touch]">
+        <nav className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-4 [-webkit-overflow-scrolling:touch]">
           {navGroups.map((group) => (
             <div key={group.labelKey}>
               <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
@@ -187,7 +190,7 @@ export function DashboardLayout() {
                       to={link.href}
                       onClick={() => setSidebarOpen(false)}
                       className={cn(
-                        "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors",
+                        "flex min-h-11 items-center gap-2.5 rounded-2xl px-3 py-2.5 text-[13px] font-medium transition-colors",
                         active
                           ? "nav-item-active"
                           : "text-muted hover:bg-secondary/50 hover:text-foreground"
@@ -206,7 +209,7 @@ export function DashboardLayout() {
             <Link
               to="/dashboard/admin"
               onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-gold hover:bg-gold/10"
+              className="flex min-h-11 items-center gap-2.5 rounded-2xl px-3 py-2.5 text-[13px] font-medium text-gold hover:bg-gold/10"
             >
               <Shield className="h-4 w-4" aria-hidden="true" />
               {t("nav.adminPanel")}
@@ -214,12 +217,12 @@ export function DashboardLayout() {
           )}
         </nav>
 
-        <div className="border-t border-border/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="border-t border-border/60 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Link
             to="/dashboard/settings"
             onClick={() => setSidebarOpen(false)}
             className={cn(
-              "mb-2 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors",
+              "mb-2 flex min-h-11 items-center gap-2.5 rounded-2xl px-3 py-2.5 text-[13px] font-medium transition-colors",
               settingsActive
                 ? "nav-item-active"
                 : "text-muted hover:bg-secondary/50 hover:text-foreground"
@@ -228,7 +231,7 @@ export function DashboardLayout() {
             <Settings className="h-4 w-4 shrink-0" aria-hidden="true" />
             {t("dashboard.settings")}
           </Link>
-          <div className="mb-2 flex items-center gap-2.5 rounded-xl border border-border bg-secondary/30 px-2.5 py-2">
+          <div className="mb-2 flex items-center gap-2.5 rounded-2xl border border-border/70 bg-secondary/25 px-2.5 py-2.5">
             <UserAvatar
               size="sm"
               name={profile?.full_name}
@@ -241,7 +244,11 @@ export function DashboardLayout() {
               <p className="truncate text-[11px] text-muted">{profile?.email}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={signOut}>
+          <div className="mb-2 flex items-center gap-1 lg:hidden">
+            <ThemeToggle />
+            <LanguageSelector />
+          </div>
+          <Button variant="outline" size="sm" className="w-full rounded-full" onClick={signOut}>
             <LogOut className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
             {t("common.signOut")}
           </Button>
@@ -258,15 +265,34 @@ export function DashboardLayout() {
       )}
 
       <div className="relative z-[1] flex min-w-0 w-full flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b border-border/80 bg-background/80 px-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:gap-3 sm:px-4 md:px-6">
+        <header
+          className={cn(
+            "sticky top-0 z-20 flex min-h-14 items-center gap-2 px-3 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4 md:px-6",
+            isOverview
+              ? "border-b-0 bg-transparent"
+              : "border-b border-border/60 bg-background/80 backdrop-blur-xl"
+          )}
+        >
           <button
             type="button"
-            className="shrink-0 rounded-lg p-2 text-muted hover:bg-secondary lg:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label={t("dashboard.openSidebar")}
           >
             <Menu className="h-5 w-5" />
           </button>
+
+          <Link
+            to="/dashboard/settings"
+            className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-border/80 lg:hidden"
+            aria-label={t("dashboard.settings")}
+          >
+            <UserAvatar
+              size="sm"
+              name={profile?.full_name}
+              avatarUrl={profile?.avatar_url}
+            />
+          </Link>
 
           <form onSubmit={handleSearch} className="relative hidden min-w-0 flex-1 sm:block">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" aria-hidden="true" />
@@ -280,14 +306,20 @@ export function DashboardLayout() {
           </form>
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5">
-            <ThemeToggle />
-            <LanguageSelector />
+            <div className="hidden lg:flex lg:items-center lg:gap-0.5">
+              <ThemeToggle />
+              <LanguageSelector />
+            </div>
             <NotificationBell />
-            <LogoIcon className="ml-1 hidden h-7 w-7 md:block lg:hidden" />
           </div>
         </header>
 
-        <main className="relative min-w-0 flex-1 overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-7">
+        <main
+          className={cn(
+            "relative min-w-0 flex-1 overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-7",
+            !hideDock && "pb-dock"
+          )}
+        >
           <div className="dashboard-shell">
             <PageEnter key={location.pathname}>
               <Outlet />
@@ -295,6 +327,8 @@ export function DashboardLayout() {
           </div>
         </main>
       </div>
+
+      <DashboardDock onAccountPress={() => setSidebarOpen(true)} />
       <NotificationToast />
       <PushNotificationInit />
     </div>

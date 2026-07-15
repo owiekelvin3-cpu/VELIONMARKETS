@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { FadeIn } from "@/components/motion/Motion";
 import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 import { GiftCardBrandIcon } from "@/components/dashboard/DepositIcons";
 import { GIFT_CARD_BRANDS } from "@/constants/deposit-assets";
 
@@ -16,7 +17,8 @@ export default function GiftCardDepositPage() {
         backTo="/dashboard/deposits"
       />
 
-      <FadeIn>
+      <DashboardSheet>
+<FadeIn>
         <p className="mb-4 text-sm text-muted">{t("deposits.giftCardPageDesc")}</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {GIFT_CARD_BRANDS.map((brand) => (
@@ -31,6 +33,7 @@ export default function GiftCardDepositPage() {
           ))}
         </div>
       </FadeIn>
+      </DashboardSheet>
     </div>
   );
 }

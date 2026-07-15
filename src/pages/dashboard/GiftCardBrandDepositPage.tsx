@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 import { BrandLogo } from "@/components/dashboard/DepositIcons";
 import { ImageUploadField } from "@/components/dashboard/ImageUploadField";
 import { FadeIn } from "@/components/motion/Motion";
@@ -95,7 +96,8 @@ export default function GiftCardBrandDepositPage() {
         backTo="/dashboard/deposits"
       />
 
-      <FadeIn>
+      <DashboardSheet>
+<FadeIn>
         <div className="rounded-2xl border border-border bg-secondary/50 p-5 sm:p-6">
           <Link
             to="/dashboard/deposits/gift-card"
@@ -198,6 +200,7 @@ export default function GiftCardBrandDepositPage() {
           </form>
         </div>
       </FadeIn>
+      </DashboardSheet>
     </div>
   );
 }

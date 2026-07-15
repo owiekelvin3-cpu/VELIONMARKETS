@@ -4,10 +4,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { ensureValidSession } from "@/lib/auth-session";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Trade } from "@/types/database";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 
 export default function TradesPage() {
   const { t } = useTranslation();
@@ -36,9 +36,8 @@ export default function TradesPage() {
   return (
     <div className="space-y-6">
       <PageHeader title={t("tradesPage.title")} subtitle={t("tradesPage.subtitle")} />
-      <Card>
-        <CardHeader><CardTitle>{t("tradesPage.allTrades")}</CardTitle></CardHeader>
-        <CardContent>
+      <DashboardSheet>
+        <h2 className="mb-4 font-display text-base font-semibold">{t("tradesPage.allTrades")}</h2>
           {loading ? (
             <p className="text-sm text-muted">{t("common.loading")}…</p>
           ) : error ? (
@@ -75,8 +74,7 @@ export default function TradesPage() {
               </table>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </DashboardSheet>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DepositMethodCard } from "@/components/dashboard/DepositMethodCard";
 import { DepositFundsShowcase } from "@/components/dashboard/DepositFundsShowcase";
 import { CryptoIconGrid, GiftCardIconGrid } from "@/components/dashboard/DepositIcons";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 
 export default function DepositsPage() {
   const { t } = useTranslation();
@@ -27,32 +28,34 @@ export default function DepositsPage() {
         }
       />
 
-      <FadeIn className="space-y-4">
-        <DepositMethodCard
-          to="/dashboard/deposits/crypto"
-          title={t("deposits.cryptoTitle")}
-          description={t("deposits.cryptoDesc")}
-          iconGrid={<CryptoIconGrid size="lg" />}
-          iconRow={<CryptoIconGrid size="sm" />}
-        />
+      <DashboardSheet>
+        <FadeIn className="space-y-4">
+          <DepositMethodCard
+            to="/dashboard/deposits/crypto"
+            title={t("deposits.cryptoTitle")}
+            description={t("deposits.cryptoDesc")}
+            iconGrid={<CryptoIconGrid size="lg" />}
+            iconRow={<CryptoIconGrid size="sm" />}
+          />
 
-        <DepositMethodCard
-          to="/dashboard/deposits/gift-card"
-          title={t("deposits.giftCardTitle")}
-          description={t("deposits.giftCardDesc")}
-          iconGrid={<GiftCardIconGrid size="lg" />}
-          iconRow={<GiftCardIconGrid size="sm" />}
-        />
+          <DepositMethodCard
+            to="/dashboard/deposits/gift-card"
+            title={t("deposits.giftCardTitle")}
+            description={t("deposits.giftCardDesc")}
+            iconGrid={<GiftCardIconGrid size="lg" />}
+            iconRow={<GiftCardIconGrid size="sm" />}
+          />
 
-        <div className="surface-muted flex gap-4 p-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted">
-            <Shield className="h-4 w-4" aria-hidden="true" />
+          <div className="surface-muted flex gap-4 p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-muted">
+              <Shield className="h-4 w-4" aria-hidden="true" />
+            </div>
+            <p className="text-sm leading-relaxed text-muted">{t("deposits.verificationNote")}</p>
           </div>
-          <p className="text-sm leading-relaxed text-muted">{t("deposits.verificationNote")}</p>
-        </div>
 
-        <DepositFundsShowcase />
-      </FadeIn>
+          <DepositFundsShowcase />
+        </FadeIn>
+      </DashboardSheet>
     </div>
   );
 }

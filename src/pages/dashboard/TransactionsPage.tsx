@@ -11,6 +11,7 @@ import {
   type UserTransaction,
 } from "@/lib/transactions";
 import { cn } from "@/lib/utils";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 
 type Filter = "all" | TransactionKind;
 
@@ -61,16 +62,16 @@ export default function TransactionsPage() {
         subtitle={t("transactions.subtitle")}
       />
 
-      <div className="inline-flex flex-wrap gap-0.5 rounded-xl border border-border bg-secondary/30 p-1">
+      <div className="inline-flex flex-wrap gap-0.5 rounded-full border border-border bg-secondary/30 p-1">
         {filters.map((f) => (
           <button
             key={f.id}
             type="button"
             onClick={() => setFilter(f.id)}
             className={cn(
-              "rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
+              "rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
               filter === f.id
-                ? "bg-card text-foreground shadow-sm"
+                ? "bg-foreground text-background shadow-sm"
                 : "text-muted hover:text-foreground"
             )}
           >
@@ -79,7 +80,7 @@ export default function TransactionsPage() {
         ))}
       </div>
 
-      <div className="surface-panel p-4 md:p-5">
+      <DashboardSheet>
         {loading ? (
           <p className="text-sm text-muted">{t("common.loading")}…</p>
         ) : error ? (
@@ -96,7 +97,7 @@ export default function TransactionsPage() {
             />
           </>
         )}
-      </div>
+      </DashboardSheet>
 
       <TransactionReceiptPanel transaction={selected} onClose={() => setSelected(null)} />
     </div>

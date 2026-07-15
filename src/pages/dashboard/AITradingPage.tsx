@@ -273,7 +273,7 @@ export default function AITradingPage() {
         }
       />
 
-      <div className="surface-panel p-4">
+      <div className="surface-panel overflow-hidden rounded-3xl p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted">{t("aiTrading.yourBalance")}</p>

@@ -285,7 +285,7 @@ export default function SettingsPage() {
 
         <div className="min-w-0 flex-1 space-y-6">
           {section === "profile" && (
-            <Card className="border-border bg-secondary/50">
+            <Card className="dashboard-stat !p-0 border-border/70 bg-card/80">
               <CardHeader>
                 <CardTitle>{t("settingsPage.profileTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.profileDesc")}</CardDescription>
@@ -393,7 +393,7 @@ export default function SettingsPage() {
           )}
 
           {section === "wallet" && (
-            <Card className="border-border bg-secondary/50">
+            <Card className="dashboard-stat !p-0 border-border/70 bg-card/80">
               <CardHeader>
                 <CardTitle>{t("settingsPage.walletTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.walletDesc")}</CardDescription>
@@ -468,7 +468,7 @@ export default function SettingsPage() {
           )}
 
           {section === "security" && (
-            <Card className="border-border bg-secondary/50">
+            <Card className="dashboard-stat !p-0 border-border/70 bg-card/80">
               <CardHeader>
                 <CardTitle>{t("settingsPage.securityTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.securityDesc")}</CardDescription>
@@ -523,7 +523,7 @@ export default function SettingsPage() {
           )}
 
           {section === "notifications" && (
-            <Card className="border-border bg-secondary/50">
+            <Card className="dashboard-stat !p-0 border-border/70 bg-card/80">
               <CardHeader>
                 <CardTitle>{t("settingsPage.notificationsTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.notificationsDesc")}</CardDescription>
@@ -596,7 +596,7 @@ export default function SettingsPage() {
           )}
 
           {section === "preferences" && (
-            <Card className="border-border bg-secondary/50">
+            <Card className="dashboard-stat !p-0 border-border/70 bg-card/80">
               <CardHeader>
                 <CardTitle>{t("settingsPage.preferencesTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.preferencesDesc")}</CardDescription>

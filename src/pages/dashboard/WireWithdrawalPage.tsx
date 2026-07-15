@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 import { WithdrawalHistory } from "@/components/dashboard/WithdrawalHistory";
 import {
   WithdrawalBalanceBanner,
@@ -61,7 +62,8 @@ export default function WireWithdrawalPage() {
         backTo="/dashboard/withdrawals"
       />
 
-      <FadeIn className="space-y-6">
+      <DashboardSheet>
+<FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
 
         {user && (
@@ -119,6 +121,7 @@ export default function WireWithdrawalPage() {
           <WithdrawalHistory withdrawals={withdrawals} />
         </WithdrawalHistoryPanel>
       </FadeIn>
+      </DashboardSheet>
     </div>
   );
 }

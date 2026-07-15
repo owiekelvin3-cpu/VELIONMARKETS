@@ -5,10 +5,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { ensureValidSession } from "@/lib/auth-session";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 
 const packages = [
   { name: "Starter", investment: 500, dailyReturn: 0.8, hashrate: "10 TH/s" },
@@ -79,34 +79,32 @@ export default function MiningPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {packages.map((pkg) => (
-          <Card key={pkg.name}>
-            <CardHeader><CardTitle>{pkg.name}</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(pkg.investment)}</p>
-              <p className="mt-1 text-sm text-muted">{pkg.hashrate}</p>
-              <p className="mt-2 font-semibold text-emerald">{pkg.dailyReturn}% {t("mining.daily")}</p>
-              <Button size="sm" className="mt-4 w-full" disabled={loading === pkg.name || balance < pkg.investment} onClick={() => handlePurchase(pkg)}>
-                {loading === pkg.name ? t("common.saving") : t("mining.purchase")}
-              </Button>
-            </CardContent>
-          </Card>
+          <div key={pkg.name} className="dashboard-stat">
+            <p className="font-display text-lg font-semibold">{pkg.name}</p>
+            <p className="mt-2 text-2xl font-bold">{formatCurrency(pkg.investment)}</p>
+            <p className="mt-1 text-sm text-muted">{pkg.hashrate}</p>
+            <p className="mt-2 font-semibold text-emerald">{pkg.dailyReturn}% {t("mining.daily")}</p>
+            <Button size="sm" className="mt-4 w-full rounded-full" disabled={loading === pkg.name || balance < pkg.investment} onClick={() => handlePurchase(pkg)}>
+              {loading === pkg.name ? t("common.saving") : t("mining.purchase")}
+            </Button>
+          </div>
         ))}
       </div>
 
       {message && <p className={cn("text-sm", isSuccess ? "text-emerald" : "text-amber-400")}>{message}</p>}
 
       {subs.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>{t("mining.yourPackages")}</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
+        <DashboardSheet>
+          <h2 className="mb-4 font-display text-base font-semibold">{t("mining.yourPackages")}</h2>
+          <div className="space-y-2">
             {subs.map((s) => (
-              <div key={s.id} className="flex justify-between border-b pb-2 text-sm">
-                <span>{s.package_name} — {formatCurrency(s.investment)}</span>
-                <Badge variant="success">{s.status} ({s.daily_return}%/{t("mining.day")})</Badge>
+              <div key={s.id} className="dashboard-row border-b border-border/40 px-0">
+                <span className="text-sm">{s.package_name} — {formatCurrency(s.investment)}</span>
+                <Badge variant="success" className="ml-auto">{s.status} ({s.daily_return}%/{t("mining.day")})</Badge>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardSheet>
       )}
     </div>
   );

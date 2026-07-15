@@ -5,10 +5,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { ensureValidSession } from "@/lib/auth-session";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 
 const signalPackages = [
   { name: "Basic Signals", price: 49, duration: "30 days", signals: "5/day" },
@@ -78,36 +78,34 @@ export default function SignalsPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {signalPackages.map((pkg) => (
-          <Card key={pkg.name}>
-            <CardHeader><CardTitle>{pkg.name}</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(pkg.price)}<span className="text-sm text-muted">/mo</span></p>
-              <p className="mt-2 text-sm text-muted">{pkg.signals}</p>
-              <Button size="sm" className="mt-4 w-full" disabled={loading === pkg.name || balance < pkg.price} onClick={() => handlePurchase(pkg)}>
-                {loading === pkg.name ? t("common.saving") : t("signals.subscribe")}
-              </Button>
-            </CardContent>
-          </Card>
+          <div key={pkg.name} className="dashboard-stat">
+            <p className="font-display text-lg font-semibold">{pkg.name}</p>
+            <p className="mt-2 text-2xl font-bold">{formatCurrency(pkg.price)}<span className="text-sm text-muted">/mo</span></p>
+            <p className="mt-2 text-sm text-muted">{pkg.signals}</p>
+            <Button size="sm" className="mt-4 w-full rounded-full" disabled={loading === pkg.name || balance < pkg.price} onClick={() => handlePurchase(pkg)}>
+              {loading === pkg.name ? t("common.saving") : t("signals.subscribe")}
+            </Button>
+          </div>
         ))}
       </div>
 
       {message && <p className={cn("text-sm", message.includes("subscribed") || message.includes("Subscribed") ? "text-emerald" : "text-amber-400")}>{message}</p>}
 
       {subs.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>{t("signals.activeSubs")}</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
+        <DashboardSheet>
+          <h2 className="mb-4 font-display text-base font-semibold">{t("signals.activeSubs")}</h2>
+          <div className="space-y-2">
             {subs.map((s) => (
-              <div key={s.id} className="flex justify-between border-b pb-2 text-sm">
-                <span>{s.package_name}</span>
-                <div className="text-right">
+              <div key={s.id} className="dashboard-row border-b border-border/40 px-0">
+                <span className="text-sm">{s.package_name}</span>
+                <div className="ml-auto text-right">
                   <Badge variant="success">{s.status}</Badge>
                   {s.expires_at && <p className="mt-1 text-xs text-muted">{t("signals.expires")} {formatDate(s.expires_at)}</p>}
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardSheet>
       )}
     </div>
   );

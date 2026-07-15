@@ -395,12 +395,12 @@
   /* Soft panel used across dashboard — works in both themes */
   .surface-panel,
   .panel-surface {
-    @apply rounded-2xl border border-border bg-card;
+    @apply rounded-3xl border border-border/70 bg-card/90 shadow-sm;
   }
 
   .surface-muted,
   .panel-muted {
-    @apply rounded-2xl border border-border bg-secondary/40;
+    @apply rounded-2xl border border-border/60 bg-secondary/30;
   }
 
   .dashboard-shell {
@@ -426,25 +426,113 @@
       radial-gradient(ellipse 60% 50% at 50% 120%, rgba(16, 185, 129, 0.04), transparent 55%);
   }
 
+  /* Finance hero — void base with soft brand washes */
   .dashboard-hero {
-    @apply relative rounded-2xl border border-border bg-card/80 shadow-[0_8px_40px_rgba(0,0,0,0.18)] backdrop-blur-xl;
+    @apply relative overflow-hidden rounded-[1.75rem] border-0 bg-[#0c0c0e] text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)];
+    background-image:
+      radial-gradient(ellipse 80% 60% at 10% 0%, color-mix(in oklab, var(--color-emerald) 22%, transparent), transparent 55%),
+      radial-gradient(ellipse 50% 50% at 100% 20%, color-mix(in oklab, var(--color-gold) 12%, transparent), transparent 50%),
+      linear-gradient(165deg, #121214 0%, #09090b 55%, #0a0f0d 100%);
   }
 
   :root.light .dashboard-hero {
-    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  }
+
+  .dashboard-hero-muted {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  /* Elevated content sheet */
+  .dashboard-sheet {
+    @apply relative rounded-t-[2rem] border border-border bg-card px-4 py-5 shadow-[0_-8px_40px_rgba(0,0,0,0.12)] sm:rounded-3xl sm:px-6 sm:py-6;
+  }
+
+  :root.light .dashboard-sheet {
+    @apply bg-[#fafafa] shadow-[0_-4px_32px_rgba(15,23,42,0.06)];
+  }
+
+  .dark .dashboard-sheet,
+  :root:not(.light) .dashboard-sheet {
+    background: color-mix(in oklab, var(--color-surface-elevated) 92%, transparent);
   }
 
   .dashboard-stat {
-    @apply rounded-2xl border border-border bg-card/70 p-4 backdrop-blur-sm transition-colors hover:border-emerald/25;
+    @apply rounded-2xl border border-border/70 bg-card/80 p-4 backdrop-blur-sm transition-colors hover:border-emerald/25;
+  }
+
+  :root.light .dashboard-stat {
+    @apply bg-white/90 shadow-sm;
+  }
+
+  .dashboard-pill {
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-colors;
+  }
+
+  .dashboard-pill-primary {
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-void transition-colors hover:bg-white/90;
+  }
+
+  .dashboard-pill-secondary {
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/15;
+  }
+
+  .dashboard-pill-emerald {
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full bg-emerald px-5 text-sm font-semibold text-white transition-colors hover:bg-emerald-glow;
+  }
+
+  .dashboard-row {
+    @apply flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors;
+  }
+
+  .dashboard-row:hover {
+    @apply bg-secondary/40;
+  }
+
+  .dashboard-row-icon {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-secondary/70;
+  }
+
+  .pb-dock {
+    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 1024px) {
+    .pb-dock {
+      padding-bottom: 0;
+    }
+  }
+
+  .dashboard-dock {
+    @apply fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 lg:hidden;
+    pointer-events: none;
+  }
+
+  .dashboard-dock-inner {
+    pointer-events: auto;
+    @apply flex w-full max-w-sm items-center justify-between gap-1 rounded-full border border-border/60 bg-[#0c0c0e]/95 px-2 py-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl;
+  }
+
+  :root.light .dashboard-dock-inner {
+    @apply border-black/10 bg-[#111113]/95;
+  }
+
+  .dashboard-dock-item {
+    @apply flex h-11 min-w-[3.25rem] flex-1 flex-col items-center justify-center rounded-full text-[10px] font-medium text-white/55 transition-colors;
+  }
+
+  .dashboard-dock-item[aria-current="page"],
+  .dashboard-dock-item-active {
+    @apply bg-white text-void;
   }
 
   .dashboard-sidebar {
     background:
-      linear-gradient(180deg, color-mix(in oklab, var(--color-void) 92%, var(--color-emerald) 8%) 0%, var(--color-void) 28%, var(--color-void) 100%);
+      linear-gradient(180deg, color-mix(in oklab, var(--color-void) 96%, var(--color-emerald) 4%) 0%, var(--color-void) 100%);
   }
 
   :root.light .dashboard-sidebar {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
   }
 
   .admin-atmosphere {
@@ -501,19 +589,18 @@
   }
 
   .nav-item-active {
-    @apply relative bg-emerald/10 text-foreground;
+    @apply relative rounded-2xl bg-emerald/12 text-foreground;
   }
 
   .nav-item-active::before {
     content: "";
     position: absolute;
     left: 0;
-    top: 18%;
-    bottom: 18%;
+    top: 22%;
+    bottom: 22%;
     width: 3px;
     border-radius: 999px;
     background: var(--color-emerald);
-    box-shadow: 0 0 12px color-mix(in oklab, var(--color-emerald) 50%, transparent);
   }
 
   .select-input {

@@ -1,15 +1,17 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileCheck, Upload } from "@/lib/icons";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 
 export default function KYCPage() {
+  const { t } = useTranslation();
   const { user, profile, refreshProfile } = useAuth();
   const [docType, setDocType] = useState("passport");
   const [loading, setLoading] = useState(false);
@@ -52,7 +54,7 @@ export default function KYCPage() {
     if (!error) {
       await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user.id);
       await refreshProfile();
-      setMessage("KYC documents submitted for review.");
+      setMessage(t("kyc.submitted", { defaultValue: "KYC documents submitted for review." }));
     } else {
       setMessage(error.message);
     }
@@ -61,45 +63,62 @@ export default function KYCPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="KYC Verification" />
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <FileCheck className="h-5 w-5" />
-            Identity Verification
-          </CardTitle>
+      <PageHeader
+        title={t("dashboard.kyc")}
+        subtitle={t("kyc.subtitle", { defaultValue: "Verify your identity to unlock full platform access." })}
+      />
+      <DashboardSheet>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 font-display text-base font-semibold">
+            <FileCheck className="h-5 w-5 text-emerald" />
+            {t("kyc.identityTitle", { defaultValue: "Identity Verification" })}
+          </h2>
           <Badge variant={statusColors[profile?.kyc_status || "none"]}>
-            {profile?.kyc_status === "none" ? "Not Submitted" : profile?.kyc_status}
+            {profile?.kyc_status === "none"
+              ? t("dashboard.kycNone")
+              : t(
+                  profile?.kyc_status === "pending"
+                    ? "dashboard.kycPending"
+                    : profile?.kyc_status === "approved"
+                      ? "dashboard.verified"
+                      : "dashboard.kycRejected"
+                )}
           </Badge>
-        </CardHeader>
-        <CardContent>
-          {profile?.kyc_status === "approved" ? (
-            <p className="text-muted">Your identity has been verified. You have full access to all platform features.</p>
-          ) : profile?.kyc_status === "pending" ? (
-            <p className="text-muted">Your documents are under review. This typically takes 24-48 hours.</p>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-              <div>
-                <Label htmlFor="docType">Document Type</Label>
-                <select id="docType" value={docType} onChange={(e) => setDocType(e.target.value)} className="select-input">
-                  <option value="passport">Passport</option>
-                  <option value="drivers_license">Driver&apos;s License</option>
-                  <option value="national_id">National ID</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="document">Upload Document</Label>
-                <Input id="document" name="document" type="file" accept="image/*,.pdf" required />
-              </div>
-              {message && <p className="text-sm text-muted">{message}</p>}
-              <Button type="submit" disabled={loading}>
-                <Upload className="mr-2 h-4 w-4" />
-                {loading ? "Submitting..." : "Submit for Review"}
-              </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+        {profile?.kyc_status === "approved" ? (
+          <p className="text-muted">
+            {t("kyc.approvedDesc", {
+              defaultValue: "Your identity has been verified. You have full access to all platform features.",
+            })}
+          </p>
+        ) : profile?.kyc_status === "pending" ? (
+          <p className="text-muted">
+            {t("kyc.pendingDesc", {
+              defaultValue: "Your documents are under review. This typically takes 24-48 hours.",
+            })}
+          </p>
+        ) : (
+          <form onSubmit={handleSubmit} className="max-w-md space-y-4">
+            <div>
+              <Label htmlFor="docType">{t("kyc.documentType", { defaultValue: "Document Type" })}</Label>
+              <select id="docType" value={docType} onChange={(e) => setDocType(e.target.value)} className="select-input mt-2">
+                <option value="passport">{t("kyc.passport", { defaultValue: "Passport" })}</option>
+                <option value="drivers_license">{t("kyc.driversLicense", { defaultValue: "Driver's License" })}</option>
+                <option value="national_id">{t("kyc.nationalId", { defaultValue: "National ID" })}</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="document">{t("kyc.uploadDocument", { defaultValue: "Upload Document" })}</Label>
+              <Input id="document" name="document" type="file" accept="image/*,.pdf" required className="mt-2" />
+            </div>
+            {message && <p className="text-sm text-muted">{message}</p>}
+            <Button type="submit" disabled={loading} className="rounded-full">
+              <Upload className="mr-2 h-4 w-4" />
+              {loading ? t("common.saving") : t("kyc.submit", { defaultValue: "Submit for Review" })}
+            </Button>
+          </form>
+        )}
+      </DashboardSheet>
     </div>
   );
 }

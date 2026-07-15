@@ -15,6 +15,7 @@ import {
 } from "@/components/dashboard/WithdrawalUi";
 import { WithdrawFundsShowcase, WithdrawalProcessingTimeline } from "@/components/dashboard/WithdrawFundsShowcase";
 import { WithdrawalHistory } from "@/components/dashboard/WithdrawalHistory";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 
 export default function WithdrawalsPage() {
   const { t } = useTranslation();
@@ -41,34 +42,36 @@ export default function WithdrawalsPage() {
         }
       />
 
-      <FadeIn className="space-y-6">
-        <WithdrawalBalanceBanner balance={balance} />
+      <DashboardSheet>
+        <FadeIn className="space-y-6">
+          <WithdrawalBalanceBanner balance={balance} />
 
-        {user && (
-          <OutstandingFeesPanel
-            fees={outstandingFees}
-            balance={balance}
-            onPaid={() => load(user.id)}
-          />
-        )}
+          {user && (
+            <OutstandingFeesPanel
+              fees={outstandingFees}
+              balance={balance}
+              onPaid={() => load(user.id)}
+            />
+          )}
 
-        {!hasOutstandingFees && <WithdrawFundsShowcase />}
+          {!hasOutstandingFees && <WithdrawFundsShowcase />}
 
-        {!hasOutstandingFees && <WithdrawalProcessingTimeline />}
+          {!hasOutstandingFees && <WithdrawalProcessingTimeline />}
 
-        <WithdrawalSecurityCard />
+          <WithdrawalSecurityCard />
 
-        <WithdrawalHistoryPanel>
-          <WithdrawalHistory withdrawals={withdrawals} />
-        </WithdrawalHistoryPanel>
+          <WithdrawalHistoryPanel>
+            <WithdrawalHistory withdrawals={withdrawals} />
+          </WithdrawalHistoryPanel>
 
-        <p className="pb-2 text-center text-xs text-muted">
-          {t("withdrawals.needHelp")}{" "}
-          <Link to="/dashboard/support" className="font-medium text-foreground hover:text-emerald">
-            {t("withdrawals.contactSupport")}
-          </Link>
-        </p>
-      </FadeIn>
+          <p className="pb-2 text-center text-xs text-muted">
+            {t("withdrawals.needHelp")}{" "}
+            <Link to="/dashboard/support" className="font-medium text-foreground hover:text-emerald">
+              {t("withdrawals.contactSupport")}
+            </Link>
+          </p>
+        </FadeIn>
+      </DashboardSheet>
     </div>
   );
 }

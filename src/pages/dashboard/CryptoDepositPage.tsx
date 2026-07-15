@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 import { CryptoBrandIcon } from "@/components/dashboard/DepositIcons";
 import { FadeIn } from "@/components/motion/Motion";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -92,6 +93,7 @@ export default function CryptoDepositPage() {
         backTo="/dashboard/deposits"
       />
 
+      <DashboardSheet>
       <FadeIn className="space-y-6">
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
           {CRYPTO_ASSETS.map((c) => (
@@ -174,6 +176,7 @@ export default function CryptoDepositPage() {
           </div>
         )}
       </FadeIn>
+      </DashboardSheet>
     </div>
   );
 }

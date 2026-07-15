@@ -7,10 +7,10 @@ import { ensureValidSession } from "@/lib/auth-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 
 interface Subscription {
   id: string;
@@ -87,48 +87,47 @@ export default function CopyTradingPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {traders.map((tr) => (
-          <Card key={tr.name} className={selectedTrader === tr.name ? "ring-1 ring-emerald/30" : ""}>
-            <CardHeader>
-              <CardTitle className="text-lg">{tr.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-emerald">{tr.return}</p>
-              <Badge variant="secondary" className="mt-2">{t(`copyTrading.risk.${tr.risk}`)}</Badge>
-              <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => setSelectedTrader(tr.name)}>
-                {t("copyTrading.select")}
-              </Button>
-            </CardContent>
-          </Card>
+          <div
+            key={tr.name}
+            className={cn("dashboard-stat", selectedTrader === tr.name && "border-emerald/40 ring-1 ring-emerald/25")}
+          >
+            <p className="font-display text-lg font-semibold">{tr.name}</p>
+            <p className="mt-2 text-2xl font-bold text-emerald">{tr.return}</p>
+            <Badge variant="secondary" className="mt-2">{t(`copyTrading.risk.${tr.risk}`)}</Badge>
+            <Button variant="outline" size="sm" className="mt-4 w-full rounded-full" onClick={() => setSelectedTrader(tr.name)}>
+              {t("copyTrading.select")}
+            </Button>
+          </div>
         ))}
       </div>
 
       {selectedTrader && (
-        <Card>
-          <CardHeader><CardTitle>{t("copyTrading.subscribeTo", { name: selectedTrader })}</CardTitle></CardHeader>
-          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-end">
+        <DashboardSheet>
+          <h2 className="mb-4 font-display text-base font-semibold">{t("copyTrading.subscribeTo", { name: selectedTrader })}</h2>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
               <Label>{t("copyTrading.allocation")}</Label>
               <Input type="number" min={100} value={allocation} onChange={(e) => setAllocation(e.target.value)} className="mt-2" />
             </div>
-            <Button onClick={handleSubscribe} disabled={loading}>{loading ? t("common.saving") : t("copyTrading.subscribe")}</Button>
-          </CardContent>
-        </Card>
+            <Button className="rounded-full" onClick={handleSubscribe} disabled={loading}>{loading ? t("common.saving") : t("copyTrading.subscribe")}</Button>
+          </div>
+        </DashboardSheet>
       )}
 
       {message && <p className={cn("text-sm", message === t("copyTrading.subscribed") ? "text-emerald" : "text-amber-400")}>{message}</p>}
 
       {subs.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>{t("copyTrading.activeSubs")}</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
+        <DashboardSheet>
+          <h2 className="mb-4 font-display text-base font-semibold">{t("copyTrading.activeSubs")}</h2>
+          <div className="space-y-2">
             {subs.map((s) => (
-              <div key={s.id} className="flex justify-between border-b pb-2 text-sm">
-                <span>{s.trader_name}</span>
-                <span>{formatCurrency(s.allocation)} <Badge variant="success">{s.status}</Badge></span>
+              <div key={s.id} className="dashboard-row border-b border-border/40 px-0">
+                <span className="text-sm">{s.trader_name}</span>
+                <span className="ml-auto text-sm">{formatCurrency(s.allocation)} <Badge variant="success">{s.status}</Badge></span>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardSheet>
       )}
     </div>
   );

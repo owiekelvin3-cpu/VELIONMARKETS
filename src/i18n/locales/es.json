@@ -417,7 +417,15 @@
     "openPositions": "Pending or open",
     "verificationStatus": "Identity verification",
     "profileLoadErrorTitle": "Couldn’t load your profile",
-    "profileLoadErrorDesc": "Your session is active, but we couldn’t fetch your account details. Retry or sign out and try again."
+    "profileLoadErrorDesc": "Your session is active, but we couldn’t fetch your account details. Retry or sign out and try again.",
+    "totalBalance": "Saldo total",
+    "activityStrip": "Actividad",
+    "dock": {
+      "home": "Inicio",
+      "trade": "Operar",
+      "cash": "Fondos",
+      "account": "Cuenta"
+    }
   },
   "notifications": {
     "title": "Notificaciones",

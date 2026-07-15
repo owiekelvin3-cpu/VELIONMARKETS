@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 import {
   ArrowDownToLine, ArrowRight, ArrowUpFromLine, TrendingUp,
 } from "@/lib/icons";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { localizeTransaction, type UserTransaction } from "@/lib/transactions";
 import { cn } from "@/lib/utils";
+import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 
 const KIND_ICONS = {
   deposit: ArrowDownToLine,
@@ -15,17 +15,17 @@ const KIND_ICONS = {
 } as const;
 
 const KIND_COLORS = {
-  deposit: "text-emerald",
-  withdrawal: "text-amber-400",
-  trade: "text-sky-400",
+  deposit: "text-emerald bg-emerald/15",
+  withdrawal: "text-amber-500 bg-amber-500/15",
+  trade: "text-sky-500 bg-sky-500/15",
 } as const;
 
-function statusVariant(status: string): "success" | "warning" | "destructive" | "secondary" {
-  if (status === "completed" || status === "approved") return "success";
-  if (status === "rejected") return "destructive";
-  if (status === "pending") return "warning";
-  return "secondary";
-}
+const STATUS_DOT: Record<string, string> = {
+  completed: "bg-emerald",
+  approved: "bg-emerald",
+  pending: "bg-amber-400",
+  rejected: "bg-red-400",
+};
 
 interface TransactionListProps {
   items: UserTransaction[];
@@ -39,11 +39,11 @@ export function TransactionList({ items, compact = false, emptyMessage, onItemCl
   const { t } = useTranslation();
 
   if (items.length === 0) {
-    return <p className="text-sm text-muted">{emptyMessage ?? t("transactions.empty")}</p>;
+    return <p className="px-1 py-6 text-center text-sm text-muted">{emptyMessage ?? t("transactions.empty")}</p>;
   }
 
   return (
-    <div className={cn("space-y-2", !compact && "space-y-3")}>
+    <div className={cn("divide-y divide-border/50", !compact && "space-y-0")}>
       {items.map((raw) => {
         const tx = localizeTransaction(raw, t);
         const Icon = KIND_ICONS[tx.kind];
@@ -57,33 +57,35 @@ export function TransactionList({ items, compact = false, emptyMessage, onItemCl
             type={onItemClick ? "button" : undefined}
             onClick={onItemClick ? () => onItemClick(raw) : undefined}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg border border-transparent bg-secondary/30 text-left transition-colors",
-              compact ? "px-3 py-2.5" : "px-4 py-3",
-              onItemClick && "group cursor-pointer hover:border-border hover:bg-secondary/50",
-              isSelected && "border-border bg-secondary/60"
+              "dashboard-row",
+              compact ? "py-3" : "py-3.5",
+              onItemClick && "cursor-pointer",
+              isSelected && "bg-secondary/50"
             )}
           >
-            <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary/60", KIND_COLORS[tx.kind])}>
-              <Icon className="h-4 w-4" />
+            <div className="relative">
+              <div className={cn("dashboard-row-icon", KIND_COLORS[tx.kind])}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <span
+                className={cn(
+                  "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-card",
+                  STATUS_DOT[tx.status] ?? "bg-muted"
+                )}
+                aria-hidden="true"
+              />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{tx.title}</p>
+              <p className="truncate text-[15px] font-medium text-foreground">{tx.title}</p>
               <p className="truncate text-xs text-muted">
                 {tx.subtitle} · {formatDate(tx.created_at)}
               </p>
             </div>
             <div className="shrink-0 text-right">
-              <p className={cn("text-sm font-semibold", isOutflow ? "text-foreground" : "text-emerald")}>
-                {isOutflow ? "−" : "+"}{formatCurrency(tx.amount)}
+              <p className={cn("text-[15px] font-semibold tabular-nums", isOutflow ? "text-foreground" : "text-emerald")}>
+                {isOutflow ? "−" : "+"}
+                {formatCurrency(tx.amount)}
               </p>
-              <Badge variant={statusVariant(tx.status)} className="mt-1 text-[10px] capitalize">
-                {tx.status}
-              </Badge>
-              {onItemClick && (
-                <p className="mt-1 text-[10px] text-emerald opacity-0 transition-opacity group-hover:opacity-100 sm:opacity-100">
-                  {t("transactions.viewReceipt")}
-                </p>
-              )}
             </div>
           </Wrapper>
         );
@@ -105,34 +107,24 @@ export function RecentTransactionsCard({ items, total, limit, onItemClick, selec
   const hasMore = total > limit;
 
   return (
-    <div className="dashboard-stat !p-0 overflow-hidden">
-      <div className="flex items-center justify-between border-b border-border/80 px-5 py-3.5">
-        <h2 className="font-display text-sm font-semibold text-foreground">{t("dashboard.recentTransactions")}</h2>
-        {hasMore && (
-          <Link to="/dashboard/transactions" className="flex items-center text-xs text-muted hover:text-emerald">
-            {t("dashboard.viewAllTransactions", { count: total })}
-            <ArrowRight className="ml-1 h-3 w-3" />
-          </Link>
-        )}
+    <DashboardSheet className="-mx-3 mt-0 rounded-t-[2rem] sm:mx-0 sm:rounded-3xl">
+      <div className="mb-3 flex items-center justify-between px-1">
+        <h2 className="font-display text-base font-semibold text-foreground">{t("dashboard.recentTransactions")}</h2>
+        <Link
+          to="/dashboard/transactions"
+          className="flex items-center text-xs font-medium text-muted hover:text-emerald"
+        >
+          {hasMore ? t("dashboard.viewAllTransactions", { count: total }) : t("dashboard.openTransactions")}
+          <ArrowRight className="ml-1 h-3 w-3" />
+        </Link>
       </div>
-      <div className="p-4 md:p-5">
-        <TransactionList
-          items={items}
-          compact
-          emptyMessage={t("dashboard.noTransactions")}
-          onItemClick={onItemClick}
-          selectedId={selectedId}
-        />
-        {!hasMore && total > 0 && (
-          <Link
-            to="/dashboard/transactions"
-            className="mt-4 inline-flex items-center text-xs text-muted hover:text-emerald"
-          >
-            {t("dashboard.openTransactions")}
-            <ArrowRight className="ml-1 h-3 w-3" />
-          </Link>
-        )}
-      </div>
-    </div>
+      <TransactionList
+        items={items}
+        compact
+        emptyMessage={t("dashboard.noTransactions")}
+        onItemClick={onItemClick}
+        selectedId={selectedId}
+      />
+    </DashboardSheet>
   );
 }

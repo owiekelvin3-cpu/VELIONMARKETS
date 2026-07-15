@@ -441,6 +441,14 @@
     "searchPlaceholder": "Search portfolio, trades...",
     "todayChange": "today",
     "viewAll": "View all",
+    "totalBalance": "Total balance",
+    "activityStrip": "Activity",
+    "dock": {
+      "home": "Home",
+      "trade": "Trade",
+      "cash": "Cash",
+      "account": "Account"
+    },
     "accountStatus": "Account Status",
     "verified": "Verified",
     "kycNone": "Not verified",
