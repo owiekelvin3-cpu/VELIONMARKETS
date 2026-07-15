@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { primeNotificationSound } from "@/lib/notification-sound";
+import { unlockNotificationAudio } from "@/lib/notification-sound";
 import { ensureNotificationDefaults } from "@/lib/notification-preferences";
 import {
   disablePushNotifications,
@@ -43,12 +43,15 @@ export function usePushNotifications(userId: string | undefined) {
   const requestPermission = useCallback(async () => {
     if (!userId) return permission;
     setBusy(true);
-    primeNotificationSound();
-    const result = await enablePushNotifications(userId);
-    setPermission(result);
-    setEnabled(result === "granted");
-    setBusy(false);
-    return result;
+    unlockNotificationAudio();
+    try {
+      const result = await enablePushNotifications(userId);
+      setPermission(result);
+      setEnabled(result === "granted");
+      return result;
+    } finally {
+      setBusy(false);
+    }
   }, [userId, permission]);
 
   const enable = requestPermission;
@@ -56,18 +59,23 @@ export function usePushNotifications(userId: string | undefined) {
   const disable = useCallback(async () => {
     if (!userId) return;
     setBusy(true);
-    await disablePushNotifications(userId);
-    setEnabled(false);
-    setBusy(false);
+    try {
+      await disablePushNotifications(userId);
+      setEnabled(false);
+      setPermission(getNotificationPermission());
+    } finally {
+      setBusy(false);
+    }
   }, [userId]);
 
   const toggle = useCallback(async () => {
+    if (busy) return;
     if (enabled) {
       await disable();
     } else {
       await requestPermission();
     }
-  }, [enabled, disable, requestPermission]);
+  }, [busy, enabled, disable, requestPermission]);
 
   return {
     supported,

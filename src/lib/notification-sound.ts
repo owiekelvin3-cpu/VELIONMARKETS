@@ -54,7 +54,24 @@ export async function playNotificationSound() {
   }
 }
 
-/** Call after a click so AudioContext is allowed to start. */
-export function primeNotificationSound() {
-  void playNotificationSound();
+/** Ensure AudioContext can play after a user gesture — does not play a chime. */
+export function unlockNotificationAudio() {
+  try {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    if (audioContext.state === "suspended") {
+      void audioContext.resume();
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Call after a click so AudioContext is allowed to start. Optionally plays a chime. */
+export function primeNotificationSound(opts?: { play?: boolean }) {
+  unlockNotificationAudio();
+  if (opts?.play !== false) {
+    void playNotificationSound();
+  }
 }

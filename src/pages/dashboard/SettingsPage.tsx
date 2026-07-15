@@ -12,8 +12,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   getNotificationSoundEnabled,
-  primeNotificationSound,
+  playNotificationSound,
   setNotificationSoundEnabled,
+  unlockNotificationAudio,
 } from "@/lib/notification-sound";
 import { UserAvatar } from "@/components/settings/UserAvatar";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
@@ -42,41 +43,69 @@ import { cn } from "@/lib/utils";
 
 type Section = "profile" | "wallet" | "security" | "notifications" | "preferences";
 
-function SettingsToggle({
+function PrefSwitch({
   checked,
   disabled,
   busy,
-  onChange,
-  label,
+  onLabel,
+  offLabel,
+  onToggle,
+  name,
 }: {
   checked: boolean;
   disabled?: boolean;
   busy?: boolean;
-  onChange: () => void;
-  label: string;
+  onLabel: string;
+  offLabel: string;
+  onToggle: (next: boolean) => void;
+  name: string;
 }) {
+  const locked = Boolean(disabled || busy);
+
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      disabled={disabled || busy}
-      onClick={onChange}
+    <div
       className={cn(
-        "relative h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/40",
-        checked ? "bg-emerald" : "bg-secondary ring-1 ring-border",
-        (disabled || busy) && "cursor-not-allowed opacity-50"
+        "grid w-full max-w-[11.5rem] shrink-0 grid-cols-2 gap-1 rounded-xl border border-border bg-secondary/40 p-1",
+        locked && "opacity-60"
       )}
+      role="group"
+      aria-label={name}
     >
-      <span
+      <button
+        type="button"
+        disabled={locked}
+        aria-pressed={!checked}
+        onClick={() => {
+          if (!checked) return;
+          onToggle(false);
+        }}
         className={cn(
-          "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform",
-          checked ? "translate-x-5" : "translate-x-0.5",
-          busy && "opacity-70"
+          "min-h-10 rounded-lg px-3 text-sm font-semibold transition-colors",
+          !checked
+            ? "bg-card text-foreground shadow-sm ring-1 ring-border"
+            : "text-muted hover:text-foreground"
         )}
-      />
-    </button>
+      >
+        {offLabel}
+      </button>
+      <button
+        type="button"
+        disabled={locked}
+        aria-pressed={checked}
+        onClick={() => {
+          if (checked) return;
+          onToggle(true);
+        }}
+        className={cn(
+          "min-h-10 rounded-lg px-3 text-sm font-semibold transition-colors",
+          checked
+            ? "bg-emerald text-white shadow-sm"
+            : "text-muted hover:text-foreground"
+        )}
+      >
+        {busy ? "…" : onLabel}
+      </button>
+    </div>
   );
 }
 
@@ -629,7 +658,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="overflow-hidden rounded-2xl border border-border/80">
-                  <div className="flex items-center gap-3 border-b border-border/70 bg-secondary/20 px-4 py-4">
+                  <div className="flex flex-col gap-4 border-b border-border/70 bg-secondary/20 px-4 py-4 sm:flex-row sm:items-center">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald/10 text-emerald">
                       <Bell className="h-4 w-4" />
                     </span>
@@ -646,19 +675,22 @@ export default function SettingsPage() {
                         </p>
                       )}
                     </div>
-                    <SettingsToggle
+                    <PrefSwitch
+                      name={t("settingsPage.pushNotifications")}
                       checked={push.enabled}
-                      disabled={!push.supported || push.permission === "denied"}
+                      disabled={!push.supported || push.permission === "denied" || !user}
                       busy={push.busy}
-                      label={t("settingsPage.pushNotifications")}
-                      onChange={() => {
-                        if (soundEnabled) primeNotificationSound();
+                      onLabel={t("settingsPage.prefOn")}
+                      offLabel={t("settingsPage.prefOff")}
+                      onToggle={(next) => {
+                        unlockNotificationAudio();
+                        if (next === push.enabled) return;
                         void push.toggle();
                       }}
                     />
                   </div>
 
-                  <div className="flex items-center gap-3 px-4 py-4">
+                  <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary text-foreground">
                       <Volume2 className="h-4 w-4" />
                     </span>
@@ -670,30 +702,34 @@ export default function SettingsPage() {
                         {t("settingsPage.notificationSoundDesc")}
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+                      <PrefSwitch
+                        name={t("settingsPage.notificationSound")}
+                        checked={soundEnabled}
+                        onLabel={t("settingsPage.prefOn")}
+                        offLabel={t("settingsPage.prefOff")}
+                        onToggle={(next) => {
+                          setSoundEnabled(next);
+                          setNotificationSoundEnabled(next);
+                          if (next) {
+                            unlockNotificationAudio();
+                            void playNotificationSound();
+                          }
+                        }}
+                      />
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="hidden rounded-full sm:inline-flex"
+                        className="rounded-full"
                         disabled={!soundEnabled}
                         onClick={() => {
-                          setNotificationSoundEnabled(true);
-                          primeNotificationSound();
+                          unlockNotificationAudio();
+                          void playNotificationSound();
                         }}
                       >
                         {t("settingsPage.testSound")}
                       </Button>
-                      <SettingsToggle
-                        checked={soundEnabled}
-                        label={t("settingsPage.notificationSound")}
-                        onChange={() => {
-                          const next = !soundEnabled;
-                          setSoundEnabled(next);
-                          setNotificationSoundEnabled(next);
-                          if (next) primeNotificationSound();
-                        }}
-                      />
                     </div>
                   </div>
                 </div>
