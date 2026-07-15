@@ -9,10 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { CryptoBrandIcon } from "@/components/dashboard/DepositIcons";
 import { FadeIn } from "@/components/motion/Motion";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { isKycApproved } from "@/lib/kyc";
 import { Copy, Check } from "@/lib/icons";
 import { CRYPTO_ASSETS } from "@/constants/deposit-assets";
 import { useDepositConfig } from "@/hooks/useDepositConfig";
@@ -21,7 +23,7 @@ import type { Deposit } from "@/types/database";
 
 export default function CryptoDepositPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data: depositConfig } = useDepositConfig();
   const [searchParams] = useSearchParams();
   const coinParam = searchParams.get("coin");
@@ -66,6 +68,10 @@ export default function CryptoDepositPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!isKycApproved(profile)) {
+      setMessage(t("kyc.required"));
+      return;
+    }
     setLoading(true);
     setMessage("");
     const { error } = await supabase.from("deposits").insert({
@@ -94,6 +100,7 @@ export default function CryptoDepositPage() {
       />
 
       <DashboardSheet>
+      <KycRequiredGate>
       <FadeIn className="space-y-6">
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
           {CRYPTO_ASSETS.map((c) => (
@@ -176,6 +183,7 @@ export default function CryptoDepositPage() {
           </div>
         )}
       </FadeIn>
+      </KycRequiredGate>
       </DashboardSheet>
     </div>
   );

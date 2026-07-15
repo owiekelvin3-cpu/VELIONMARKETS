@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { ensureValidSession } from "@/lib/auth-session";
+import { isKycApproved } from "@/lib/kyc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 
 interface Subscription {
   id: string;
@@ -28,7 +30,7 @@ const traders = [
 
 export default function CopyTradingPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [balance, setBalance] = useState(0);
   const [selectedTrader, setSelectedTrader] = useState("");
@@ -51,6 +53,10 @@ export default function CopyTradingPage() {
 
   const handleSubscribe = async () => {
     if (!user || !selectedTrader) return;
+    if (!isKycApproved(profile)) {
+      setMessage(t("kyc.required"));
+      return;
+    }
     const amount = parseFloat(allocation);
     if (!amount || amount < 100) {
       setMessage(t("copyTrading.minAllocation", { amount: formatCurrency(100) }));
@@ -83,6 +89,7 @@ export default function CopyTradingPage() {
   return (
     <div className="space-y-6">
       <PageHeader title={t("copyTrading.title")} subtitle={t("copyTrading.subtitle")} />
+      <KycRequiredGate>
       <p className="text-sm text-muted">{t("copyTrading.balance")}: <span className="font-semibold text-emerald">{formatCurrency(balance)}</span></p>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -115,6 +122,7 @@ export default function CopyTradingPage() {
       )}
 
       {message && <p className={cn("text-sm", message === t("copyTrading.subscribed") ? "text-emerald" : "text-amber-400")}>{message}</p>}
+      </KycRequiredGate>
 
       {subs.length > 0 && (
         <DashboardSheet>

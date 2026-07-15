@@ -5,6 +5,8 @@ import { RefreshCw, TrendingDown, TrendingUp, Wallet } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useTradingMarket } from "@/hooks/useTradingMarket";
 import { supabase } from "@/lib/supabase";
+import { isKycApproved } from "@/lib/kyc";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import {
   TRADING_PAIRS,
   formatPrice,
@@ -29,7 +31,7 @@ const INTERVALS: { id: MarketInterval; labelKey: string }[] = [
 
 export default function TradingRoomPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [chartInterval, setChartInterval] = useState<MarketInterval>("1h");
   const [balance, setBalance] = useState(0);
@@ -58,6 +60,11 @@ export default function TradingRoomPage() {
 
   const handleOrder = async (side: "buy" | "sell", amountUsd: number) => {
     if (!user || !ticker) return;
+    if (!isKycApproved(profile)) {
+      setMessage(t("kyc.required"));
+      setMessageOk(false);
+      return;
+    }
     if (amountUsd > balance) {
       setMessage(t("trading.insufficientBalance"));
       setMessageOk(false);
@@ -210,14 +217,16 @@ export default function TradingRoomPage() {
           <TradingChart candles={candles} symbol={symbol} loading={loading} />
         </div>
         <div className="xl:sticky xl:top-20 xl:self-start">
-          <OrderPanel
-            symbol={symbol}
-            pairLabel={pair.label}
-            price={ticker?.lastPrice ?? 0}
-            balance={balance}
-            loading={submitting}
-            onSubmit={handleOrder}
-          />
+          <KycRequiredGate>
+            <OrderPanel
+              symbol={symbol}
+              pairLabel={pair.label}
+              price={ticker?.lastPrice ?? 0}
+              balance={balance}
+              loading={submitting}
+              onSubmit={handleOrder}
+            />
+          </KycRequiredGate>
         </div>
       </div>
 

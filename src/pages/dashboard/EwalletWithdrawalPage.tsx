@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { EwalletProviderIcon } from "@/components/dashboard/WithdrawIcons";
 import { WithdrawalHistory } from "@/components/dashboard/WithdrawalHistory";
 import {
@@ -72,6 +73,7 @@ export default function EwalletWithdrawalPage() {
         backTo="/dashboard/withdrawals"
       />
 
+      <KycRequiredGate>
       <DashboardSheet>
 <FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
@@ -150,6 +152,7 @@ export default function EwalletWithdrawalPage() {
         </WithdrawalHistoryPanel>
       </FadeIn>
       </DashboardSheet>
+      </KycRequiredGate>
     </div>
   );
 }

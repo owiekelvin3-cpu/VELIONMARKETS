@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
+import { isKycApproved } from "@/lib/kyc";
 
 const signalPackages = [
   { name: "Basic Signals", price: 49, duration: "30 days", signals: "5/day" },
@@ -26,7 +28,7 @@ interface SignalSub {
 
 export default function SignalsPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [subs, setSubs] = useState<SignalSub[]>([]);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState<string | null>(null);
@@ -47,6 +49,10 @@ export default function SignalsPage() {
 
   const handlePurchase = async (pkg: typeof signalPackages[0]) => {
     if (!user) return;
+    if (!isKycApproved(profile)) {
+      setMessage(t("kyc.required"));
+      return;
+    }
     if (pkg.price > balance) {
       setMessage(t("signals.insufficientBalance"));
       return;
@@ -74,6 +80,7 @@ export default function SignalsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title={t("signals.title")} subtitle={t("signals.subtitle")} />
+      <KycRequiredGate>
       <p className="text-sm text-muted">{t("signals.balance")}: <span className="font-semibold text-emerald">{formatCurrency(balance)}</span></p>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -90,6 +97,7 @@ export default function SignalsPage() {
       </div>
 
       {message && <p className={cn("text-sm", message.includes("subscribed") || message.includes("Subscribed") ? "text-emerald" : "text-amber-400")}>{message}</p>}
+      </KycRequiredGate>
 
       {subs.length > 0 && (
         <DashboardSheet>

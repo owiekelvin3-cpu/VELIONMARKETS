@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
+import { isKycApproved } from "@/lib/kyc";
 
 const packages = [
   { name: "Starter", investment: 500, dailyReturn: 0.8, hashrate: "10 TH/s" },
@@ -26,7 +28,7 @@ interface MiningSub {
 
 export default function MiningPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [subs, setSubs] = useState<MiningSub[]>([]);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState<string | null>(null);
@@ -48,6 +50,11 @@ export default function MiningPage() {
 
   const handlePurchase = async (pkg: typeof packages[0]) => {
     if (!user) return;
+    if (!isKycApproved(profile)) {
+      setMessage(t("kyc.required"));
+      setIsSuccess(false);
+      return;
+    }
     if (pkg.investment > balance) {
       setMessage(t("mining.insufficientBalance"));
       return;
@@ -75,6 +82,7 @@ export default function MiningPage() {
   return (
     <div className="space-y-6">
       <PageHeader title={t("mining.title")} subtitle={t("mining.subtitle")} />
+      <KycRequiredGate>
       <p className="text-sm text-muted">{t("mining.balance")}: <span className="font-semibold text-emerald">{formatCurrency(balance)}</span></p>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -92,6 +100,7 @@ export default function MiningPage() {
       </div>
 
       {message && <p className={cn("text-sm", isSuccess ? "text-emerald" : "text-amber-400")}>{message}</p>}
+      </KycRequiredGate>
 
       {subs.length > 0 && (
         <DashboardSheet>

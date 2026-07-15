@@ -1758,5 +1758,27 @@
     "installTitle": "Install VELION app",
     "installDesc": "Open faster from your home screen — works like a native app.",
     "install": "Install"
+  },
+  "kyc": {
+    "subtitle": "Verify your identity to unlock deposits, withdrawals, and trading.",
+    "identityTitle": "Identity Verification",
+    "submitted": "KYC documents submitted for review.",
+    "approvedDesc": "Your identity has been verified. You have full access to all platform features.",
+    "pendingDesc": "Your documents are under review. This typically takes 24-48 hours.",
+    "documentType": "Document Type",
+    "passport": "Passport",
+    "driversLicense": "Driver's License",
+    "nationalId": "National ID",
+    "uploadDocument": "Upload Document",
+    "submit": "Submit for Review",
+    "required": "Please verify your identity before making any transactions.",
+    "gateTitle": "Verify your account to continue",
+    "gateDesc": "For your security and compliance, deposits, withdrawals, and trading are available after KYC approval.",
+    "gatePendingTitle": "Verification in review",
+    "gatePendingDesc": "Your documents are being reviewed. You can transact once your account is approved.",
+    "gateRejectedTitle": "Verification needs attention",
+    "gateRejectedDesc": "Your previous submission was rejected. Please resubmit your documents to unlock transactions.",
+    "gateCta": "Start verification",
+    "gateViewStatus": "View verification status"
   }
 }

@@ -8,6 +8,7 @@ import { DepositMethodCard } from "@/components/dashboard/DepositMethodCard";
 import { DepositFundsShowcase } from "@/components/dashboard/DepositFundsShowcase";
 import { CryptoIconGrid, GiftCardIconGrid } from "@/components/dashboard/DepositIcons";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 
 export default function DepositsPage() {
   const { t } = useTranslation();
@@ -28,6 +29,7 @@ export default function DepositsPage() {
         }
       />
 
+      <KycRequiredGate>
       <DashboardSheet>
         <FadeIn className="space-y-4">
           <DepositMethodCard
@@ -56,6 +58,7 @@ export default function DepositsPage() {
           <DepositFundsShowcase />
         </FadeIn>
       </DashboardSheet>
+      </KycRequiredGate>
     </div>
   );
 }

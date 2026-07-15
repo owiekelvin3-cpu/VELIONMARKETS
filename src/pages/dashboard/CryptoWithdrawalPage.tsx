@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { CryptoBrandIcon } from "@/components/dashboard/DepositIcons";
 import { WithdrawalHistory } from "@/components/dashboard/WithdrawalHistory";
 import {
@@ -77,6 +78,7 @@ export default function CryptoWithdrawalPage() {
         backTo="/dashboard/withdrawals"
       />
 
+      <KycRequiredGate>
       <DashboardSheet>
 <FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
@@ -154,6 +156,7 @@ export default function CryptoWithdrawalPage() {
         </WithdrawalHistoryPanel>
       </FadeIn>
       </DashboardSheet>
+      </KycRequiredGate>
     </div>
   );
 }

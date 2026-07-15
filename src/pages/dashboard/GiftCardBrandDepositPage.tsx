@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { BrandLogo } from "@/components/dashboard/DepositIcons";
+import { isKycApproved } from "@/lib/kyc";
 import { ImageUploadField } from "@/components/dashboard/ImageUploadField";
 import { FadeIn } from "@/components/motion/Motion";
 import { GIFT_CARD_BRANDS } from "@/constants/deposit-assets";
@@ -25,7 +27,7 @@ async function uploadGiftCardImage(userId: string, file: File, side: "front" | "
 export default function GiftCardBrandDepositPage() {
   const { brandId } = useParams<{ brandId: string }>();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const brand = GIFT_CARD_BRANDS.find((g) => g.id === brandId);
 
   const [amount, setAmount] = useState("");
@@ -50,6 +52,11 @@ export default function GiftCardBrandDepositPage() {
     setSuccess(false);
 
     try {
+      if (!isKycApproved(profile)) {
+        setMessage(t("kyc.required"));
+        setLoading(false);
+        return;
+      }
       const [frontUrl, backUrl] = await Promise.all([
         uploadGiftCardImage(user.id, frontImage, "front"),
         backImage ? uploadGiftCardImage(user.id, backImage, "back") : Promise.resolve(null),
@@ -96,6 +103,7 @@ export default function GiftCardBrandDepositPage() {
         backTo="/dashboard/deposits"
       />
 
+      <KycRequiredGate>
       <DashboardSheet>
 <FadeIn>
         <div className="rounded-2xl border border-border bg-secondary/50 p-5 sm:p-6">
@@ -201,6 +209,7 @@ export default function GiftCardBrandDepositPage() {
         </div>
       </FadeIn>
       </DashboardSheet>
+      </KycRequiredGate>
     </div>
   );
 }

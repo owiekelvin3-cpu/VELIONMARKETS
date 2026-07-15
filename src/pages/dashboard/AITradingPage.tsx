@@ -7,6 +7,8 @@ import {
 } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import { isKycApproved } from "@/lib/kyc";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,7 +86,7 @@ function StepPill({
 
 export default function AITradingPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [balance, setBalance] = useState(0);
   const [subs, setSubs] = useState<AISubscription[]>([]);
   const [trades, setTrades] = useState<AIBotTrade[]>([]);
@@ -164,6 +166,10 @@ export default function AITradingPage() {
 
   const handlePurchase = async () => {
     if (!user) return;
+    if (!isKycApproved(profile)) {
+      setMessage(t("kyc.required"));
+      return;
+    }
     if (!powerNum || powerNum < bot.minPower) {
       setMessage(t("aiTrading.minPower", { amount: formatCurrency(bot.minPower) }));
       return;
@@ -273,6 +279,7 @@ export default function AITradingPage() {
         }
       />
 
+      <KycRequiredGate>
       <div className="surface-panel overflow-hidden rounded-3xl p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -797,6 +804,7 @@ export default function AITradingPage() {
           )}
         </FadeIn>
       )}
+      </KycRequiredGate>
     </div>
   );
 }

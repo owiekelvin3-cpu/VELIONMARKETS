@@ -16,6 +16,7 @@ import {
 import { WithdrawFundsShowcase, WithdrawalProcessingTimeline } from "@/components/dashboard/WithdrawFundsShowcase";
 import { WithdrawalHistory } from "@/components/dashboard/WithdrawalHistory";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 
 export default function WithdrawalsPage() {
   const { t } = useTranslation();
@@ -42,6 +43,7 @@ export default function WithdrawalsPage() {
         }
       />
 
+      <KycRequiredGate>
       <DashboardSheet>
         <FadeIn className="space-y-6">
           <WithdrawalBalanceBanner balance={balance} />
@@ -72,6 +74,7 @@ export default function WithdrawalsPage() {
           </p>
         </FadeIn>
       </DashboardSheet>
+      </KycRequiredGate>
     </div>
   );
 }

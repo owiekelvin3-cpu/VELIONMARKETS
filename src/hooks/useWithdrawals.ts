@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import i18n from "@/i18n";
 import { supabase } from "@/lib/supabase";
 import { ensureValidSession } from "@/lib/auth-session";
 import { fetchOutstandingFees, sumOutstandingFees } from "@/lib/fees";
@@ -67,6 +68,18 @@ export function useWithdrawalForm(
     setSuccess(false);
 
     await ensureValidSession();
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("kyc_status")
+      .eq("id", userId)
+      .single();
+    if (profile?.kyc_status !== "approved") {
+      setMessage(i18n.t("kyc.required"));
+      setLoading(false);
+      return false;
+    }
+
     const { error } = await supabase.from("withdrawals").insert({
       user_id: userId,
       amount: data.amount,

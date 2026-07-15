@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { WithdrawalHistory } from "@/components/dashboard/WithdrawalHistory";
 import {
   WithdrawalBalanceBanner,
@@ -60,6 +61,7 @@ export default function BankWithdrawalPage() {
         backTo="/dashboard/withdrawals"
       />
 
+      <KycRequiredGate>
       <DashboardSheet>
 <FadeIn className="space-y-6">
         <WithdrawalBalanceBanner balance={balance} />
@@ -116,6 +118,7 @@ export default function BankWithdrawalPage() {
         </WithdrawalHistoryPanel>
       </FadeIn>
       </DashboardSheet>
+      </KycRequiredGate>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { formatAuthError, withValidSession } from "@/lib/auth-session";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
+import { isKycApproved } from "@/lib/kyc";
 import {
   ArrowDownToLine, ArrowUpFromLine, TrendingUp, ShieldCheck, Bot, CandlestickChart,
 } from "@/lib/icons";
@@ -155,6 +156,9 @@ export default function DashboardPage() {
   const kycStatus = profile?.kyc_status ?? "none";
   const kycKey = KYC_LABELS[kycStatus] ?? "dashboard.kycNone";
   const balanceParts = formatBalanceParts(balance);
+  const cashHref = isKycApproved(profile) ? "/dashboard/deposits" : "/dashboard/kyc";
+  const withdrawHref = isKycApproved(profile) ? "/dashboard/withdrawals" : "/dashboard/kyc";
+  const tradeHref = isKycApproved(profile) ? "/dashboard/trading-room" : "/dashboard/kyc";
 
   return (
     <div className="space-y-0 lg:space-y-6">
@@ -200,15 +204,15 @@ export default function DashboardPage() {
         </div>
 
         <div className="relative mt-7 flex flex-wrap gap-3">
-          <Link to="/dashboard/deposits" className="dashboard-pill-primary">
+          <Link to={cashHref} className="dashboard-pill-primary">
             <ArrowDownToLine className="h-4 w-4" />
             {t("dashboard.deposits")}
           </Link>
-          <Link to="/dashboard/withdrawals" className="dashboard-pill-secondary">
+          <Link to={withdrawHref} className="dashboard-pill-secondary">
             <ArrowUpFromLine className="h-4 w-4" />
             {t("dashboard.withdrawals")}
           </Link>
-          <Link to="/dashboard/trading-room" className="dashboard-pill-secondary hidden sm:inline-flex">
+          <Link to={tradeHref} className="dashboard-pill-secondary hidden sm:inline-flex">
             <CandlestickChart className="h-4 w-4" />
             {t("dashboard.tradingRoom")}
           </Link>
