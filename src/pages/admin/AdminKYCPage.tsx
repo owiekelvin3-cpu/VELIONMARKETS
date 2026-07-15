@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
+import { createKycDocumentSignedUrl } from "@/lib/kyc";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -24,6 +25,7 @@ export default function AdminKYCPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [acting, setActing] = useState<string | null>(null);
+  const [openingId, setOpeningId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -37,7 +39,9 @@ export default function AdminKYCPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const updateStatus = async (id: string, userId: string, status: "approved" | "rejected") => {
     setActing(id);
@@ -54,11 +58,30 @@ export default function AdminKYCPage() {
     setActing(null);
   };
 
+  const openDocument = async (submission: KYCSubmission) => {
+    setOpeningId(submission.id);
+    setError("");
+    try {
+      const url = await createKycDocumentSignedUrl(submission.document_url, 180);
+      if (!url) {
+        setError(t("admin.viewDocument") + " unavailable");
+        return;
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not open document");
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AdminPageHeader title={t("admin.kycTitle")} subtitle={t("admin.kycSubtitle")} />
 
-      {error && <p className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">{error}</p>}
+      {error && (
+        <p className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">{error}</p>
+      )}
 
       <AdminPanel title={t("admin.pendingSubmissions")}>
         {loading ? (
@@ -68,24 +91,41 @@ export default function AdminKYCPage() {
         ) : (
           <div className="space-y-3">
             {submissions.map((s) => (
-              <div key={s.id} className="flex flex-col gap-3 rounded-xl border border-border bg-secondary/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div
+                key={s.id}
+                className="flex flex-col gap-3 rounded-xl border border-border bg-secondary/50 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-foreground">{s.profiles?.full_name || s.profiles?.email}</p>
-                  <p className="truncate text-sm text-muted">{s.document_type} · {formatDate(s.created_at)}</p>
+                  <p className="truncate font-medium text-foreground">
+                    {s.profiles?.full_name || s.profiles?.email}
+                  </p>
+                  <p className="truncate text-sm text-muted">
+                    {s.document_type} · {formatDate(s.created_at)}
+                  </p>
                   {s.document_url && (
-                    <a href={s.document_url} target="_blank" rel="noopener noreferrer" className="text-sm text-emerald hover:underline">
-                      {t("admin.viewDocument")}
-                    </a>
+                    <button
+                      type="button"
+                      onClick={() => void openDocument(s)}
+                      disabled={openingId === s.id}
+                      className="mt-1 text-sm font-medium text-emerald hover:underline disabled:opacity-60"
+                    >
+                      {openingId === s.id ? t("common.loading") : t("admin.viewDocument")}
+                    </button>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={s.status} />
                   {s.status === "pending" && (
                     <>
-                      <Button size="sm" disabled={acting === s.id} onClick={() => updateStatus(s.id, s.user_id, "approved")}>
+                      <Button size="sm" disabled={acting === s.id} onClick={() => void updateStatus(s.id, s.user_id, "approved")}>
                         {t("admin.approve")}
                       </Button>
-                      <Button size="sm" variant="destructive" disabled={acting === s.id} onClick={() => updateStatus(s.id, s.user_id, "rejected")}>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={acting === s.id}
+                        onClick={() => void updateStatus(s.id, s.user_id, "rejected")}
+                      >
                         {t("admin.reject")}
                       </Button>
                     </>

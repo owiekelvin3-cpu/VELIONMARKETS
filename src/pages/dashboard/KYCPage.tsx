@@ -1,124 +1,480 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { FileCheck, Upload } from "@/lib/icons";
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  CheckCircle,
+  Clock,
+  FileCheck,
+  Lock,
+  Shield,
+  TrendingUp,
+  Upload,
+  X,
+} from "@/lib/icons";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { FadeIn } from "@/components/motion/Motion";
+import { BRAND } from "@/constants/brand";
+import { getKycStatus, type KycStatus } from "@/lib/kyc";
+import { cn } from "@/lib/utils";
+
+const DOC_TYPES = [
+  { id: "passport", labelKey: "kyc.passport" },
+  { id: "drivers_license", labelKey: "kyc.driversLicense" },
+  { id: "national_id", labelKey: "kyc.nationalId" },
+] as const;
+
+const MAX_BYTES = 10 * 1024 * 1024;
+
+function statusMeta(status: KycStatus) {
+  if (status === "approved") {
+    return {
+      badgeClass: "border-emerald/30 bg-emerald/10 text-emerald",
+      labelKey: "dashboard.verified" as const,
+    };
+  }
+  if (status === "pending") {
+    return {
+      badgeClass: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      labelKey: "dashboard.kycPending" as const,
+    };
+  }
+  if (status === "rejected") {
+    return {
+      badgeClass: "border-red-500/30 bg-red-500/10 text-red-500",
+      labelKey: "dashboard.kycRejected" as const,
+    };
+  }
+  return {
+    badgeClass: "border-border bg-secondary/60 text-muted",
+    labelKey: "dashboard.kycNone" as const,
+  };
+}
 
 export default function KYCPage() {
   const { t } = useTranslation();
   const { user, profile, refreshProfile } = useAuth();
-  const [docType, setDocType] = useState("passport");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const statusColors: Record<string, "default" | "success" | "warning" | "destructive"> = {
-    none: "secondary" as "default",
-    pending: "warning",
-    approved: "success",
-    rejected: "destructive",
+  const [docType, setDocType] = useState<(typeof DOC_TYPES)[number]["id"]>("passport");
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const status = getKycStatus(profile);
+  const meta = statusMeta(status);
+  const canSubmit = status === "none" || status === "rejected";
+
+  const trustPoints = useMemo(
+    () => [
+      { icon: Lock, title: t("kyc.trustEncryptedTitle"), desc: t("kyc.trustEncryptedDesc") },
+      {
+        icon: Shield,
+        title: t("kyc.trustComplianceTitle"),
+        desc: t("kyc.trustComplianceDesc", { brand: BRAND.name }),
+      },
+      { icon: Clock, title: t("kyc.trustReviewTitle"), desc: t("kyc.trustReviewDesc") },
+    ],
+    [t]
+  );
+
+  const unlockPoints = useMemo(
+    () => [
+      { icon: ArrowDownToLine, label: t("kyc.unlockDeposits") },
+      { icon: ArrowUpFromLine, label: t("kyc.unlockWithdrawals") },
+      { icon: TrendingUp, label: t("kyc.unlockTrading") },
+    ],
+    [t]
+  );
+
+  const tips = useMemo(
+    () => [t("kyc.tipClear"), t("kyc.tipCorners"), t("kyc.tipReadable"), t("kyc.tipMatch")],
+    [t]
+  );
+
+  const steps = useMemo(
+    () => [
+      { n: 1, label: t("kyc.stepDocument") },
+      { n: 2, label: t("kyc.stepUpload") },
+      { n: 3, label: t("kyc.stepReview") },
+    ],
+    [t]
+  );
+
+  const activeStep = status === "pending" || status === "approved" ? 3 : file ? 2 : 1;
+
+  const pickFile = (next: File | null) => {
+    setError("");
+    setSuccess("");
+    if (!next) {
+      setFile(null);
+      return;
+    }
+    const allowed = /^(image\/(jpeg|jpg|png|webp)|application\/pdf)$/i.test(next.type);
+    if (!allowed) {
+      setError(t("kyc.errorFileType"));
+      setFile(null);
+      return;
+    }
+    if (next.size > MAX_BYTES) {
+      setError(t("kyc.errorFileSize"));
+      setFile(null);
+      return;
+    }
+    setFile(next);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    setLoading(true);
-    const form = new FormData(e.currentTarget);
-    const file = form.get("document") as File;
-
-    let documentUrl = null;
-    if (file && file.size > 0) {
-      const path = `${user.id}/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("kyc-documents").upload(path, file);
-      if (uploadError) {
-        setMessage(uploadError.message);
-        setLoading(false);
-        return;
-      }
-      const { data: urlData } = supabase.storage.from("kyc-documents").getPublicUrl(path);
-      documentUrl = urlData.publicUrl;
+    if (!user || !file) {
+      setError(t("kyc.errorNoFile"));
+      return;
     }
 
-    const { error } = await supabase.from("kyc_submissions").insert({
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 80);
+    const path = `${user.id}/${Date.now()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage.from("kyc-documents").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type,
+    });
+
+    if (uploadError) {
+      setError(uploadError.message);
+      setLoading(false);
+      return;
+    }
+
+    const { error: insertError } = await supabase.from("kyc_submissions").insert({
       user_id: user.id,
       document_type: docType,
-      document_url: documentUrl,
+      document_url: path,
       status: "pending",
     });
 
-    if (!error) {
-      await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user.id);
-      await refreshProfile();
-      setMessage(t("kyc.submitted", { defaultValue: "KYC documents submitted for review." }));
-    } else {
-      setMessage(error.message);
+    if (insertError) {
+      setError(insertError.message);
+      setLoading(false);
+      return;
     }
+
+    await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user.id);
+    await refreshProfile();
+    setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setSuccess(t("kyc.submitted"));
     setLoading(false);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
+        eyebrow={t("dashboard.navGroupAccount")}
         title={t("dashboard.kyc")}
-        subtitle={t("kyc.subtitle", { defaultValue: "Verify your identity to unlock full platform access." })}
+        subtitle={t("kyc.subtitle")}
       />
-      <DashboardSheet>
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-            <FileCheck className="h-5 w-5 text-emerald" />
-            {t("kyc.identityTitle", { defaultValue: "Identity Verification" })}
-          </h2>
-          <Badge variant={statusColors[profile?.kyc_status || "none"]}>
-            {profile?.kyc_status === "none"
-              ? t("dashboard.kycNone")
-              : t(
-                  profile?.kyc_status === "pending"
-                    ? "dashboard.kycPending"
-                    : profile?.kyc_status === "approved"
-                      ? "dashboard.verified"
-                      : "dashboard.kycRejected"
+
+      <FadeIn>
+        <section
+          className={cn(
+            "relative overflow-hidden rounded-[1.75rem] border border-border p-5 sm:p-6",
+            status === "approved"
+              ? "bg-emerald/[0.07]"
+              : status === "rejected"
+                ? "bg-red-500/[0.05]"
+                : "bg-card"
+          )}
+        >
+          <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald/10 blur-3xl" />
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex gap-3">
+              <div
+                className={cn(
+                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl",
+                  status === "approved"
+                    ? "bg-emerald/15 text-emerald"
+                    : status === "pending"
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      : status === "rejected"
+                        ? "bg-red-500/15 text-red-500"
+                        : "bg-emerald/10 text-emerald"
                 )}
-          </Badge>
+              >
+                {status === "approved" ? (
+                  <CheckCircle className="h-6 w-6" />
+                ) : status === "pending" ? (
+                  <Clock className="h-6 w-6" />
+                ) : (
+                  <Shield className="h-6 w-6" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-display text-lg font-semibold text-foreground">
+                    {status === "approved"
+                      ? t("kyc.statusApprovedTitle")
+                      : status === "pending"
+                        ? t("kyc.statusPendingTitle")
+                        : status === "rejected"
+                          ? t("kyc.statusRejectedTitle")
+                          : t("kyc.statusNoneTitle")}
+                  </h2>
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+                      meta.badgeClass
+                    )}
+                  >
+                    {t(meta.labelKey)}
+                  </span>
+                </div>
+                <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted">
+                  {status === "approved"
+                    ? t("kyc.approvedDesc")
+                    : status === "pending"
+                      ? t("kyc.pendingDesc")
+                      : status === "rejected"
+                        ? t("kyc.rejectedDesc")
+                        : t("kyc.introDesc")}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {status !== "approved" && (
+            <ol className="relative mt-5 grid gap-2 sm:grid-cols-3">
+              {steps.map((step) => {
+                const done = activeStep > step.n || status === "pending";
+                const current = activeStep === step.n && status !== "pending";
+                return (
+                  <li
+                    key={step.n}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm",
+                      done || current
+                        ? "border-emerald/25 bg-emerald/[0.06] text-foreground"
+                        : "border-border/70 bg-secondary/30 text-muted"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                        done || current ? "bg-emerald text-white" : "bg-secondary text-muted"
+                      )}
+                    >
+                      {done && !current ? <CheckCircle className="h-3.5 w-3.5" /> : step.n}
+                    </span>
+                    <span className="font-medium">{step.label}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
+      </FadeIn>
+
+      {status === "approved" ? (
+        <DashboardSheet>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {unlockPoints.map(({ icon: Icon, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-3 rounded-2xl border border-emerald/20 bg-emerald/[0.05] px-4 py-3"
+              >
+                <Icon className="h-5 w-5 shrink-0 text-emerald" />
+                <p className="text-sm font-medium text-foreground">{label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 text-sm text-muted">{t("kyc.approvedSupport", { brand: BRAND.name })}</p>
+        </DashboardSheet>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
+          <DashboardSheet>
+            {status === "pending" ? (
+              <div className="space-y-5">
+                <div className="flex items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
+                  <Clock className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t("kyc.pendingCardTitle")}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted">{t("kyc.pendingCardDesc")}</p>
+                  </div>
+                </div>
+                <ul className="space-y-2.5 text-sm text-muted">
+                  <li className="flex gap-2">
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald" />
+                    {t("kyc.pendingPoint1")}
+                  </li>
+                  <li className="flex gap-2">
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald" />
+                    {t("kyc.pendingPoint2")}
+                  </li>
+                  <li className="flex gap-2">
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald" />
+                    {t("kyc.pendingPoint3")}
+                  </li>
+                </ul>
+              </div>
+            ) : canSubmit ? (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {status === "rejected" && (
+                  <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.06] px-4 py-3 text-sm text-red-500">
+                    {t("kyc.rejectedBanner")}
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-sm font-semibold text-foreground">{t("kyc.documentType")}</Label>
+                  <p className="mt-1 text-xs text-muted">{t("kyc.documentTypeHint")}</p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    {DOC_TYPES.map((doc) => (
+                      <button
+                        key={doc.id}
+                        type="button"
+                        onClick={() => setDocType(doc.id)}
+                        className={cn(
+                          "rounded-2xl border px-3 py-3 text-left text-sm font-medium transition-colors",
+                          docType === doc.id
+                            ? "border-emerald/40 bg-emerald/[0.08] text-foreground ring-1 ring-emerald/20"
+                            : "border-border bg-secondary/30 text-muted hover:border-border hover:text-foreground"
+                        )}
+                      >
+                        <FileCheck
+                          className={cn(
+                            "mb-2 h-4 w-4",
+                            docType === doc.id ? "text-emerald" : "text-muted"
+                          )}
+                        />
+                        {t(doc.labelKey)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-foreground">{t("kyc.uploadDocument")}</Label>
+                  <p className="mt-1 text-xs text-muted">{t("kyc.uploadHint")}</p>
+
+                  <input
+                    ref={fileInputRef}
+                    id="kyc-document"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,application/pdf,.pdf,.jpg,.jpeg,.png,.webp"
+                    className="sr-only"
+                    onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+                  />
+
+                  {!file ? (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="mt-3 flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-secondary/20 px-4 py-10 text-center transition-colors hover:border-emerald/40 hover:bg-emerald/[0.04]"
+                    >
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald/10 text-emerald">
+                        <Upload className="h-5 w-5" />
+                      </span>
+                      <span className="text-sm font-semibold text-foreground">{t("kyc.uploadCta")}</span>
+                      <span className="max-w-xs text-xs text-muted">{t("kyc.uploadFormats")}</span>
+                    </button>
+                  ) : (
+                    <div className="mt-3 flex items-center gap-3 rounded-2xl border border-border bg-secondary/30 px-4 py-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald/10 text-emerald">
+                        <FileCheck className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
+                        <p className="text-xs text-muted">
+                          {(file.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pickFile(null);
+                          if (fileInputRef.current) fileInputRef.current.value = "";
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
+                        aria-label={t("kyc.removeFile")}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {(error || success) && (
+                  <p className={cn("text-sm", error ? "text-red-400" : "text-emerald")}>
+                    {error || success}
+                  </p>
+                )}
+
+                <Button type="submit" disabled={loading || !file} variant="pill" className="w-full sm:w-auto">
+                  <Upload className="h-4 w-4" />
+                  {loading ? t("common.saving") : t("kyc.submit")}
+                </Button>
+              </form>
+            ) : null}
+          </DashboardSheet>
+
+          <div className="space-y-4">
+            <DashboardSheet className="!py-5">
+              <h3 className="font-display text-sm font-semibold text-foreground">{t("kyc.unlockTitle")}</h3>
+              <ul className="mt-3 space-y-2.5">
+                {unlockPoints.map(({ icon: Icon, label }) => (
+                  <li key={label} className="flex items-center gap-3 text-sm text-muted">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald/10 text-emerald">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    {label}
+                  </li>
+                ))}
+              </ul>
+            </DashboardSheet>
+
+            <DashboardSheet className="!py-5">
+              <h3 className="font-display text-sm font-semibold text-foreground">{t("kyc.trustTitle")}</h3>
+              <ul className="mt-3 space-y-3">
+                {trustPoints.map(({ icon: Icon, title, desc }) => (
+                  <li key={title} className="flex gap-3">
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-secondary text-foreground">
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{title}</p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-muted">{desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </DashboardSheet>
+
+            {canSubmit && (
+              <DashboardSheet className="!py-5">
+                <h3 className="font-display text-sm font-semibold text-foreground">{t("kyc.tipsTitle")}</h3>
+                <ul className="mt-3 space-y-2">
+                  {tips.map((tip) => (
+                    <li key={tip} className="flex gap-2 text-xs leading-relaxed text-muted">
+                      <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald" />
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </DashboardSheet>
+            )}
+          </div>
         </div>
-        {profile?.kyc_status === "approved" ? (
-          <p className="text-muted">
-            {t("kyc.approvedDesc", {
-              defaultValue: "Your identity has been verified. You have full access to all platform features.",
-            })}
-          </p>
-        ) : profile?.kyc_status === "pending" ? (
-          <p className="text-muted">
-            {t("kyc.pendingDesc", {
-              defaultValue: "Your documents are under review. This typically takes 24-48 hours.",
-            })}
-          </p>
-        ) : (
-          <form onSubmit={handleSubmit} className="max-w-md space-y-4">
-            <div>
-              <Label htmlFor="docType">{t("kyc.documentType", { defaultValue: "Document Type" })}</Label>
-              <select id="docType" value={docType} onChange={(e) => setDocType(e.target.value)} className="select-input mt-2">
-                <option value="passport">{t("kyc.passport", { defaultValue: "Passport" })}</option>
-                <option value="drivers_license">{t("kyc.driversLicense", { defaultValue: "Driver's License" })}</option>
-                <option value="national_id">{t("kyc.nationalId", { defaultValue: "National ID" })}</option>
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="document">{t("kyc.uploadDocument", { defaultValue: "Upload Document" })}</Label>
-              <Input id="document" name="document" type="file" accept="image/*,.pdf" required className="mt-2" />
-            </div>
-            {message && <p className="text-sm text-muted">{message}</p>}
-            <Button type="submit" disabled={loading} className="rounded-full">
-              <Upload className="mr-2 h-4 w-4" />
-              {loading ? t("common.saving") : t("kyc.submit", { defaultValue: "Submit for Review" })}
-            </Button>
-          </form>
-        )}
-      </DashboardSheet>
+      )}
     </div>
   );
 }
