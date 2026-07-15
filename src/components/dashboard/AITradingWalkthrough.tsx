@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ArrowLeft, ArrowRight, Bot, CheckCircle, Clock, History,
-  Sparkles, Wallet, X, TrendingUp,
+  ArrowLeft, ArrowRight, Bot, Sparkles, TrendingUp, X,
 } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,7 +15,7 @@ interface AITradingWalkthroughProps {
   onComplete?: () => void;
 }
 
-const STEP_ICONS = [Sparkles, Bot, CheckCircle, Wallet, TrendingUp, History, Sparkles] as const;
+const STEP_ICONS = [Sparkles, Bot, TrendingUp] as const;
 
 export default function AITradingWalkthrough({
   userId, open, onClose, onComplete,
@@ -31,7 +30,7 @@ export default function AITradingWalkthrough({
     body: string;
     tip?: string;
   }>;
-  const total = steps.length;
+  const total = Array.isArray(steps) ? steps.length : 0;
 
   useEffect(() => {
     if (open) setStep(0);
@@ -59,7 +58,7 @@ export default function AITradingWalkthrough({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, step, total]);
 
-  if (!open) return null;
+  if (!open || total === 0) return null;
 
   const isLast = step === total - 1;
   const current = steps[step];
@@ -80,7 +79,6 @@ export default function AITradingWalkthrough({
       />
 
       <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-void shadow-2xl">
-        {/* Top bar */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-emerald">
@@ -100,7 +98,6 @@ export default function AITradingWalkthrough({
           </button>
         </div>
 
-        {/* Progress dots */}
         <div className="flex justify-center gap-1.5 px-5 pt-4">
           {steps.map((_, i) => (
             <button
@@ -116,7 +113,6 @@ export default function AITradingWalkthrough({
           ))}
         </div>
 
-        {/* Content */}
         <div className="px-5 py-6">
           <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald/10 text-emerald">
             <Icon className="h-7 w-7" />
@@ -128,49 +124,32 @@ export default function AITradingWalkthrough({
           <p className="mt-3 text-sm leading-relaxed text-muted">{withBot(current?.body)}</p>
 
           {current?.tip && (
-            <div className="mt-4 flex items-start gap-3 rounded-xl border border-emerald/20 bg-emerald/5 px-4 py-3">
-              <Clock className="mt-0.5 h-4 w-4 shrink-0 text-emerald" />
+            <div className="mt-4 rounded-xl border border-emerald/20 bg-emerald/5 px-4 py-3">
               <p className="text-xs leading-relaxed text-emerald/90">{withBot(current.tip)}</p>
             </div>
           )}
 
-          {/* Visual mini-flow on step 3 (index 2) */}
-          {step === 2 && (
+          {step === 1 && (
             <div className="mt-5 space-y-2">
-              {(["pickBot", "setPlan", "confirm"] as const).map((key, i) => (
-                <div key={key} className="flex items-center gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3">
+              {(["pickBot", "setPlan", "watch"] as const).map((key, i) => (
+                <div
+                  key={key}
+                  className="flex items-center gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3"
+                >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald/20 text-xs font-bold text-emerald">
                     {i + 1}
                   </span>
-                  <span className="text-sm">{t(`aiTrading.walkthrough.flow.${key}`, { bot: recommendedBot })}</span>
+                  <span className="text-sm">
+                    {t(`aiTrading.walkthrough.flow.${key}`, { bot: recommendedBot })}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Nav tabs preview on step 6 (index 5) */}
-          {step === 5 && (
-            <div className="mt-5 flex flex-wrap gap-2">
-              {(["start", "myBot", "history"] as const).map((key) => (
-                <span
-                  key={key}
-                  className="rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-muted"
-                >
-                  {t(`aiTrading.nav.${key}`)}
-                </span>
               ))}
             </div>
           )}
         </div>
 
-        {/* Footer actions */}
         <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted"
-            onClick={handleSkip}
-          >
+          <Button variant="ghost" size="sm" className="text-muted" onClick={handleSkip}>
             {t("aiTrading.walkthrough.skip")}
           </Button>
 
