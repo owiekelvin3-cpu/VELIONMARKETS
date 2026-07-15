@@ -324,16 +324,16 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div>
-        <p className="text-sm font-semibold text-foreground">{t("kyc.faceTitle")}</p>
-        <p className="mt-1 text-xs text-muted">{t("kyc.faceDesc")}</p>
+        <h3 className="font-display text-base font-semibold text-foreground">{t("kyc.faceTitle")}</h3>
+        <p className="mt-1 text-sm text-muted">{t("kyc.faceDesc")}</p>
       </div>
 
       <div
         className={cn(
-          "relative overflow-hidden rounded-[1.5rem] border border-border bg-[#0a0a0b]",
-          phase === "idle" || phase === "error" ? "min-h-[220px]" : "aspect-[4/5] sm:aspect-[3/4]"
+          "relative mx-auto w-full max-w-sm overflow-hidden rounded-[1.75rem] border border-border bg-[#0a0a0b] shadow-[0_20px_50px_-28px_rgba(0,0,0,0.55)]",
+          phase === "idle" || phase === "error" ? "min-h-[260px]" : "aspect-[3/4]"
         )}
       >
         {(phase === "camera" || phase === "countdown") && (
@@ -378,19 +378,25 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
         )}
 
         {(phase === "idle" || phase === "error") && (
-          <div className="flex h-full min-h-[220px] flex-col items-center justify-center gap-3 px-6 py-10 text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-emerald">
-              <Camera className="h-6 w-6" />
+          <div className="flex h-full min-h-[260px] flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+            <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-emerald ring-1 ring-white/15">
+              <span className="absolute inset-0 animate-pulse rounded-full bg-emerald/10" />
+              <Camera className="relative h-6 w-6" />
             </span>
             <p className="text-sm font-semibold text-white">{t("kyc.faceStartTitle")}</p>
-            <p className="max-w-xs text-xs leading-relaxed text-white/65">{t("kyc.faceStartDesc")}</p>
+            <p className="max-w-[16rem] text-xs leading-relaxed text-white/65">{t("kyc.faceStartDesc")}</p>
           </div>
         )}
 
         {(phase === "preview" || phase === "camera" || phase === "countdown") && (
-          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur">
-            <span className={cn("h-1.5 w-1.5 rounded-full", faceReady || phase === "preview" ? "bg-emerald" : "bg-amber-400")} />
-            {t("kyc.faceLiveBadge")}
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur">
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                phase === "preview" || faceReady ? "bg-emerald" : "bg-amber-400 animate-pulse"
+              )}
+            />
+            {phase === "preview" ? t("kyc.faceCaptured") : t("kyc.faceLiveBadge")}
           </div>
         )}
       </div>
@@ -417,7 +423,7 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
         {phase === "idle" || phase === "error" ? (
           <>
             <Button type="button" variant="pill" disabled={disabled} onClick={() => void startCamera()}>
@@ -465,20 +471,16 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
         ) : null}
       </div>
 
-      <ul className="space-y-1.5 text-xs text-muted">
-        <li className="flex gap-2">
-          <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald" />
-          {t("kyc.faceTipLighting")}
-        </li>
-        <li className="flex gap-2">
-          <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald" />
-          {t("kyc.faceTipGlasses")}
-        </li>
-        <li className="flex gap-2">
-          <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald" />
-          {t("kyc.faceTipMatch")}
-        </li>
-      </ul>
+      {(phase === "idle" || phase === "camera" || phase === "error") && (
+        <ul className="grid gap-2 rounded-2xl border border-border/70 bg-secondary/15 p-3.5 sm:grid-cols-3">
+          {[t("kyc.faceTipLighting"), t("kyc.faceTipGlasses"), t("kyc.faceTipMatch")].map((tip) => (
+            <li key={tip} className="flex gap-2 text-xs leading-relaxed text-muted">
+              <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald" />
+              {tip}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
