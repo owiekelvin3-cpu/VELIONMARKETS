@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Camera, CheckCircle, RefreshCw, X } from "@/lib/icons";
+import { Camera, CheckCircle, RefreshCw, Upload, X } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -26,14 +26,48 @@ function stopStream(stream: MediaStream | null) {
   stream?.getTracks().forEach((track) => track.stop());
 }
 
+function isSecureCameraContext() {
+  if (typeof window === "undefined") return false;
+  return window.isSecureContext || location.protocol === "https:" || location.hostname === "localhost";
+}
+
+function mapCameraError(error: unknown, t: (key: string) => string): string {
+  if (!isSecureCameraContext()) return t("kyc.faceCameraInsecure");
+  if (!navigator.mediaDevices?.getUserMedia) return t("kyc.faceCameraUnsupported");
+
+  const name =
+    error && typeof error === "object" && "name" in error
+      ? String((error as { name: unknown }).name)
+      : "";
+
+  if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+    return t("kyc.faceCameraDenied");
+  }
+  if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+    return t("kyc.faceCameraMissing");
+  }
+  if (name === "NotReadableError" || name === "TrackStartError") {
+    return t("kyc.faceCameraBusy");
+  }
+  if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") {
+    return t("kyc.faceCameraUnsupported");
+  }
+  if (name === "SecurityError") {
+    return t("kyc.faceCameraBlocked");
+  }
+  return t("kyc.faceCameraError");
+}
+
 export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerificationCaptureProps) {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<FaceDetectorLike | null>(null);
   const rafRef = useRef<number>(0);
   const countdownTimerRef = useRef<number | null>(null);
+  const attachAttemptRef = useRef(0);
 
   const [phase, setPhase] = useState<Phase>(value ? "preview" : "idle");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -41,6 +75,7 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
   const [countdown, setCountdown] = useState(3);
   const [error, setError] = useState("");
   const [challenge, setChallenge] = useState<"center" | "hold">("center");
+  const [showUploadFallback, setShowUploadFallback] = useState(false);
 
   useEffect(() => {
     if (!value) {
@@ -104,7 +139,6 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
             setChallenge("center");
           }
         } else {
-          // Browser has no FaceDetector — allow capture with guidance only
           setFaceReady(true);
           setChallenge("hold");
         }
@@ -119,38 +153,91 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
     rafRef.current = requestAnimationFrame(() => void tick());
   }, []);
 
+  const attachStreamToVideo = useCallback(
+    (stream: MediaStream, attempt = 0) => {
+      const video = videoRef.current;
+      if (!video) {
+        if (attempt < 10) {
+          window.setTimeout(() => attachStreamToVideo(stream, attempt + 1), 50);
+        } else {
+          setError(t("kyc.faceCameraError"));
+          setPhase("error");
+          setShowUploadFallback(true);
+          cleanupCamera();
+        }
+        return;
+      }
+
+      video.srcObject = stream;
+      video.setAttribute("playsinline", "true");
+      video.muted = true;
+
+      void video
+        .play()
+        .then(() => watchFace())
+        .catch(() => {
+          setError(t("kyc.faceCameraError"));
+          setPhase("error");
+          setShowUploadFallback(true);
+          cleanupCamera();
+        });
+    },
+    [cleanupCamera, t, watchFace]
+  );
+
   const startCamera = async () => {
     if (disabled) return;
     setError("");
+    setShowUploadFallback(false);
     onChange(null);
     cleanupCamera();
+    attachAttemptRef.current = 0;
+
+    if (!isSecureCameraContext()) {
+      setError(t("kyc.faceCameraInsecure"));
+      setPhase("error");
+      setShowUploadFallback(true);
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError(t("kyc.faceCameraUnsupported"));
+      setPhase("error");
+      setShowUploadFallback(true);
+      return;
+    }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-          facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: { ideal: "user" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        });
+      } catch (firstError) {
+        // Relax constraints and retry once (common on laptops / older devices)
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: true,
+        }).catch(() => {
+          throw firstError;
+        });
+      }
+
       streamRef.current = stream;
       setPhase("camera");
       setChallenge("center");
       setFaceReady(false);
-
-      requestAnimationFrame(() => {
-        const video = videoRef.current;
-        if (!video) return;
-        video.srcObject = stream;
-        void video.play().then(() => watchFace()).catch(() => {
-          setError(t("kyc.faceCameraError"));
-          setPhase("error");
-        });
-      });
-    } catch {
-      setError(t("kyc.faceCameraDenied"));
+      // Wait for the video element to mount after phase change
+      requestAnimationFrame(() => attachStreamToVideo(stream));
+    } catch (err) {
+      setError(mapCameraError(err, t));
       setPhase("error");
+      setShowUploadFallback(true);
     }
   };
 
@@ -168,7 +255,6 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Mirror to match preview
     ctx.translate(w, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, w, h);
@@ -219,6 +305,24 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
     setPhase(value ? "preview" : "idle");
   };
 
+  const pickFallbackSelfie = (file: File | null) => {
+    setError("");
+    if (!file) return;
+    const allowed = /^image\/(jpeg|jpg|png|webp)$/i.test(file.type);
+    if (!allowed) {
+      setError(t("kyc.faceUploadType"));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError(t("kyc.errorFileSize"));
+      return;
+    }
+    cleanupCamera();
+    onChange(file);
+    setPhase("preview");
+    setShowUploadFallback(false);
+  };
+
   return (
     <div className="space-y-3">
       <div>
@@ -241,7 +345,6 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
               autoPlay
               className="absolute inset-0 h-full w-full scale-x-[-1] object-cover"
             />
-            {/* Dark vignette with oval cutout */}
             <div
               className="pointer-events-none absolute inset-0"
               style={{
@@ -293,15 +396,46 @@ export function FaceVerificationCapture({ value, onChange, disabled }: FaceVerif
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+        capture="user"
+        className="sr-only"
+        onChange={(e) => {
+          pickFallbackSelfie(e.target.files?.[0] ?? null);
+          e.target.value = "";
+        }}
+      />
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && (
+        <div className="rounded-xl border border-red-500/25 bg-red-500/[0.06] px-3 py-2.5 text-sm text-red-400">
+          <p>{error}</p>
+          {phase === "error" && (
+            <p className="mt-1 text-xs text-red-400/80">{t("kyc.faceCameraHelp")}</p>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {phase === "idle" || phase === "error" ? (
-          <Button type="button" variant="pill" disabled={disabled} onClick={() => void startCamera()}>
-            <Camera className="h-4 w-4" />
-            {t("kyc.faceStartCta")}
-          </Button>
+          <>
+            <Button type="button" variant="pill" disabled={disabled} onClick={() => void startCamera()}>
+              <Camera className="h-4 w-4" />
+              {phase === "error" ? t("kyc.faceRetryCta") : t("kyc.faceStartCta")}
+            </Button>
+            {(showUploadFallback || phase === "error") && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={disabled}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" />
+                {t("kyc.faceUploadFallback")}
+              </Button>
+            )}
+          </>
         ) : null}
 
         {phase === "camera" ? (
