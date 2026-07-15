@@ -14,7 +14,7 @@ import { CryptoBrandIcon } from "@/components/dashboard/DepositIcons";
 import { FadeIn } from "@/components/motion/Motion";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { isKycApproved } from "@/lib/kyc";
+import { isKycApproved, formatTransactionError } from "@/lib/kyc";
 import { Copy, Check } from "@/lib/icons";
 import { CRYPTO_ASSETS } from "@/constants/deposit-assets";
 import { useDepositConfig } from "@/hooks/useDepositConfig";
@@ -81,7 +81,7 @@ export default function CryptoDepositPage() {
       status: "pending",
       notes: txHash || null,
     });
-    if (error) setMessage(error.message);
+    if (error) setMessage(formatTransactionError(error, t("deposits.submitError"), t("kyc.required")));
     else {
       setMessage(t("deposits.submitSuccess"));
       setAmount("");
@@ -99,8 +99,8 @@ export default function CryptoDepositPage() {
         backTo="/dashboard/deposits"
       />
 
-      <DashboardSheet>
       <KycRequiredGate>
+      <DashboardSheet>
       <FadeIn className="space-y-6">
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
           {CRYPTO_ASSETS.map((c) => (
@@ -183,8 +183,8 @@ export default function CryptoDepositPage() {
           </div>
         )}
       </FadeIn>
-      </KycRequiredGate>
       </DashboardSheet>
+      </KycRequiredGate>
     </div>
   );
 }

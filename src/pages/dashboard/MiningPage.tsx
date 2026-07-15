@@ -10,7 +10,7 @@ import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
-import { isKycApproved } from "@/lib/kyc";
+import { isKycApproved, formatTransactionError } from "@/lib/kyc";
 
 const packages = [
   { name: "Starter", investment: 500, dailyReturn: 0.8, hashrate: "10 TH/s" },
@@ -70,7 +70,13 @@ export default function MiningPage() {
       status: "active",
     });
     if (error) {
-      setMessage(error.message.includes("Insufficient") ? t("mining.insufficientBalance") : error.message);
+      setMessage(
+        formatTransactionError(
+          error,
+          error.message.includes("Insufficient") ? t("mining.insufficientBalance") : error.message,
+          t("kyc.required")
+        )
+      );
     } else {
       setIsSuccess(true);
       setMessage(t("mining.purchased", { name: pkg.name }));

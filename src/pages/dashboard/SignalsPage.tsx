@@ -10,7 +10,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
-import { isKycApproved } from "@/lib/kyc";
+import { isKycApproved, formatTransactionError } from "@/lib/kyc";
 
 const signalPackages = [
   { name: "Basic Signals", price: 49, duration: "30 days", signals: "5/day" },
@@ -69,7 +69,13 @@ export default function SignalsPage() {
       expires_at: expires.toISOString(),
     });
     if (error) {
-      setMessage(error.message.includes("Insufficient") ? t("signals.insufficientBalance") : error.message);
+      setMessage(
+        formatTransactionError(
+          error,
+          error.message.includes("Insufficient") ? t("signals.insufficientBalance") : error.message,
+          t("kyc.required")
+        )
+      );
     } else {
       setMessage(t("signals.subscribed", { name: pkg.name }));
       await load();

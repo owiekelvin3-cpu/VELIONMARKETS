@@ -5,7 +5,7 @@ import { RefreshCw, TrendingDown, TrendingUp, Wallet } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useTradingMarket } from "@/hooks/useTradingMarket";
 import { supabase } from "@/lib/supabase";
-import { isKycApproved } from "@/lib/kyc";
+import { isKycApproved, formatTransactionError } from "@/lib/kyc";
 import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import {
   TRADING_PAIRS,
@@ -84,7 +84,13 @@ export default function TradingRoomPage() {
       status: "pending",
     });
     if (err) {
-      setMessage(err.message.includes("Insufficient") ? t("trading.insufficientBalance") : err.message);
+      setMessage(
+        formatTransactionError(
+          err,
+          err.message.includes("Insufficient") ? t("trading.insufficientBalance") : err.message,
+          t("kyc.required")
+        )
+      );
       setMessageOk(false);
     } else {
       setMessage(
@@ -217,7 +223,7 @@ export default function TradingRoomPage() {
           <TradingChart candles={candles} symbol={symbol} loading={loading} />
         </div>
         <div className="xl:sticky xl:top-20 xl:self-start">
-          <KycRequiredGate>
+          <KycRequiredGate compact>
             <OrderPanel
               symbol={symbol}
               pairLabel={pair.label}

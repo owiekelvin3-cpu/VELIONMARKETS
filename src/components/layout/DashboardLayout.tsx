@@ -151,7 +151,7 @@ export function DashboardLayout() {
       <div className="dashboard-atmosphere" aria-hidden="true" />
       <aside
         className={cn(
-          "dashboard-sidebar fixed inset-y-0 left-0 z-40 flex w-[min(18rem,88vw)] flex-col border-r border-border transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-60 lg:translate-x-0 xl:w-64",
+          "dashboard-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(18rem,88vw)] flex-col border-r border-border transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-60 lg:translate-x-0 xl:w-64",
           sidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0 lg:shadow-none"
         )}
         aria-label={t("dashboard.navLabel")}
@@ -217,7 +217,7 @@ export function DashboardLayout() {
           )}
         </nav>
 
-        <div className="border-t border-border/60 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="border-t border-border/60 p-3 pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] lg:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Link
             to="/dashboard/settings"
             onClick={() => setSidebarOpen(false)}
@@ -258,7 +258,7 @@ export function DashboardLayout() {
       {sidebarOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-[45] bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-label={t("dashboard.closeSidebar")}
         />
@@ -275,7 +275,12 @@ export function DashboardLayout() {
         >
           <button
             type="button"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-secondary lg:hidden"
+            className={cn(
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-full lg:hidden",
+              isOverview
+                ? "text-white/80 hover:bg-white/10 hover:text-white"
+                : "text-muted hover:bg-secondary"
+            )}
             onClick={() => setSidebarOpen(true)}
             aria-label={t("dashboard.openSidebar")}
           >
@@ -284,7 +289,10 @@ export function DashboardLayout() {
 
           <Link
             to="/dashboard/settings"
-            className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-border/80 lg:hidden"
+            className={cn(
+              "flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full lg:hidden",
+              isOverview ? "ring-1 ring-white/25" : "ring-1 ring-border/80"
+            )}
             aria-label={t("dashboard.settings")}
           >
             <UserAvatar
@@ -305,12 +313,14 @@ export function DashboardLayout() {
             />
           </form>
 
-          <div className="ml-auto flex shrink-0 items-center gap-0.5">
+      <div className="ml-auto flex shrink-0 items-center gap-0.5">
             <div className="hidden lg:flex lg:items-center lg:gap-0.5">
               <ThemeToggle />
               <LanguageSelector />
             </div>
-            <NotificationBell />
+            <div className={cn(isOverview && "[&_button]:text-white/80 [&_button]:hover:bg-white/10 [&_button]:hover:text-white")}>
+              <NotificationBell />
+            </div>
           </div>
         </header>
 
@@ -328,7 +338,7 @@ export function DashboardLayout() {
         </main>
       </div>
 
-      <DashboardDock onAccountPress={() => setSidebarOpen(true)} />
+      {!sidebarOpen && <DashboardDock onAccountPress={() => setSidebarOpen(true)} />}
       <NotificationToast />
       <PushNotificationInit />
     </div>

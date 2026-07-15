@@ -10,7 +10,7 @@ import { DepositPageHeader } from "@/components/dashboard/DepositPageHeader";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { BrandLogo } from "@/components/dashboard/DepositIcons";
-import { isKycApproved } from "@/lib/kyc";
+import { isKycApproved, formatTransactionError } from "@/lib/kyc";
 import { ImageUploadField } from "@/components/dashboard/ImageUploadField";
 import { FadeIn } from "@/components/motion/Motion";
 import { GIFT_CARD_BRANDS } from "@/constants/deposit-assets";
@@ -78,7 +78,7 @@ export default function GiftCardBrandDepositPage() {
       });
 
       if (error) {
-        setMessage(error.message);
+        setMessage(formatTransactionError(error, t("deposits.submitError"), t("kyc.required")));
       } else {
         setSuccess(true);
         setMessage(t("deposits.submitSuccess"));

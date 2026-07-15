@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { ensureValidSession } from "@/lib/auth-session";
-import { isKycApproved } from "@/lib/kyc";
+import { isKycApproved, formatTransactionError } from "@/lib/kyc";
+import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
-import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 
 interface Subscription {
   id: string;
@@ -77,7 +77,13 @@ export default function CopyTradingPage() {
     });
 
     if (error) {
-      setMessage(error.message.includes("Insufficient") ? t("copyTrading.insufficientBalance") : error.message);
+      setMessage(
+        formatTransactionError(
+          error,
+          error.message.includes("Insufficient") ? t("copyTrading.insufficientBalance") : error.message,
+          t("kyc.required")
+        )
+      );
     } else {
       setMessage(t("copyTrading.subscribed"));
       setAllocation("");

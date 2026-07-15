@@ -7,7 +7,7 @@ import {
 } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
-import { isKycApproved } from "@/lib/kyc";
+import { isKycApproved, formatTransactionError } from "@/lib/kyc";
 import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -192,7 +192,13 @@ export default function AITradingPage() {
     }).select().single();
 
     if (error) {
-      setMessage(error.message.includes("Insufficient") ? t("aiTrading.insufficientBalance") : error.message);
+      setMessage(
+        formatTransactionError(
+          error,
+          error.message.includes("Insufficient") ? t("aiTrading.insufficientBalance") : error.message,
+          t("kyc.required")
+        )
+      );
     } else {
       setMessage(t("aiTrading.purchased"));
       setPower("");

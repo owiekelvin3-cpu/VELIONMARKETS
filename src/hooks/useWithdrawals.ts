@@ -3,6 +3,7 @@ import i18n from "@/i18n";
 import { supabase } from "@/lib/supabase";
 import { ensureValidSession } from "@/lib/auth-session";
 import { fetchOutstandingFees, sumOutstandingFees } from "@/lib/fees";
+import { formatTransactionError } from "@/lib/kyc";
 import type { UserFee, Withdrawal } from "@/types/database";
 
 export type WithdrawalFilter = "crypto" | "bank_transfer" | "wire_transfer" | "ewallet";
@@ -90,7 +91,7 @@ export function useWithdrawalForm(
     });
 
     if (error) {
-      setMessage(error.message);
+      setMessage(formatTransactionError(error, error.message, i18n.t("kyc.required")));
     } else {
       setSuccess(true);
       await load(userId);
