@@ -86,11 +86,11 @@ export default function WireWithdrawalPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="iban">{t("withdrawals.iban")}</Label>
-                <Input id="iban" value={iban} onChange={(e) => setIban(e.target.value)} required className="mt-2 h-11 font-mono text-sm" />
+                <Input id="iban" value={iban} onChange={(e) => setIban(e.target.value)} required className="mt-2 h-11 font-mono text-base" />
               </div>
               <div>
                 <Label htmlFor="swift">{t("withdrawals.swift")}</Label>
-                <Input id="swift" value={swift} onChange={(e) => setSwift(e.target.value)} required className="mt-2 h-11 font-mono text-sm" />
+                <Input id="swift" value={swift} onChange={(e) => setSwift(e.target.value)} required className="mt-2 h-11 font-mono text-base" />
               </div>
             </div>
             <div>

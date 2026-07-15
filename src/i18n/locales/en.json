@@ -394,7 +394,10 @@
     "regionPlaceholder": "State / Region",
     "countryRequired": "Please select your country.",
     "regionRequired": "Please enter your state or region.",
-    "signUpLocationHint": "Tell us where you’re based — required for account compliance."
+    "signUpLocationHint": "Tell us where you’re based — required for account compliance.",
+    "signInFailed": "Sign in failed. Check your email and password.",
+    "signUpFailed": "Could not create your account. Please try again.",
+    "checkEmail": "Check your email to confirm your account, then sign in."
   },
   "dashboard": {
     "title": "Client Dashboard",
@@ -731,7 +734,11 @@
       "pending": "Pending",
       "resolved": "Resolved",
       "archived": "Archived"
-    }
+    },
+    "back": "Back",
+    "internalNote": "Internal",
+    "loadConversationsError": "Failed to load conversations",
+    "loadMessagesError": "Failed to load messages"
   },
   "transactions": {
     "title": "Transactions",
@@ -1057,6 +1064,7 @@
   },
   "admin": {
     "title": "Administration",
+    "badge": "Admin",
     "overview": "Overview",
     "users": "Users",
     "kycReview": "KYC Review",

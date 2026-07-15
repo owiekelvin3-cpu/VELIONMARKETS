@@ -18,7 +18,7 @@ interface AuthContextType {
     password: string,
     fullName: string,
     location?: { country: string; region: string }
-  ) => Promise<{ error: Error | null; user: User | null }>;
+  ) => Promise<{ error: Error | null; user: User | null; session: Session | null }>;
   signOut: () => Promise<void>;
   refreshProfile: (userId?: string) => Promise<Profile | null>;
   clearSessionExpired: () => void;
@@ -36,42 +36,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(async (userId: string) => {
     setProfileStatus("loading");
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
 
-    if (error && isJwtExpiredError(error)) {
-      const ok = await ensureValidSession();
-      if (ok) {
-        const retry = await supabase.from("profiles").select("*").eq("id", userId).single();
-        if (retry.data) {
-          setProfile(retry.data);
-          setProfileStatus("ready");
-          return retry.data;
+    const withTimeout = <T,>(promise: PromiseLike<T>, ms = 12_000) =>
+      Promise.race([
+        Promise.resolve(promise),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error("Profile load timed out")), ms);
+        }),
+      ]);
+
+    try {
+      const { data, error } = await withTimeout(
+        supabase.from("profiles").select("*").eq("id", userId).single()
+      );
+
+      if (error && isJwtExpiredError(error)) {
+        const ok = await ensureValidSession();
+        if (ok) {
+          const retry = await withTimeout(
+            supabase.from("profiles").select("*").eq("id", userId).single()
+          );
+          if (retry.data) {
+            setProfile(retry.data);
+            setProfileStatus("ready");
+            return retry.data;
+          }
+          setProfile(null);
+          setProfileStatus("error");
+          return null;
         }
+        setSessionExpired(true);
+        setProfileStatus("error");
+        await supabase.auth.signOut();
+        return null;
+      }
+
+      if (error) {
+        console.error("Failed to load profile", error);
         setProfile(null);
         setProfileStatus("error");
         return null;
       }
-      setSessionExpired(true);
-      setProfileStatus("error");
-      await supabase.auth.signOut();
-      return null;
-    }
 
-    if (error) {
-      console.error("Failed to load profile", error);
+      setProfile(data);
+      setProfileStatus("ready");
+      void syncUserLocation(userId);
+      return data;
+    } catch (err) {
+      console.error("Failed to load profile", err);
       setProfile(null);
       setProfileStatus("error");
       return null;
     }
-
-    setProfile(data);
-    setProfileStatus("ready");
-    void syncUserLocation(userId);
-    return data;
   }, []);
 
   const refreshProfile = async (userId?: string) => {
@@ -206,8 +222,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         region: location?.region || null,
       }).eq("id", data.user.id);
       setSessionExpired(false);
+      // Same race fix as signIn — sync React state before navigating.
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        await fetchProfile(data.session.user.id);
+      }
     }
-    return { error: error as Error | null, user: data.user ?? null };
+    return {
+      error: error as Error | null,
+      user: data.user ?? null,
+      session: data.session ?? null,
+    };
   };
 
   const signOut = async () => {

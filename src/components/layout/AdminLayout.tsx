@@ -102,7 +102,7 @@ export function AdminLayout() {
           <Link to="/dashboard/admin" className="flex min-w-0 items-center gap-2.5" onClick={() => setSidebarOpen(false)}>
             <Logo size="sm" wordmarkClassName="text-sm" />
             <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-gold ring-1 ring-gold/25">
-              Admin
+              {t("admin.badge")}
             </span>
           </Link>
           <button
@@ -154,7 +154,7 @@ export function AdminLayout() {
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{profile?.full_name || "Admin"}</p>
+              <p className="truncate text-sm font-medium text-foreground">{profile?.full_name || t("admin.badge")}</p>
               <p className="truncate text-xs text-muted">{profile?.email}</p>
             </div>
           </div>

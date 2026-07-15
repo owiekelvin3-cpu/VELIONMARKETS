@@ -125,7 +125,7 @@ export default function CryptoWithdrawalPage() {
                 onChange={(e) => setWalletAddress(e.target.value)}
                 placeholder={t("withdrawals.walletPlaceholder")}
                 required
-                className="mt-2 h-11 font-mono text-sm"
+                className="mt-2 h-11 font-mono text-base"
               />
             </div>
 

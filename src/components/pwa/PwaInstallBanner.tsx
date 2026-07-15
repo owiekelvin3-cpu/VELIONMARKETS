@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowDownToLine, X } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,11 @@ import { cn } from "@/lib/utils";
 /** Native-feeling “Install app” prompt when the browser allows it. */
 export function PwaInstallBanner({ className }: { className?: string }) {
   const { t } = useTranslation();
+  const location = useLocation();
   const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const hideOnAdmin = location.pathname.startsWith("/dashboard/admin");
 
   useEffect(() => {
     if (isStandaloneDisplay() || wasInstallDismissed()) return;
@@ -27,7 +30,7 @@ export function PwaInstallBanner({ className }: { className?: string }) {
     });
   }, []);
 
-  if (!visible || !promptEvent) return null;
+  if (hideOnAdmin || !visible || !promptEvent) return null;
 
   const close = () => {
     dismissInstallPrompt();

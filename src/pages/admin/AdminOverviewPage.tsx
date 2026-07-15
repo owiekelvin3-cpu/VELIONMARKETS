@@ -42,7 +42,7 @@ export default function AdminOverviewPage() {
       <AdminPageHeader
         eyebrow={t("admin.portalLabel")}
         title={t("admin.overviewTitle")}
-        subtitle={t("admin.overviewSubtitle", { name: profile?.full_name || profile?.email || "Admin" })}
+        subtitle={t("admin.overviewSubtitle", { name: profile?.full_name || profile?.email || t("admin.badge") })}
         action={
           <Button variant="outline" size="sm" onClick={refresh} className="w-full rounded-full border-border sm:w-auto">
             <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />

@@ -25,6 +25,14 @@ import { cn } from "@/lib/utils";
 
 type Mode = "login" | "register";
 
+function safeReturnPath(from: unknown): string {
+  if (!from || typeof from !== "object") return "/dashboard";
+  const pathname = (from as { pathname?: string }).pathname;
+  if (typeof pathname !== "string" || !pathname.startsWith("/")) return "/dashboard";
+  if (pathname.startsWith("/auth") || pathname.startsWith("/admin-auth")) return "/dashboard";
+  return `${pathname}${(from as { search?: string }).search ?? ""}`;
+}
+
 const selectClass =
   "h-12 w-full appearance-none rounded-xl border border-border bg-secondary/40 px-3.5 pr-10 text-base text-foreground outline-none transition-colors focus-visible:border-emerald/50 focus-visible:ring-2 focus-visible:ring-emerald/20";
 
@@ -32,12 +40,14 @@ export default function AuthPage() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const mode: Mode = searchParams.get("mode") === "register" ? "register" : "login";
-  const { signIn, signUp, clearSessionExpired } = useAuth();
+  const { signIn, signUp, clearSessionExpired, user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const sessionExpired =
     (location.state as { sessionExpired?: boolean } | null)?.sessionExpired === true;
+  const returnTo = safeReturnPath((location.state as { from?: unknown } | null)?.from);
   const [error, setError] = useState(sessionExpired ? t("auth.sessionExpired") : "");
+  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const [countryCode, setCountryCode] = useState("");
   const [region, setRegion] = useState("");
@@ -50,8 +60,18 @@ export default function AuthPage() {
     setRegion("");
   }, [countryCode]);
 
+  useEffect(() => {
+    if (!user || !profile) return;
+    if (profile.role === "admin") {
+      navigate(returnTo.startsWith("/dashboard/admin") ? returnTo : "/dashboard/admin", { replace: true });
+      return;
+    }
+    navigate(returnTo.startsWith("/dashboard/admin") ? "/dashboard" : returnTo, { replace: true });
+  }, [user, profile, navigate, returnTo]);
+
   function setMode(next: Mode) {
     setError("");
+    setInfo("");
     setCountryCode("");
     setRegion("");
     setSearchParams(next === "register" ? { mode: "register" } : {}, { replace: true });
@@ -61,23 +81,24 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setInfo("");
     const permissionPromise = prepareNotificationsOnUserGesture();
     const form = new FormData(e.currentTarget);
     const { error } = await signIn(form.get("email") as string, form.get("password") as string);
     if (error) {
-      setError(error.message);
+      setError(t("auth.signInFailed"));
     } else {
       const {
-        data: { user },
+        data: { user: signedIn },
       } = await supabase.auth.getUser();
-      if (user) {
+      if (signedIn) {
         try {
-          await completePushSetup(user.id, permissionPromise);
+          await completePushSetup(signedIn.id, permissionPromise);
         } catch {
           /* ignore */
         }
       }
-      navigate("/dashboard");
+      navigate(returnTo, { replace: true });
     }
     setLoading(false);
   };
@@ -86,6 +107,7 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setInfo("");
 
     if (!countryCode) {
       setError(t("auth.countryRequired"));
@@ -100,7 +122,7 @@ export default function AuthPage() {
 
     const permissionPromise = prepareNotificationsOnUserGesture();
     const form = new FormData(e.currentTarget);
-    const { error, user } = await signUp(
+    const { error, user: created, session } = await signUp(
       form.get("email") as string,
       form.get("password") as string,
       form.get("fullName") as string,
@@ -110,16 +132,21 @@ export default function AuthPage() {
       }
     );
     if (error) {
-      setError(error.message);
+      setError(t("auth.signUpFailed"));
+    } else if (!session) {
+      setInfo(t("auth.checkEmail"));
+      setCountryCode("");
+      setRegion("");
+      setSearchParams({}, { replace: true });
     } else {
-      if (user) {
+      if (created) {
         try {
-          await completePushSetup(user.id, permissionPromise);
+          await completePushSetup(created.id, permissionPromise);
         } catch {
           /* ignore */
         }
       }
-      navigate("/dashboard");
+      navigate(returnTo, { replace: true });
     }
     setLoading(false);
   };
@@ -182,6 +209,12 @@ export default function AuthPage() {
                   <p className="mb-6 text-center text-sm text-muted">{t("auth.signUpLocationHint")}</p>
                 )}
                 {mode === "login" && <div className="mb-8" />}
+
+                {info ? (
+                  <p className="mb-4 rounded-xl border border-emerald/25 bg-emerald/10 px-3.5 py-3 text-sm text-emerald">
+                    {info}
+                  </p>
+                ) : null}
 
                 {mode === "login" ? (
                   <form onSubmit={handleLogin} className="space-y-4">

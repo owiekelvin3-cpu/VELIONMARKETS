@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
 import {
   createConversation,
@@ -14,6 +15,7 @@ import {
 import type { SupportConversation } from "@/types/database";
 
 export function useUserSupport(userId: string | undefined) {
+  const { t } = useTranslation();
   const [conversations, setConversations] = useState<SupportConversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<SupportMessageWithAttachments[]>([]);
@@ -30,11 +32,11 @@ export function useUserSupport(userId: string | undefined) {
       const rows = await listUserConversations(userId);
       setConversations(rows);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load conversations");
+      setError(e instanceof Error ? e.message : t("support.loadConversationsError"));
     } finally {
       setLoadingList(false);
     }
-  }, [userId]);
+  }, [userId, t]);
 
   const loadMessages = useCallback(async (conversationId: string, reset = true) => {
     setLoadingMessages(true);
@@ -46,11 +48,11 @@ export function useUserSupport(userId: string | undefined) {
       setMessages((prev) => (reset ? rows : [...rows, ...prev]));
       if (userId) await markConversationRead(conversationId, false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load messages");
+      setError(e instanceof Error ? e.message : t("support.loadMessagesError"));
     } finally {
       setLoadingMessages(false);
     }
-  }, [messages, userId]);
+  }, [messages, userId, t]);
 
   useEffect(() => {
     void refreshList();

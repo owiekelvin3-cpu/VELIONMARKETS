@@ -16,13 +16,18 @@ export default function HomePage() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.hash === "#markets" || location.hash === "#economy") {
-      const id = location.hash.slice(1);
-      requestAnimationFrame(() => {
-        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-      });
-    }
-  }, [location.hash]);
+    if (location.hash !== "#markets" && location.hash !== "#economy") return;
+    const id = location.hash.slice(1);
+    const scroll = () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    const frame = requestAnimationFrame(scroll);
+    const t1 = window.setTimeout(scroll, 120);
+    const t2 = window.setTimeout(scroll, 400);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [location.pathname, location.hash, location.key]);
 
   return (
     <>

@@ -274,6 +274,7 @@ export function SupportMessageBubble({
   isOwn: boolean;
   clustered?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <motion.div
       layout
@@ -298,7 +299,7 @@ export function SupportMessageBubble({
         )}
       >
         {message.is_internal && (
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide opacity-80">Internal</p>
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide opacity-80">{t("support.internalNote")}</p>
         )}
         {message.body && <p className="whitespace-pre-wrap break-words">{message.body}</p>}
         {message.attachments?.map((att) => <AttachmentChip key={att.id} att={att} />)}
@@ -610,6 +611,7 @@ export function SupportThreadFrame({
   /** Apply notch safe-area on the header (mobile overlay). */
   safeAreaTop?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div className={cn("flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background", className)}>
       <header
@@ -623,7 +625,7 @@ export function SupportThreadFrame({
             type="button"
             onClick={onBack}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-emerald hover:bg-secondary"
-            aria-label="Back"
+            aria-label={t("support.back")}
           >
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />

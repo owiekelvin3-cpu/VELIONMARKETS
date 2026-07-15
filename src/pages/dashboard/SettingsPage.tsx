@@ -235,6 +235,12 @@ export default function SettingsPage() {
     approved: "success",
     rejected: "destructive",
   };
+  const kycLabels: Record<string, string> = {
+    none: "dashboard.kycNone",
+    pending: "dashboard.kycPending",
+    approved: "dashboard.verified",
+    rejected: "dashboard.kycRejected",
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -348,7 +354,7 @@ export default function SettingsPage() {
                     <Label>{t("settingsPage.kycStatus")}</Label>
                     <div className="flex h-10 items-center gap-2">
                       <Badge variant={kycBadge[profile?.kyc_status ?? "none"]}>
-                        {profile?.kyc_status ?? "none"}
+                        {t(kycLabels[profile?.kyc_status ?? "none"] ?? "dashboard.kycNone")}
                       </Badge>
                       {profile?.kyc_status !== "approved" && (
                         <Link to="/dashboard/kyc" className="text-xs text-emerald hover:underline">
@@ -367,7 +373,7 @@ export default function SettingsPage() {
                     onChange={(e) => setBio(e.target.value)}
                     rows={3}
                     placeholder={t("settingsPage.bioPlaceholder")}
-                    className="w-full rounded-lg border border-border bg-secondary/60 px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-emerald/30 focus:outline-none focus:ring-1 focus:ring-emerald/20"
+                    className="w-full rounded-lg border border-border bg-secondary/60 px-3 py-2 text-base text-foreground placeholder:text-muted focus:border-emerald/30 focus:outline-none focus:ring-1 focus:ring-emerald/20"
                   />
                 </div>
 

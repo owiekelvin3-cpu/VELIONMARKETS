@@ -1,5 +1,5 @@
 /* VELION MARKETS — PWA + push service worker */
-const CACHE_VERSION = "velion-shell-v2";
+const CACHE_VERSION = "velion-shell-v3";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const ASSET_CACHE = `${CACHE_VERSION}-assets`;
 
@@ -15,7 +15,8 @@ const PRECACHE_URLS = [
   "/icons/icon.svg",
 ];
 
-const ASSET_EXT = /\.(?:js|css|woff2?|png|jpg|jpeg|gif|svg|webp|avif|mp4|webm)$/i;
+const ASSET_EXT = /\.(?:js|css|woff2?|png|jpg|jpeg|gif|svg|webp|avif)$/i;
+const VIDEO_EXT = /\.(?:mp4|webm|ogg|mov)$/i;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -116,6 +117,11 @@ self.addEventListener("fetch", (event) => {
   if (!isSameOrigin(url) || shouldBypass(url)) return;
 
   if (isNavigate(request)) {
+    event.respondWith(networkFirstNavigation(request));
+    return;
+  }
+
+  if (VIDEO_EXT.test(url.pathname) || url.pathname.startsWith("/videos/")) {
     event.respondWith(networkFirstNavigation(request));
     return;
   }

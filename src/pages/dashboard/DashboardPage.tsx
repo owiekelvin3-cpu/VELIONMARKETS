@@ -49,9 +49,13 @@ export default function DashboardPage() {
   const [selectedTx, setSelectedTx] = useState<UserTransaction | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { soft?: boolean }) => {
     if (!user) return;
+    const soft = opts?.soft === true;
+    if (soft) setRefreshing(true);
+    else setLoading(true);
     setError("");
     try {
       const [balRes, allDepRes, txList] = await withValidSession(() =>
@@ -75,6 +79,7 @@ export default function DashboardPage() {
       setError(formatAuthError(err, t("dashboard.loadError")));
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [user, t]);
 
@@ -85,7 +90,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!user) return;
     const onVisible = () => {
-      if (document.visibilityState === "visible") void load();
+      if (document.visibilityState === "visible") void load({ soft: true });
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -171,7 +176,7 @@ export default function DashboardPage() {
       {error && (
         <div className="flex flex-col gap-2 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-red-400">{error}</p>
-          <Button size="sm" variant="outline" onClick={() => { setLoading(true); void load(); }}>
+          <Button size="sm" variant="outline" disabled={refreshing} onClick={() => { void load({ soft: true }); }}>
             {t("errors.tryAgain")}
           </Button>
         </div>
