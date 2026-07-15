@@ -23,6 +23,12 @@ import { FaceVerificationCapture } from "@/components/kyc/FaceVerificationCaptur
 import { FadeIn } from "@/components/motion/Motion";
 import { BRAND } from "@/constants/brand";
 import { getKycStatus, type KycStatus } from "@/lib/kyc";
+import {
+  ensureValidSession,
+  forceRefreshSession,
+  formatAuthError,
+  isJwtExpiredError,
+} from "@/lib/auth-session";
 import { cn } from "@/lib/utils";
 
 const DOC_TYPES = [
@@ -161,41 +167,65 @@ export default function KYCPage() {
     const docPath = `${user.id}/${stamp}-${safeName}`;
     const selfiePath = `${user.id}/${stamp}-face-selfie.jpg`;
 
-    const { error: uploadError } = await supabase.storage.from("kyc-documents").upload(docPath, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type,
-    });
+    const sessionOk = await ensureValidSession();
+    if (!sessionOk) {
+      setError(t("auth.sessionExpired"));
+      setLoading(false);
+      return;
+    }
+
+    const uploadWithRefresh = async (path: string, body: File, contentType: string) => {
+      const first = await supabase.storage.from("kyc-documents").upload(path, body, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType,
+      });
+      if (!first.error || !isJwtExpiredError(first.error)) return first;
+      const refreshed = await forceRefreshSession();
+      if (!refreshed) return first;
+      return supabase.storage.from("kyc-documents").upload(path, body, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType,
+      });
+    };
+
+    const { error: uploadError } = await uploadWithRefresh(docPath, file, file.type);
 
     if (uploadError) {
-      setError(uploadError.message);
+      setError(formatAuthError(uploadError, t("auth.sessionExpired")));
       setLoading(false);
       return;
     }
 
-    const { error: selfieError } = await supabase.storage.from("kyc-documents").upload(selfiePath, selfie, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: "image/jpeg",
-    });
+    const { error: selfieError } = await uploadWithRefresh(selfiePath, selfie, "image/jpeg");
 
     if (selfieError) {
-      setError(selfieError.message);
+      setError(formatAuthError(selfieError, t("auth.sessionExpired")));
       setLoading(false);
       return;
     }
 
-    const { error: insertError } = await supabase.from("kyc_submissions").insert({
-      user_id: user.id,
-      document_type: docType,
-      document_url: docPath,
-      selfie_url: selfiePath,
-      face_captured_at: new Date().toISOString(),
-      status: "pending",
-    });
+    const insertOnce = () =>
+      supabase.from("kyc_submissions").insert({
+        user_id: user.id,
+        document_type: docType,
+        document_url: docPath,
+        selfie_url: selfiePath,
+        face_captured_at: new Date().toISOString(),
+        status: "pending",
+      });
+
+    let { error: insertError } = await insertOnce();
+    if (insertError && isJwtExpiredError(insertError)) {
+      const refreshed = await forceRefreshSession();
+      if (refreshed) {
+        ({ error: insertError } = await insertOnce());
+      }
+    }
 
     if (insertError) {
-      setError(insertError.message);
+      setError(formatAuthError(insertError, t("auth.sessionExpired")));
       setLoading(false);
       return;
     }

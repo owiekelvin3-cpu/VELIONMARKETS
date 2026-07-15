@@ -114,22 +114,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initAuth = async () => {
       const { data: { user: validatedUser }, error } = await supabase.auth.getUser();
 
-      if (error && isJwtExpiredError(error)) {
+      if (error) {
+        // Includes "exp claim timestamp check failed" and other stale-token shapes.
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         if (!mounted) return;
 
         if (refreshError || !refreshData.session) {
-          await handleSessionLoss(true);
+          // Only force sign-out when the token is clearly expired / unusable.
+          if (isJwtExpiredError(error) || isJwtExpiredError(refreshError)) {
+            await handleSessionLoss(true);
+            return;
+          }
+        } else {
+          const refreshed = refreshData.session;
+          setSession(refreshed);
+          setUser(refreshed.user);
+          setSessionExpired(false);
+          setTimeout(() => { void fetchProfile(refreshed.user.id); }, 0);
+          setLoading(false);
           return;
         }
-
-        const refreshed = refreshData.session;
-        setSession(refreshed);
-        setUser(refreshed.user);
-        setSessionExpired(false);
-        setTimeout(() => { void fetchProfile(refreshed.user.id); }, 0);
-        setLoading(false);
-        return;
       }
 
       const { data: { session: currentSession } } = await supabase.auth.getSession();
