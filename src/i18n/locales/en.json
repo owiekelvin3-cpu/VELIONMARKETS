@@ -454,6 +454,8 @@
     "kycNone": "Not verified",
     "kycPending": "Pending review",
     "kycRejected": "Rejected",
+    "completeVerification": "Verify your identity",
+    "completeVerificationDesc": "Unlock deposits, withdrawals, and trading.",
     "loadError": "We couldn’t load your portfolio. Please try again.",
     "fundAccount": "Fund account",
     "settledDeposits": "Approved & completed",

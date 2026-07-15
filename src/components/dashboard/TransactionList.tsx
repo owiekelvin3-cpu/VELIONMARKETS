@@ -107,12 +107,14 @@ export function RecentTransactionsCard({ items, total, limit, onItemClick, selec
   const hasMore = total > limit;
 
   return (
-    <DashboardSheet className="-mx-3 mt-0 rounded-t-[2rem] sm:mx-0 sm:rounded-3xl">
-      <div className="mb-3 flex items-center justify-between px-1">
-        <h2 className="font-display text-base font-semibold text-foreground">{t("dashboard.recentTransactions")}</h2>
+    <DashboardSheet>
+      <div className="mb-4 flex items-center justify-between gap-3 px-0.5">
+        <h2 className="font-display text-base font-semibold tracking-tight text-foreground">
+          {t("dashboard.recentTransactions")}
+        </h2>
         <Link
           to="/dashboard/transactions"
-          className="flex items-center text-xs font-medium text-muted hover:text-emerald"
+          className="flex items-center text-xs font-medium text-muted transition-colors hover:text-emerald"
         >
           {hasMore ? t("dashboard.viewAllTransactions", { count: total }) : t("dashboard.openTransactions")}
           <ArrowRight className="ml-1 h-3 w-3" />

@@ -428,15 +428,15 @@
 
   /* Finance hero — void base with soft brand washes */
   .dashboard-hero {
-    @apply relative overflow-hidden rounded-[1.75rem] border-0 bg-[#0c0c0e] text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)];
+    @apply relative overflow-hidden rounded-[1.75rem] border-0 bg-[#0c0c0e] text-white shadow-[0_18px_48px_rgba(0,0,0,0.28)];
     background-image:
-      radial-gradient(ellipse 80% 60% at 10% 0%, color-mix(in oklab, var(--color-emerald) 22%, transparent), transparent 55%),
-      radial-gradient(ellipse 50% 50% at 100% 20%, color-mix(in oklab, var(--color-gold) 12%, transparent), transparent 50%),
-      linear-gradient(165deg, #121214 0%, #09090b 55%, #0a0f0d 100%);
+      radial-gradient(ellipse 70% 55% at 0% -10%, color-mix(in oklab, var(--color-emerald) 18%, transparent), transparent 58%),
+      radial-gradient(ellipse 45% 40% at 100% 0%, color-mix(in oklab, var(--color-gold) 9%, transparent), transparent 52%),
+      linear-gradient(165deg, #111113 0%, #09090b 58%, #0a0d0c 100%);
   }
 
   :root.light .dashboard-hero {
-    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+    box-shadow: 0 20px 44px rgba(15, 23, 42, 0.14);
   }
 
   .dashboard-hero-muted {
@@ -445,16 +445,16 @@
 
   /* Elevated content sheet */
   .dashboard-sheet {
-    @apply relative rounded-t-[2rem] border border-border bg-card px-4 py-5 shadow-[0_-8px_40px_rgba(0,0,0,0.12)] sm:rounded-3xl sm:px-6 sm:py-6;
+    @apply relative rounded-[1.5rem] border border-border/70 bg-card px-4 py-5 sm:rounded-3xl sm:px-6 sm:py-6;
   }
 
   :root.light .dashboard-sheet {
-    @apply bg-[#fafafa] shadow-[0_-4px_32px_rgba(15,23,42,0.06)];
+    @apply bg-white shadow-sm;
   }
 
   .dark .dashboard-sheet,
   :root:not(.light) .dashboard-sheet {
-    background: color-mix(in oklab, var(--color-surface-elevated) 92%, transparent);
+    background: color-mix(in oklab, var(--color-surface-elevated) 94%, transparent);
   }
 
   .dashboard-stat {
@@ -463,6 +463,14 @@
 
   :root.light .dashboard-stat {
     @apply bg-white/90 shadow-sm;
+  }
+
+  .dashboard-metric {
+    @apply min-h-[5.5rem];
+  }
+
+  :root.light .dashboard-metric {
+    @apply bg-white;
   }
 
   .dashboard-pill {
@@ -474,7 +482,7 @@
   }
 
   .dashboard-pill-secondary {
-    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/15;
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.07] px-5 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/12;
   }
 
   .dashboard-pill-emerald {
