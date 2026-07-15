@@ -694,42 +694,136 @@
   },
   "copyTrading": {
     "title": "Copy Trading",
-    "subtitle": "Mirror top traders automatically with your allocated capital.",
+    "subtitle": "Allocate capital to a published strategy. Past sample ranges are illustrative — markets can move against you.",
+    "eyebrow": "Managed strategies",
     "balance": "Available balance",
-    "select": "Select trader",
-    "subscribeTo": "Subscribe to {{name}}",
+    "select": "Choose strategy",
+    "selected": "Selected",
+    "subscribeTo": "Allocate to {{name}}",
     "allocation": "Allocation (USD)",
-    "subscribe": "Subscribe",
-    "subscribed": "Successfully subscribed to trader.",
-    "activeSubs": "Active subscriptions",
+    "subscribe": "Confirm allocation",
+    "confirmTitle": "Confirm copy allocation",
+    "confirmBody": "You are allocating {{amount}} to {{name}}. Funds leave your available balance immediately. You can review this under Active allocations.",
+    "cancel": "Cancel",
+    "subscribed": "Allocation recorded. Your subscription is now active.",
+    "alreadyActive": "You already have an active allocation with this strategy.",
+    "activeSubs": "Active allocations",
+    "noSubs": "No active allocations yet.",
     "minAllocation": "Minimum allocation is {{amount}}",
     "insufficientBalance": "Insufficient balance for this allocation.",
+    "sampleLabel": "Illustrative 90-day sample",
+    "sampleHint": "Not a guarantee of future results",
+    "focusLabel": "Focus",
+    "styleLabel": "Style",
+    "howItWorksTitle": "How it works",
+    "howItWorksBody": "Allocate capital to a strategy desk. Executions are reviewed by operations. Returns are never guaranteed and depend on live market conditions.",
+    "riskTitle": "Capital at risk",
+    "riskBody": "You can lose part or all of an allocation. Only use funds you can afford to commit.",
     "risk": {
-      "low": "Low Risk",
-      "medium": "Medium Risk",
-      "high": "High Risk"
+      "low": "Lower risk profile",
+      "medium": "Balanced risk",
+      "high": "Higher risk profile"
+    },
+    "strategies": {
+      "brooks": {
+        "focus": "Major FX pairs & gold",
+        "style": "Conservative, multi-day holds"
+      },
+      "mercer": {
+        "focus": "Index & liquid crypto",
+        "style": "Swing / media-cycle setups"
+      },
+      "chen": {
+        "focus": "High-beta crypto & tech",
+        "style": "Momentum, tighter stops"
+      }
+    },
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "cancelled": "Cancelled"
     }
   },
   "mining": {
-    "title": "Crypto Mining",
-    "subtitle": "Purchase mining packages and earn daily returns.",
+    "title": "Cloud Mining",
+    "subtitle": "Reserve hashrate capacity. Daily figures are target estimates — payouts are credited after operations review.",
+    "eyebrow": "Hashrate capacity",
     "balance": "Available balance",
-    "daily": "daily",
+    "daily": "indicative / day",
     "day": "day",
-    "purchase": "Purchase package",
-    "purchased": "{{name}} package activated successfully.",
-    "yourPackages": "Your mining packages",
-    "insufficientBalance": "Insufficient balance for this package."
+    "purchase": "Reserve package",
+    "confirmTitle": "Confirm mining reservation",
+    "confirmBody": "{{amount}} will be reserved for {{name}}. Hashrate is provisioned by operations; indicative daily targets are not guaranteed.",
+    "cancel": "Cancel",
+    "purchased": "{{name}} reserved. Status is active pending operational settlement.",
+    "yourPackages": "Your mining reservations",
+    "noPackages": "No mining reservations yet.",
+    "insufficientBalance": "Insufficient balance for this package.",
+    "estimateLabel": "Indicative daily target",
+    "estimateHint": "Estimate only — not a promise",
+    "termLabel": "Term",
+    "termDays": "{{days}} days",
+    "hashrateLabel": "Hashrate capacity",
+    "howItWorksTitle": "How settlement works",
+    "howItWorksBody": "Your balance is allocated when you reserve a package. Operations provisions capacity and credits distributions after scheduled settlement — never instantly on purchase.",
+    "riskTitle": "Important",
+    "riskBody": "Mining yields vary with network difficulty, fees, and uptime. Treat any daily percentage as an estimate, not a fixed return.",
+    "packages": {
+      "starter": "Starter",
+      "professional": "Professional",
+      "enterprise": "Enterprise"
+    },
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "completed": "Completed"
+    }
   },
   "signals": {
     "title": "Trading Signals",
-    "subtitle": "Subscribe to receive professional trading signals.",
+    "subtitle": "Subscribe for desk alerts delivered in-app. Signals are research suggestions — not financial advice or guaranteed outcomes.",
+    "eyebrow": "Desk alerts",
     "balance": "Available balance",
     "subscribe": "Subscribe",
-    "subscribed": "Subscribed to {{name}} successfully.",
-    "activeSubs": "Active subscriptions",
+    "confirmTitle": "Confirm signal plan",
+    "confirmBody": "{{amount}} will be charged for {{name}} ({{days}} days). Alerts appear in Notifications and Support.",
+    "cancel": "Cancel",
+    "subscribed": "Subscribed to {{name}}. Watch Notifications for desk alerts.",
+    "activeSubs": "Your signal plans",
+    "noSubs": "No active signal plans yet.",
     "expires": "Expires",
-    "insufficientBalance": "Insufficient balance for this package."
+    "expired": "Expired",
+    "insufficientBalance": "Insufficient balance for this package.",
+    "perPeriod": "/ {{days}} days",
+    "includesTitle": "Includes",
+    "howItWorksTitle": "Delivery",
+    "howItWorksBody": "After you subscribe, desk ideas are posted as in-app notifications. Always confirm levels and risk in the Trading Room before acting.",
+    "riskTitle": "Not advice",
+    "riskBody": "Signals can be wrong. Size positions carefully and never trade money you cannot afford to lose.",
+    "accessTitle": "Subscriber access",
+    "accessBody": "You have an active plan. Open Notifications for the latest desk notes, or go to the Trading Room to act.",
+    "openNotifications": "Open notifications",
+    "openTradingRoom": "Trading room",
+    "packages": {
+      "basic": "Basic desk",
+      "pro": "Pro desk",
+      "vip": "VIP desk",
+      "basicVolume": "Up to 5 ideas / day",
+      "proVolume": "Up to 15 ideas / day",
+      "vipVolume": "Priority desk coverage"
+    },
+    "includes": {
+      "desk": "Curated desk outlooks",
+      "alerts": "In-app notification alerts",
+      "support": "Support ticket priority",
+      "prioritized": "Higher-frequency setups",
+      "concierge": "VIP desk concierge via Support"
+    },
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    }
   },
   "support": {
     "title": "Support",
@@ -917,14 +1011,29 @@
   },
   "tradesPage": {
     "title": "Trade History",
-    "subtitle": "View all your manual and bot-assisted trades.",
-    "allTrades": "All trades",
+    "subtitle": "Manual Trading Room orders and AI bot fills in one place.",
+    "eyebrow": "Execution ledger",
+    "allTrades": "All fills",
     "empty": "No trades recorded yet.",
+    "emptyCta": "Open trading room",
+    "emptyAiCta": "Try AI trading",
     "asset": "Asset",
-    "type": "Type",
-    "amount": "Amount",
+    "type": "Side",
+    "amount": "Size",
     "price": "Price",
-    "date": "Date"
+    "date": "Date",
+    "source": "Source",
+    "sourceManual": "Trading room",
+    "sourceAi": "AI bot",
+    "profit": "Profit",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "completed": "Completed",
+      "rejected": "Rejected",
+      "active": "Active",
+      "cancelled": "Cancelled"
+    }
   },
   "withdrawals": {
     "title": "Withdraw Funds",
