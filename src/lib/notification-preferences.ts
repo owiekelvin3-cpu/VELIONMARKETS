@@ -4,10 +4,21 @@ import {
   setPushEnabledPreference,
 } from "@/lib/push-notifications";
 
-/** Ensure push + sound preferences are explicitly on unless the user turned them off. */
+const PUSH_ENABLED_KEY = "velion-push-enabled";
+const SOUND_ENABLED_KEY = "velion-notification-sound";
+
+/** Seed push + sound preferences only when the user has never chosen. */
 export function ensureNotificationDefaults() {
-  setPushEnabledPreference(true);
-  setNotificationSoundEnabled(true);
+  try {
+    if (localStorage.getItem(PUSH_ENABLED_KEY) === null) {
+      setPushEnabledPreference(true);
+    }
+    if (localStorage.getItem(SOUND_ENABLED_KEY) === null) {
+      setNotificationSoundEnabled(true);
+    }
+  } catch {
+    /* private mode / blocked storage */
+  }
 }
 
 /**

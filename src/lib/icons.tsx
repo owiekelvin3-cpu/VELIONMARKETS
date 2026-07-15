@@ -74,6 +74,7 @@ import {
   faUser,
   faUserPlus,
   faUsers,
+  faVolumeHigh,
   faWallet,
   faWandMagicSparkles,
   faXmark,
@@ -156,6 +157,7 @@ export const Upload = createIcon(faUpload, "Upload");
 export const User = createIcon(faUser, "User");
 export const UserPlus = createIcon(faUserPlus, "UserPlus");
 export const Users = createIcon(faUsers, "Users");
+export const Volume2 = createIcon(faVolumeHigh, "Volume2");
 export const Wallet = createIcon(faWallet, "Wallet");
 export const X = createIcon(faXmark, "X");
 export const XCircle = createIcon(faCircleXmark, "XCircle");

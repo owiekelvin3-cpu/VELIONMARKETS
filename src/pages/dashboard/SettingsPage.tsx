@@ -35,11 +35,50 @@ import {
   Mail,
   Settings,
   Trash2,
+  Volume2,
   Wallet,
 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 type Section = "profile" | "wallet" | "security" | "notifications" | "preferences";
+
+function SettingsToggle({
+  checked,
+  disabled,
+  busy,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  busy?: boolean;
+  onChange: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled || busy}
+      onClick={onChange}
+      className={cn(
+        "relative h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/40",
+        checked ? "bg-emerald" : "bg-secondary ring-1 ring-border",
+        (disabled || busy) && "cursor-not-allowed opacity-50"
+      )}
+    >
+      <span
+        className={cn(
+          "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform",
+          checked ? "translate-x-5" : "translate-x-0.5",
+          busy && "opacity-70"
+        )}
+      />
+    </button>
+  );
+}
 
 const sections: { id: Section; labelKey: string; icon: typeof Settings }[] = [
   { id: "profile", labelKey: "settingsPage.sections.profile", icon: Settings },
@@ -524,73 +563,153 @@ export default function SettingsPage() {
 
           {section === "notifications" && (
             <Card className="dashboard-stat !p-0 border-border/70 bg-card/80">
-              <CardHeader>
+              <CardHeader className="space-y-1.5 border-b border-border/60">
                 <CardTitle>{t("settingsPage.notificationsTitle")}</CardTitle>
                 <CardDescription>{t("settingsPage.notificationsDesc")}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/50 p-4">
-                  <div>
-                    <p className="text-sm font-medium">{t("settingsPage.pushNotifications")}</p>
-                    <p className="text-xs text-muted">{t("settingsPage.pushNotificationsDesc")}</p>
-                    {push.permission === "denied" && (
-                      <p className="mt-1 text-xs text-amber-400">{t("notifications.pushBlocked")}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={push.enabled}
-                    disabled={!push.supported || push.busy || push.permission === "denied"}
-                    onClick={() => {
-                      primeNotificationSound();
-                      void push.toggle();
-                    }}
+              <CardContent className="space-y-4 pt-5">
+                <div
+                  className={cn(
+                    "flex flex-wrap items-center gap-2 rounded-2xl border px-4 py-3",
+                    push.permission === "denied"
+                      ? "border-amber-500/25 bg-amber-500/[0.06]"
+                      : push.enabled
+                        ? "border-emerald/25 bg-emerald/[0.06]"
+                        : "border-border bg-secondary/30"
+                  )}
+                >
+                  <span
                     className={cn(
-                      "relative h-7 w-12 shrink-0 rounded-full transition-colors",
-                      push.enabled ? "bg-emerald" : "bg-white/15",
-                      (!push.supported || push.permission === "denied") && "opacity-50"
+                      "flex h-9 w-9 items-center justify-center rounded-xl",
+                      push.enabled
+                        ? "bg-emerald/15 text-emerald"
+                        : push.permission === "denied"
+                          ? "bg-amber-500/15 text-amber-500"
+                          : "bg-secondary text-muted"
                     )}
                   >
-                    <span
-                      className={cn(
-                        "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform",
-                        push.enabled ? "translate-x-5" : "translate-x-0.5"
-                      )}
-                    />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-4">
-                  <div>
-                    <p className="text-sm font-medium">{t("settingsPage.notificationSound")}</p>
-                    <p className="text-xs text-muted">{t("settingsPage.notificationSoundDesc")}</p>
+                    <Bell className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      {!push.supported
+                        ? t("settingsPage.pushStatusUnsupported")
+                        : push.permission === "denied"
+                          ? t("settingsPage.pushStatusBlocked")
+                          : push.enabled
+                            ? t("settingsPage.pushStatusOn")
+                            : push.permission === "default"
+                              ? t("settingsPage.pushStatusDefault")
+                              : t("settingsPage.pushStatusOff")}
+                    </p>
+                    <p className="text-xs text-muted">
+                      {push.permission === "denied"
+                        ? t("settingsPage.pushBlockedHelp")
+                        : !push.supported
+                          ? t("settingsPage.pushUnsupported")
+                          : t("settingsPage.pushNotificationsDesc")}
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={soundEnabled}
-                    onClick={() => {
-                      const next = !soundEnabled;
-                      setSoundEnabled(next);
-                      setNotificationSoundEnabled(next);
-                      if (next) primeNotificationSound();
-                    }}
+                  <span
                     className={cn(
-                      "relative h-6 w-11 rounded-full transition-colors",
-                      soundEnabled ? "bg-emerald" : "bg-white/15"
+                      "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+                      push.enabled
+                        ? "border-emerald/30 bg-emerald/10 text-emerald"
+                        : push.permission === "denied"
+                          ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          : "border-border bg-secondary/60 text-muted"
                     )}
                   >
-                    <span
-                      className={cn(
-                        "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                        soundEnabled ? "translate-x-5" : "translate-x-0.5"
-                      )}
-                    />
-                  </button>
+                    {push.enabled
+                      ? t("settingsPage.pushStatusOn")
+                      : push.permission === "denied"
+                        ? t("settingsPage.pushStatusBlocked")
+                        : t("settingsPage.pushStatusOff")}
+                  </span>
                 </div>
+
+                <div className="overflow-hidden rounded-2xl border border-border/80">
+                  <div className="flex items-center gap-3 border-b border-border/70 bg-secondary/20 px-4 py-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald/10 text-emerald">
+                      <Bell className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        {t("settingsPage.pushNotifications")}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-muted">
+                        {t("settingsPage.pushNotificationsDesc")}
+                      </p>
+                      {push.permission === "denied" && (
+                        <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+                          {t("notifications.pushBlocked")}
+                        </p>
+                      )}
+                    </div>
+                    <SettingsToggle
+                      checked={push.enabled}
+                      disabled={!push.supported || push.permission === "denied"}
+                      busy={push.busy}
+                      label={t("settingsPage.pushNotifications")}
+                      onChange={() => {
+                        if (soundEnabled) primeNotificationSound();
+                        void push.toggle();
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 px-4 py-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary text-foreground">
+                      <Volume2 className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        {t("settingsPage.notificationSound")}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-muted">
+                        {t("settingsPage.notificationSoundDesc")}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="hidden rounded-full sm:inline-flex"
+                        disabled={!soundEnabled}
+                        onClick={() => {
+                          setNotificationSoundEnabled(true);
+                          primeNotificationSound();
+                        }}
+                      >
+                        {t("settingsPage.testSound")}
+                      </Button>
+                      <SettingsToggle
+                        checked={soundEnabled}
+                        label={t("settingsPage.notificationSound")}
+                        onChange={() => {
+                          const next = !soundEnabled;
+                          setSoundEnabled(next);
+                          setNotificationSoundEnabled(next);
+                          if (next) primeNotificationSound();
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {!push.supported && (
-                  <p className="text-xs text-muted">{t("settingsPage.pushUnsupported")}</p>
+                  <p className="rounded-xl border border-border/70 bg-secondary/20 px-3 py-2.5 text-xs text-muted">
+                    {t("settingsPage.pushUnsupported")}
+                  </p>
                 )}
+
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-secondary/15 px-4 py-3">
+                  <p className="text-xs text-muted">{t("settingsPage.notifInboxHint")}</p>
+                  <Button asChild variant="outline" size="sm" className="rounded-full">
+                    <Link to="/dashboard/notifications">{t("settingsPage.openNotifications")}</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
