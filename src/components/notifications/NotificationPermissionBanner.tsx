@@ -11,13 +11,14 @@ export function NotificationPermissionBanner() {
   const { user } = useAuth();
   const { supported, permission, busy, requestPermission } = usePushNotifications(user?.id);
 
-  if (!user || !supported || !getPushEnabledPreference()) return null;
+  if (!user || !supported) return null;
   if (permission !== "default") return null;
+  if (!getPushEnabledPreference()) return null;
 
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-xl border border-emerald/25 bg-emerald/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-2xl border border-emerald/25 bg-emerald/5 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald/10 text-emerald">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald/10 text-emerald">
           <Bell className="h-5 w-5" />
         </div>
         <div>
@@ -27,6 +28,7 @@ export function NotificationPermissionBanner() {
       </div>
       <Button
         size="sm"
+        className="rounded-full"
         disabled={busy}
         onClick={() => {
           primeNotificationSound();

@@ -47,6 +47,7 @@ const WireWithdrawalPage = lazy(() => import("@/pages/dashboard/WireWithdrawalPa
 const EwalletWithdrawalPage = lazy(() => import("@/pages/dashboard/EwalletWithdrawalPage"));
 const TradesPage = lazy(() => import("@/pages/dashboard/TradesPage"));
 const TransactionsPage = lazy(() => import("@/pages/dashboard/TransactionsPage"));
+const NotificationsPage = lazy(() => import("@/pages/dashboard/NotificationsPage"));
 const KYCPage = lazy(() => import("@/pages/dashboard/KYCPage"));
 const CopyTradingPage = lazy(() => import("@/pages/dashboard/CopyTradingPage"));
 const MiningPage = lazy(() => import("@/pages/dashboard/MiningPage"));
@@ -129,6 +130,7 @@ function App() {
                 <Route path="dashboard/withdrawals/ewallet" element={<EwalletWithdrawalPage />} />
                 <Route path="dashboard/withdrawals" element={<WithdrawalsPage />} />
                 <Route path="dashboard/transactions" element={<TransactionsPage />} />
+                <Route path="dashboard/notifications" element={<NotificationsPage />} />
                 <Route path="dashboard/trades" element={<TradesPage />} />
                 <Route path="dashboard/ai-trading" element={<AITradingPage />} />
                 <Route path="dashboard/trading-room" element={<DashboardTradingRoomPage />} />

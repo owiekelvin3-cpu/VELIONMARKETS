@@ -5,7 +5,7 @@ import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, TrendingUp, History,
-  Copy, Pickaxe, Radio, FileCheck, LogOut, Menu, Shield, Search, CandlestickChart, Bot, Settings, MessageCircle, X,
+  Copy, Pickaxe, Radio, FileCheck, LogOut, Menu, Shield, Search, CandlestickChart, Bot, Settings, MessageCircle, Bell, X,
 } from "@/lib/icons";
 import { UserAvatar } from "@/components/settings/UserAvatar";
 import { useState, useCallback, useEffect } from "react";
@@ -54,6 +54,7 @@ const navGroups: { labelKey: string; links: NavLink[] }[] = [
   {
     labelKey: "dashboard.navGroupAccount",
     links: [
+      { href: "/dashboard/notifications", labelKey: "dashboard.notifications", icon: Bell },
       { href: "/dashboard/support", labelKey: "dashboard.support", icon: MessageCircle },
       { href: "/dashboard/kyc", labelKey: "dashboard.kyc", icon: FileCheck },
     ],

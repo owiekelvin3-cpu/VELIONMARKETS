@@ -7,6 +7,11 @@ import type { Notification } from "@/types/database";
 interface UseNotificationsOptions {
   /** Where browser push / notification click should open */
   pushTargetPath?: string;
+  /**
+   * When false, only syncs the list (no toast/sound/browser alert).
+   * Use on pages that share the layout bell, which already delivers alerts.
+   */
+  enableDelivery?: boolean;
 }
 
 const POLL_MS = 30_000;
@@ -15,15 +20,18 @@ export function useNotifications(userId: string | undefined, options?: UseNotifi
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const pushTargetPath = options?.pushTargetPath ?? "/dashboard";
+  const enableDelivery = options?.enableDelivery !== false;
   const knownIdsRef = useRef<Set<string>>(new Set());
   const initializedRef = useRef(false);
 
   const handleIncoming = useCallback((notification: Notification, isNew: boolean) => {
-    if (isNew && !knownIdsRef.current.has(notification.id)) {
-      knownIdsRef.current.add(notification.id);
+    if (!isNew) return;
+    if (knownIdsRef.current.has(notification.id)) return;
+    knownIdsRef.current.add(notification.id);
+    if (enableDelivery) {
       deliverNotification(notification, { url: pushTargetPath });
     }
-  }, [pushTargetPath]);
+  }, [pushTargetPath, enableDelivery]);
 
   const refresh = useCallback(async () => {
     if (!userId) {
@@ -67,7 +75,7 @@ export function useNotifications(userId: string | undefined, options?: UseNotifi
     if (!userId) return;
 
     const channel = supabase
-      .channel(`notifications:${userId}`, {
+      .channel(`notifications:${userId}:${enableDelivery ? "live" : "list"}`, {
         config: { broadcast: { self: false } },
       })
       .on(
@@ -98,7 +106,7 @@ export function useNotifications(userId: string | undefined, options?: UseNotifi
       clearInterval(pollTimer);
       supabase.removeChannel(channel);
     };
-  }, [userId, handleIncoming, refresh]);
+  }, [userId, handleIncoming, refresh, enableDelivery]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

@@ -445,7 +445,13 @@
     "enableButton": "Autoriser Notifications",
     "soundOn": "Activer le son",
     "soundOff": "Désactiver le son",
-    "dismissToast": "Rejeter"
+    "dismissToast": "Rejeter",
+    "emptyUnread": "You're all caught up — no unread alerts.",
+    "viewAll": "View all notifications",
+    "pageSubtitle": "Alerts for deposits, withdrawals, trades, verification, and support.",
+    "unreadCount": "{{count}} unread",
+    "filterAll": "All",
+    "filterUnread": "Unread ({{count}})"
   },
   "settingsPage": {
     "title": "Réglages",
