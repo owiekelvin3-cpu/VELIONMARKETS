@@ -8,9 +8,12 @@ const VARIANT: Record<string, "success" | "warning" | "destructive" | "secondary
   paid: "success",
   pending: "warning",
   rejected: "destructive",
+  suspended: "destructive",
   cancelled: "secondary",
   waived: "secondary",
   none: "secondary",
+  admin: "default",
+  user: "secondary",
 };
 
 export function StatusBadge({ status }: { status: string }) {

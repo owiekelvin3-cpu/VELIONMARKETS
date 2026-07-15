@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 
 export default function AdminUsersPage() {
@@ -38,17 +39,11 @@ export default function AdminUsersPage() {
       || (u.full_name?.toLowerCase().includes(q))
       || u.role.includes(q)
       || u.kyc_status.includes(q)
+      || (u.is_suspended && "suspended".includes(q))
       || (u.country?.toLowerCase().includes(q))
       || (u.city?.toLowerCase().includes(q))
     );
   }, [users, search]);
-
-  const toggleRole = async (userId: string, currentRole: string) => {
-    const newRole = currentRole === "admin" ? "user" : "admin";
-    const { error: err } = await supabase.from("profiles").update({ role: newRole }).eq("id", userId);
-    if (err) setError(err.message);
-    else load();
-  };
 
   return (
     <div className="space-y-6">
@@ -80,7 +75,10 @@ export default function AdminUsersPage() {
               {filtered.map((u) => (
                 <div
                   key={u.id}
-                  className="rounded-2xl border border-border bg-card/60 p-4 backdrop-blur-sm"
+                  className={cn(
+                    "rounded-2xl border bg-card/60 p-4 backdrop-blur-sm",
+                    u.is_suspended ? "border-red-500/30" : "border-border"
+                  )}
                 >
                   <button
                     type="button"
@@ -98,13 +96,11 @@ export default function AdminUsersPage() {
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <StatusBadge status={u.role} />
                     <StatusBadge status={u.kyc_status} />
+                    {u.is_suspended && <StatusBadge status="suspended" />}
                     <div className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto">
                       <Button variant="outline" size="sm" className="min-h-10 flex-1 rounded-xl border-border sm:flex-none" onClick={() => setSelectedUserId(u.id)}>
                         <Eye className="mr-1.5 h-3.5 w-3.5" />
                         {t("admin.userDetail.view")}
-                      </Button>
-                      <Button variant="outline" size="sm" className="min-h-10 flex-1 rounded-xl border-border sm:flex-none" onClick={() => void toggleRole(u.id, u.role)}>
-                        {u.role === "admin" ? t("admin.demote") : t("admin.makeAdmin")}
                       </Button>
                     </div>
                   </div>
@@ -114,7 +110,7 @@ export default function AdminUsersPage() {
 
             {/* Desktop table */}
             <div className="hidden overflow-x-auto md:block">
-              <table className="data-table w-full min-w-[720px]">
+              <table className="data-table w-full min-w-[760px]">
                 <thead>
                   <tr>
                     <th>{t("admin.name")}</th>
@@ -122,6 +118,7 @@ export default function AdminUsersPage() {
                     <th>{t("admin.userDetail.locationShort")}</th>
                     <th>{t("admin.role")}</th>
                     <th>{t("admin.kyc")}</th>
+                    <th>{t("common.status")}</th>
                     <th>{t("admin.userDetail.joined")}</th>
                     <th>{t("admin.actions")}</th>
                   </tr>
@@ -136,15 +133,19 @@ export default function AdminUsersPage() {
                       </td>
                       <td><StatusBadge status={u.role} /></td>
                       <td><StatusBadge status={u.kyc_status} /></td>
+                      <td>
+                        {u.is_suspended ? (
+                          <StatusBadge status="suspended" />
+                        ) : (
+                          <span className="text-xs text-muted">Active</span>
+                        )}
+                      </td>
                       <td className="whitespace-nowrap text-sm text-muted">{new Date(u.created_at).toLocaleDateString()}</td>
                       <td>
                         <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                           <Button variant="outline" size="sm" className="border-border" onClick={() => setSelectedUserId(u.id)}>
                             <Eye className="mr-1.5 h-3.5 w-3.5" />
                             {t("admin.userDetail.view")}
-                          </Button>
-                          <Button variant="outline" size="sm" className="border-border" onClick={() => void toggleRole(u.id, u.role)}>
-                            {u.role === "admin" ? t("admin.demote") : t("admin.makeAdmin")}
                           </Button>
                         </div>
                       </td>

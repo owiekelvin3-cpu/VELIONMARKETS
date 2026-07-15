@@ -33,6 +33,11 @@ export interface Database {
           last_known_ip: string | null;
           last_known_location: string | null;
           location_updated_at: string | null;
+          is_suspended: boolean;
+          suspended_at: string | null;
+          suspended_by: string | null;
+          suspension_reason: string | null;
+          admin_notes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -54,6 +59,11 @@ export interface Database {
           last_known_ip?: string | null;
           last_known_location?: string | null;
           location_updated_at?: string | null;
+          is_suspended?: boolean;
+          suspended_at?: string | null;
+          suspended_by?: string | null;
+          suspension_reason?: string | null;
+          admin_notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -75,6 +85,11 @@ export interface Database {
           last_known_ip?: string | null;
           last_known_location?: string | null;
           location_updated_at?: string | null;
+          is_suspended?: boolean;
+          suspended_at?: string | null;
+          suspended_by?: string | null;
+          suspension_reason?: string | null;
+          admin_notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };

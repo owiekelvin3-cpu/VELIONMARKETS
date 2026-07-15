@@ -20,6 +20,24 @@ export interface AdminUserStats {
   ai_bots_active: number;
 }
 
+export type AdminModerationActionType =
+  | "suspend"
+  | "unsuspend"
+  | "reset_kyc"
+  | "make_admin"
+  | "demote"
+  | "note";
+
+export interface AdminModerationAction {
+  id: string;
+  action_type: AdminModerationActionType;
+  reason: string;
+  created_at: string;
+  admin_id: string;
+  admin_email: string | null;
+  admin_name: string | null;
+}
+
 export interface AdminUserDetails {
   profile: Profile;
   balance: number;
@@ -39,6 +57,7 @@ export interface AdminUserDetails {
     notes: string | null;
     created_at: string;
   }>;
+  moderation_actions: AdminModerationAction[];
 }
 
 export async function fetchAdminUserDetails(userId: string): Promise<AdminUserDetails> {
@@ -49,7 +68,22 @@ export async function fetchAdminUserDetails(userId: string): Promise<AdminUserDe
     ...details,
     outstanding_fees_total: Number(details.outstanding_fees_total ?? 0),
     fees: details.fees ?? [],
+    moderation_actions: details.moderation_actions ?? [],
   };
+}
+
+export async function moderateAdminUser(params: {
+  userId: string;
+  action: AdminModerationActionType;
+  reason: string;
+}) {
+  const { data, error } = await supabase.rpc("admin_moderate_user", {
+    p_user_id: params.userId,
+    p_action: params.action,
+    p_reason: params.reason.trim(),
+  });
+  if (error) throw error;
+  return data;
 }
 
 export async function assignUserFee(params: {
