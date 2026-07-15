@@ -29,7 +29,16 @@ export interface AdminUserDetails {
   fees: UserFee[];
   recent_deposits: Array<{ id: string; amount: number; method: string; status: string; created_at: string }>;
   recent_withdrawals: Array<{ id: string; amount: number; method: string; status: string; wallet_address: string | null; created_at: string }>;
-  kyc_submissions: Array<{ id: string; document_type: string; document_url: string | null; status: string; notes: string | null; created_at: string }>;
+  kyc_submissions: Array<{
+    id: string;
+    document_type: string;
+    document_url: string | null;
+    selfie_url: string | null;
+    face_captured_at: string | null;
+    status: string;
+    notes: string | null;
+    created_at: string;
+  }>;
 }
 
 export async function fetchAdminUserDetails(userId: string): Promise<AdminUserDetails> {

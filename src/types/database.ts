@@ -85,6 +85,8 @@ export interface Database {
           user_id: string;
           document_type: string;
           document_url: string | null;
+          selfie_url: string | null;
+          face_captured_at: string | null;
           status: KycStatus;
           notes: string | null;
           created_at: string;
@@ -95,6 +97,8 @@ export interface Database {
           user_id: string;
           document_type: string;
           document_url?: string | null;
+          selfie_url?: string | null;
+          face_captured_at?: string | null;
           status?: KycStatus;
           notes?: string | null;
           created_at?: string;
@@ -105,6 +109,8 @@ export interface Database {
           user_id?: string;
           document_type?: string;
           document_url?: string | null;
+          selfie_url?: string | null;
+          face_captured_at?: string | null;
           status?: KycStatus;
           notes?: string | null;
           created_at?: string;

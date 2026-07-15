@@ -16,6 +16,7 @@ import {
   assignUserFee, updateUserFeeStatus,
   type AdminUserDetails,
 } from "@/lib/admin-api";
+import { createKycDocumentSignedUrl } from "@/lib/kyc";
 import { FEE_TYPES, type FeeTypeId } from "@/constants/fee-types";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -497,13 +498,22 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
                   <div className="space-y-2">
                     {data.kyc_submissions.map((k) => (
                       <div key={k.id} className="flex items-center justify-between gap-3 rounded-lg bg-secondary/80 px-3 py-2 text-sm">
-                        <span className="min-w-0 truncate">{k.document_type}</span>
+                        <span className="min-w-0 truncate">{k.document_type}{k.selfie_url ? " · face" : ""}</span>
                         <div className="flex shrink-0 items-center gap-2">
                           <StatusBadge status={k.status} />
                           {k.document_url && (
-                            <a href={k.document_url} target="_blank" rel="noopener noreferrer" className="text-emerald hover:underline">
+                            <button
+                              type="button"
+                              className="text-emerald hover:underline"
+                              onClick={() => {
+                                void createKycDocumentSignedUrl(k.document_url).then((url) => {
+                                  if (url) window.open(url, "_blank", "noopener,noreferrer");
+                                });
+                              }}
+                              aria-label={t("admin.viewDocument")}
+                            >
                               <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
+                            </button>
                           )}
                         </div>
                       </div>

@@ -14,6 +14,8 @@ interface KYCSubmission {
   user_id: string;
   document_type: string;
   document_url: string | null;
+  selfie_url: string | null;
+  face_captured_at: string | null;
   status: string;
   created_at: string;
   profiles?: { email: string; full_name: string | null };
@@ -25,7 +27,7 @@ export default function AdminKYCPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [acting, setActing] = useState<string | null>(null);
-  const [openingId, setOpeningId] = useState<string | null>(null);
+  const [openingKey, setOpeningKey] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,11 +60,13 @@ export default function AdminKYCPage() {
     setActing(null);
   };
 
-  const openDocument = async (submission: KYCSubmission) => {
-    setOpeningId(submission.id);
+  const openAsset = async (id: string, path: string | null, kind: "doc" | "face") => {
+    if (!path) return;
+    const key = `${id}-${kind}`;
+    setOpeningKey(key);
     setError("");
     try {
-      const url = await createKycDocumentSignedUrl(submission.document_url, 180);
+      const url = await createKycDocumentSignedUrl(path, 180);
       if (!url) {
         setError(t("admin.viewDocument") + " unavailable");
         return;
@@ -71,7 +75,7 @@ export default function AdminKYCPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not open document");
     } finally {
-      setOpeningId(null);
+      setOpeningKey(null);
     }
   };
 
@@ -101,17 +105,30 @@ export default function AdminKYCPage() {
                   </p>
                   <p className="truncate text-sm text-muted">
                     {s.document_type} · {formatDate(s.created_at)}
+                    {s.face_captured_at ? ` · ${t("admin.faceVerified")}` : ""}
                   </p>
-                  {s.document_url && (
-                    <button
-                      type="button"
-                      onClick={() => void openDocument(s)}
-                      disabled={openingId === s.id}
-                      className="mt-1 text-sm font-medium text-emerald hover:underline disabled:opacity-60"
-                    >
-                      {openingId === s.id ? t("common.loading") : t("admin.viewDocument")}
-                    </button>
-                  )}
+                  <div className="mt-1 flex flex-wrap gap-3">
+                    {s.document_url && (
+                      <button
+                        type="button"
+                        onClick={() => void openAsset(s.id, s.document_url, "doc")}
+                        disabled={openingKey === `${s.id}-doc`}
+                        className="text-sm font-medium text-emerald hover:underline disabled:opacity-60"
+                      >
+                        {openingKey === `${s.id}-doc` ? t("common.loading") : t("admin.viewDocument")}
+                      </button>
+                    )}
+                    {s.selfie_url && (
+                      <button
+                        type="button"
+                        onClick={() => void openAsset(s.id, s.selfie_url, "face")}
+                        disabled={openingKey === `${s.id}-face`}
+                        className="text-sm font-medium text-emerald hover:underline disabled:opacity-60"
+                      >
+                        {openingKey === `${s.id}-face` ? t("common.loading") : t("admin.viewSelfie")}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={s.status} />

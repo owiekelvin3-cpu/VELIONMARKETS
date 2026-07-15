@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  Camera,
   CheckCircle,
   Clock,
   FileCheck,
@@ -18,6 +19,7 @@ import {
   X,
 } from "@/lib/icons";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
+import { FaceVerificationCapture } from "@/components/kyc/FaceVerificationCapture";
 import { FadeIn } from "@/components/motion/Motion";
 import { BRAND } from "@/constants/brand";
 import { getKycStatus, type KycStatus } from "@/lib/kyc";
@@ -63,6 +65,7 @@ export default function KYCPage() {
 
   const [docType, setDocType] = useState<(typeof DOC_TYPES)[number]["id"]>("passport");
   const [file, setFile] = useState<File | null>(null);
+  const [selfie, setSelfie] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -79,6 +82,7 @@ export default function KYCPage() {
         title: t("kyc.trustComplianceTitle"),
         desc: t("kyc.trustComplianceDesc", { brand: BRAND.name }),
       },
+      { icon: Camera, title: t("kyc.trustFaceTitle"), desc: t("kyc.trustFaceDesc") },
       { icon: Clock, title: t("kyc.trustReviewTitle"), desc: t("kyc.trustReviewDesc") },
     ],
     [t]
@@ -101,13 +105,20 @@ export default function KYCPage() {
   const steps = useMemo(
     () => [
       { n: 1, label: t("kyc.stepDocument") },
-      { n: 2, label: t("kyc.stepUpload") },
+      { n: 2, label: t("kyc.stepFace") },
       { n: 3, label: t("kyc.stepReview") },
     ],
     [t]
   );
 
-  const activeStep = status === "pending" || status === "approved" ? 3 : file ? 2 : 1;
+  const activeStep =
+    status === "pending" || status === "approved"
+      ? 3
+      : selfie
+        ? 3
+        : file
+          ? 2
+          : 1;
 
   const pickFile = (next: File | null) => {
     setError("");
@@ -136,15 +147,21 @@ export default function KYCPage() {
       setError(t("kyc.errorNoFile"));
       return;
     }
+    if (!selfie) {
+      setError(t("kyc.errorNoFace"));
+      return;
+    }
 
     setLoading(true);
     setError("");
     setSuccess("");
 
+    const stamp = Date.now();
     const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 80);
-    const path = `${user.id}/${Date.now()}-${safeName}`;
+    const docPath = `${user.id}/${stamp}-${safeName}`;
+    const selfiePath = `${user.id}/${stamp}-face-selfie.jpg`;
 
-    const { error: uploadError } = await supabase.storage.from("kyc-documents").upload(path, file, {
+    const { error: uploadError } = await supabase.storage.from("kyc-documents").upload(docPath, file, {
       cacheControl: "3600",
       upsert: false,
       contentType: file.type,
@@ -156,10 +173,24 @@ export default function KYCPage() {
       return;
     }
 
+    const { error: selfieError } = await supabase.storage.from("kyc-documents").upload(selfiePath, selfie, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: "image/jpeg",
+    });
+
+    if (selfieError) {
+      setError(selfieError.message);
+      setLoading(false);
+      return;
+    }
+
     const { error: insertError } = await supabase.from("kyc_submissions").insert({
       user_id: user.id,
       document_type: docType,
-      document_url: path,
+      document_url: docPath,
+      selfie_url: selfiePath,
+      face_captured_at: new Date().toISOString(),
       status: "pending",
     });
 
@@ -172,6 +203,7 @@ export default function KYCPage() {
     await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user.id);
     await refreshProfile();
     setFile(null);
+    setSelfie(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     setSuccess(t("kyc.submitted"));
     setLoading(false);
@@ -327,7 +359,7 @@ export default function KYCPage() {
                 </ul>
               </div>
             ) : canSubmit ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-8">
                 {status === "rejected" && (
                   <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.06] px-4 py-3 text-sm text-red-500">
                     {t("kyc.rejectedBanner")}
@@ -413,14 +445,30 @@ export default function KYCPage() {
                   )}
                 </div>
 
+                <div className="border-t border-border pt-6">
+                  <FaceVerificationCapture
+                    value={selfie}
+                    onChange={(next) => {
+                      setError("");
+                      setSelfie(next);
+                    }}
+                    disabled={loading}
+                  />
+                </div>
+
                 {(error || success) && (
                   <p className={cn("text-sm", error ? "text-red-400" : "text-emerald")}>
                     {error || success}
                   </p>
                 )}
 
-                <Button type="submit" disabled={loading || !file} variant="pill" className="w-full sm:w-auto">
-                  <Upload className="h-4 w-4" />
+                <Button
+                  type="submit"
+                  disabled={loading || !file || !selfie}
+                  variant="pill"
+                  className="w-full sm:w-auto"
+                >
+                  <Shield className="h-4 w-4" />
                   {loading ? t("common.saving") : t("kyc.submit")}
                 </Button>
               </form>
