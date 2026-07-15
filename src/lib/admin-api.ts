@@ -72,17 +72,27 @@ export async function fetchAdminUserDetails(userId: string): Promise<AdminUserDe
   };
 }
 
+function rpcErrorMessage(error: { message?: string; details?: string; hint?: string } | null, fallback: string) {
+  if (!error) return fallback;
+  return [error.message, error.details, error.hint].filter(Boolean).join(" — ") || fallback;
+}
+
 export async function moderateAdminUser(params: {
   userId: string;
   action: AdminModerationActionType;
-  reason: string;
+  reason?: string;
 }) {
+  const reason =
+    params.action === "unsuspend" && (!params.reason || params.reason.trim().length < 3)
+      ? "Suspension lifted by administrator"
+      : (params.reason ?? "").trim();
+
   const { data, error } = await supabase.rpc("admin_moderate_user", {
     p_user_id: params.userId,
     p_action: params.action,
-    p_reason: params.reason.trim(),
+    p_reason: reason,
   });
-  if (error) throw error;
+  if (error) throw new Error(rpcErrorMessage(error, "Could not complete that action."));
   return data;
 }
 

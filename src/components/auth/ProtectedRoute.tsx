@@ -5,7 +5,7 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/brand/Logo";
 import { Shield } from "@/lib/icons";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 function ProfileLoadError() {
   const { t } = useTranslation();
@@ -38,7 +38,18 @@ function ProfileLoadError() {
 
 function AccountSuspendedScreen() {
   const { t } = useTranslation();
-  const { profile, signOut } = useAuth();
+  const { profile, user, refreshProfile, signOut } = useAuth();
+  const [checking, setChecking] = useState(false);
+
+  const recheckAccess = async () => {
+    if (!user?.id) return;
+    setChecking(true);
+    try {
+      await refreshProfile(user.id);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen min-h-dvh flex-col items-center justify-center bg-gradient-void px-4">
@@ -60,9 +71,14 @@ function AccountSuspendedScreen() {
           </div>
         )}
         <p className="mt-4 text-xs text-muted">{t("admin.accountSuspendedHelp")}</p>
-        <Button variant="outline" className="mt-6" onClick={() => void signOut()}>
-          {t("common.signOut")}
-        </Button>
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <Button onClick={() => void recheckAccess()} disabled={checking}>
+            {checking ? t("common.loading") : t("admin.accountSuspendedRecheck")}
+          </Button>
+          <Button variant="outline" onClick={() => void signOut()}>
+            {t("common.signOut")}
+          </Button>
+        </div>
       </div>
     </div>
   );

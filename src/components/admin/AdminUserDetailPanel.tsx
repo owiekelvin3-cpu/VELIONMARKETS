@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
@@ -74,6 +74,8 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
   const [feeBusy, setFeeBusy] = useState(false);
   const [moderationReason, setModerationReason] = useState("");
   const [moderationBusy, setModerationBusy] = useState(false);
+  const [reasonError, setReasonError] = useState("");
+  const reasonFieldRef = useRef<HTMLTextAreaElement | null>(null);
 
   const load = useCallback(async (silent = false) => {
     if (!userId) return;
@@ -122,23 +124,29 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
 
   const runModeration = async (action: AdminModerationActionType) => {
     if (!userId) return;
-    const reason = moderationReason.trim();
-    if (reason.length < 3) {
+    const typedReason = moderationReason.trim();
+    // Lift suspension must not block on an empty reason field.
+    if (action !== "unsuspend" && typedReason.length < 3) {
+      setReasonError(t("admin.userDetail.reasonRequired"));
       setError(t("admin.userDetail.reasonRequired"));
       setMessage("");
+      reasonFieldRef.current?.focus();
+      reasonFieldRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     setModerationBusy(true);
     setError("");
+    setReasonError("");
     setMessage("");
     try {
-      await moderateAdminUser({ userId, action, reason });
+      await moderateAdminUser({ userId, action, reason: typedReason });
       setMessage(t(`admin.userDetail.actionSuccess.${action}`));
       if (action !== "note") setModerationReason("");
       await load(true);
       onUpdated?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.userDetail.actionFailed"));
+      const msg = err instanceof Error ? err.message : t("admin.userDetail.actionFailed");
+      setError(msg);
     } finally {
       setModerationBusy(false);
     }
@@ -299,15 +307,35 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
 
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="moderation-reason">{t("admin.userDetail.reasonLabel")}</Label>
+                    <Label htmlFor="moderation-reason">
+                      {profile.is_suspended
+                        ? t("admin.userDetail.reasonLabelOptional")
+                        : t("admin.userDetail.reasonLabel")}
+                    </Label>
                     <textarea
+                      ref={reasonFieldRef}
                       id="moderation-reason"
                       value={moderationReason}
-                      onChange={(e) => setModerationReason(e.target.value)}
+                      onChange={(e) => {
+                        setModerationReason(e.target.value);
+                        if (reasonError) setReasonError("");
+                      }}
                       rows={3}
-                      className="mt-1.5 w-full rounded-xl border border-border bg-void px-3 py-2.5 text-sm text-foreground placeholder:text-muted focus:border-emerald/40 focus:outline-none focus:ring-1 focus:ring-emerald/20"
-                      placeholder={t("admin.userDetail.reasonPlaceholder")}
+                      className={cn(
+                        "mt-1.5 w-full rounded-xl border bg-void px-3 py-2.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1",
+                        reasonError
+                          ? "border-red-500/50 focus:border-red-500/60 focus:ring-red-500/20"
+                          : "border-border focus:border-emerald/40 focus:ring-emerald/20"
+                      )}
+                      placeholder={
+                        profile.is_suspended
+                          ? t("admin.userDetail.unsuspendReasonPlaceholder")
+                          : t("admin.userDetail.reasonPlaceholder")
+                      }
                     />
+                    {reasonError && (
+                      <p className="mt-1.5 text-xs text-red-400">{reasonError}</p>
+                    )}
                   </div>
 
                   <div className="grid gap-2 sm:grid-cols-2">

@@ -189,6 +189,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [fetchProfile, handleSessionLoss]);
 
+  useEffect(() => {
+    if (!user?.id || !profile?.is_suspended || profile.role === "admin") return;
+
+    const channel = supabase
+      .channel(`profile-suspension:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          const next = payload.new as Profile;
+          setProfile(next);
+          setProfileStatus("ready");
+        }
+      )
+      .subscribe();
+
+    const interval = window.setInterval(() => {
+      void fetchProfile(user.id);
+    }, 12_000);
+
+    return () => {
+      window.clearInterval(interval);
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, profile?.is_suspended, profile?.role, fetchProfile]);
+
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     // Sync React state immediately — onAuthStateChange can lag one tick and
