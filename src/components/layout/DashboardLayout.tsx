@@ -148,16 +148,16 @@ export function DashboardLayout() {
   }, [user?.id]);
 
   return (
-    <div className="relative flex min-h-dvh w-full max-w-[100vw] overflow-x-hidden bg-background">
+    <div className="relative flex h-dvh max-h-dvh w-full max-w-[100vw] overflow-hidden bg-background">
       <div className="dashboard-atmosphere" aria-hidden="true" />
       <aside
         className={cn(
-          "dashboard-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(18rem,88vw)] flex-col border-r border-border transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-60 lg:translate-x-0 xl:w-64",
-          sidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0 lg:shadow-none"
+          "dashboard-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh max-h-dvh w-[min(18rem,88vw)] min-h-0 flex-col border-r border-border transition-transform duration-300 ease-out lg:relative lg:z-auto lg:w-60 lg:shrink-0 lg:translate-x-0 xl:w-64",
+          sidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:shadow-none"
         )}
         aria-label={t("dashboard.navLabel")}
       >
-        <div className="flex items-start justify-between gap-2 border-b border-border/60 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border/60 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <div className="min-w-0">
             <Link to="/dashboard" className="block" onClick={() => setSidebarOpen(false)}>
               <Logo size="sm" wordmarkClassName="text-sm" />
@@ -176,7 +176,7 @@ export function DashboardLayout() {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-4 [-webkit-overflow-scrolling:touch]">
+        <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-4 [-webkit-overflow-scrolling:touch]">
           {navGroups.map((group) => (
             <div key={group.labelKey}>
               <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
@@ -218,7 +218,7 @@ export function DashboardLayout() {
           )}
         </nav>
 
-        <div className="border-t border-border/60 p-3 pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] lg:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="shrink-0 border-t border-border/60 bg-inherit p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Link
             to="/dashboard/settings"
             onClick={() => setSidebarOpen(false)}
@@ -265,10 +265,10 @@ export function DashboardLayout() {
         />
       )}
 
-      <div className="relative z-[1] flex min-w-0 w-full flex-1 flex-col">
+      <div className="relative z-[1] flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
         <header
           className={cn(
-            "sticky top-0 z-20 flex min-h-14 items-center gap-2 px-3 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4 md:px-6",
+            "sticky top-0 z-20 flex min-h-14 shrink-0 items-center gap-2 px-3 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4 md:px-6",
             isOverview
               ? "border-b-0 bg-transparent"
               : "border-b border-border/60 bg-background/80 backdrop-blur-xl"
@@ -327,7 +327,7 @@ export function DashboardLayout() {
 
         <main
           className={cn(
-            "relative min-w-0 flex-1 overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-7",
+            "relative min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-7",
             !hideDock && "pb-dock"
           )}
         >

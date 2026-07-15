@@ -34,6 +34,7 @@ const TABS = [
     icon: User,
     match: (p: string) =>
       p.startsWith("/dashboard/settings") ||
+      p.startsWith("/dashboard/notifications") ||
       p.startsWith("/dashboard/kyc") ||
       p.startsWith("/dashboard/support") ||
       p.startsWith("/dashboard/copy") ||

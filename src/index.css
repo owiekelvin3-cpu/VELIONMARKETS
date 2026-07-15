@@ -529,10 +529,12 @@
   .dashboard-sidebar {
     background:
       linear-gradient(180deg, color-mix(in oklab, var(--color-void) 96%, var(--color-emerald) 4%) 0%, var(--color-void) 100%);
+    @apply backdrop-blur-xl;
   }
 
   :root.light .dashboard-sidebar {
-    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    @apply border-border/80 shadow-none;
   }
 
   .admin-atmosphere {
@@ -590,6 +592,10 @@
 
   .nav-item-active {
     @apply relative rounded-2xl bg-emerald/12 text-foreground;
+  }
+
+  :root.light .nav-item-active {
+    @apply bg-emerald/10 text-emerald;
   }
 
   .nav-item-active::before {
