@@ -23,3 +23,10 @@ export const supabase: SupabaseClient<any> = createClient(
     },
   }
 );
+
+/** Keep Realtime RLS auth aligned with the current session. */
+supabase.auth.onAuthStateChange((_event, session) => {
+  if (session?.access_token) {
+    void supabase.realtime.setAuth(session.access_token);
+  }
+});

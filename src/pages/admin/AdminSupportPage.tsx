@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Archive, Pin, RotateCcw, Search, Trash2, User, HelpCircle,
@@ -19,11 +19,14 @@ import {
   archiveConversation,
   assignConversation,
   deleteConversation,
+  ensureSupportRealtimeAuth,
   fetchMessages,
+  fetchNewerMessages,
   listAdminConversations,
   listAdminStaff,
   listInternalNotes,
   markConversationRead,
+  mergeSupportMessages,
   sendMessage,
   setConversationPinned,
   setConversationPriority,
@@ -35,9 +38,10 @@ import {
 } from "@/lib/support";
 import { supabase } from "@/lib/supabase";
 import { cn, formatDate } from "@/lib/utils";
-import type { SupportInternalNote } from "@/types/database";
+import type { SupportConversation, SupportInternalNote } from "@/types/database";
 
 const FILTERS: AdminSupportFilter[] = ["all", "open", "pending", "resolved", "unread", "high", "archived"];
+const THREAD_POLL_MS = 4_000;
 
 export default function AdminSupportPage() {
   const { t } = useTranslation();
@@ -55,12 +59,16 @@ export default function AdminSupportPage() {
   const [noteDraft, setNoteDraft] = useState("");
   const [error, setError] = useState("");
   const [mobileDetails, setMobileDetails] = useState(false);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  const activeIdRef = useRef(activeId);
+  activeIdRef.current = activeId;
 
   const active = conversations.find((c) => c.id === activeId) ?? null;
   const showThread = !!active;
 
-  const refreshList = useCallback(async () => {
-    setLoadingList(true);
+  const refreshList = useCallback(async (opts?: { soft?: boolean }) => {
+    if (!opts?.soft) setLoadingList(true);
     setError("");
     try {
       const rows = await listAdminConversations(filter, search);
@@ -68,7 +76,7 @@ export default function AdminSupportPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
-      setLoadingList(false);
+      if (!opts?.soft) setLoadingList(false);
     }
   }, [filter, search]);
 
@@ -77,23 +85,42 @@ export default function AdminSupportPage() {
     void listAdminStaff().then(setStaff).catch(() => undefined);
   }, [refreshList]);
 
+  const syncLatestMessages = useCallback(async (conversationId: string) => {
+    const current = messagesRef.current;
+    const lastPersisted = [...current].reverse().find((m) => !m.id.startsWith("temp-"));
+    try {
+      if (!lastPersisted) {
+        const rows = await fetchMessages(conversationId, { limit: SUPPORT_PAGE_SIZE });
+        setHasMore(rows.length >= SUPPORT_PAGE_SIZE);
+        setMessages(rows);
+        return;
+      }
+      const newer = await fetchNewerMessages(conversationId, lastPersisted.created_at);
+      if (newer.length > 0) {
+        setMessages((prev) => mergeSupportMessages(prev, newer));
+      }
+    } catch {
+      // Keep existing messages if a soft sync fails.
+    }
+  }, []);
+
   const loadThread = useCallback(async (conversationId: string, reset = true) => {
     setLoadingMessages(true);
     try {
-      const before = reset ? undefined : messages[0]?.created_at;
+      const before = reset ? undefined : messagesRef.current[0]?.created_at;
       const rows = await fetchMessages(conversationId, { before, limit: SUPPORT_PAGE_SIZE });
       setHasMore(rows.length >= SUPPORT_PAGE_SIZE);
       setMessages((prev) => (reset ? rows : [...rows, ...prev]));
       const noteRows = await listInternalNotes(conversationId);
       setNotes(noteRows);
       await markConversationRead(conversationId, true);
-      await refreshList();
+      await refreshList({ soft: true });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load thread");
     } finally {
       setLoadingMessages(false);
     }
-  }, [messages, refreshList]);
+  }, [refreshList]);
 
   useEffect(() => {
     if (!activeId) {
@@ -106,37 +133,94 @@ export default function AdminSupportPage() {
   }, [activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const channel = supabase
-      .channel("admin-support-all")
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_conversations" }, () => {
-        void refreshList();
-      })
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [refreshList]);
+    let cancelled = false;
+
+    const setup = async () => {
+      await ensureSupportRealtimeAuth();
+      if (cancelled) return;
+
+      return supabase
+        .channel("admin-support-all")
+        .on("postgres_changes", { event: "*", schema: "public", table: "support_conversations" }, (payload) => {
+          void refreshList({ soft: true });
+          const row = payload.new as SupportConversation | undefined;
+          if (row?.id && row.id === activeIdRef.current) {
+            void syncLatestMessages(row.id);
+          }
+        })
+        .subscribe();
+    };
+
+    let channel: ReturnType<typeof supabase.channel> | undefined;
+    void setup().then((ch) => {
+      channel = ch;
+    });
+
+    return () => {
+      cancelled = true;
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, [refreshList, syncLatestMessages]);
 
   useEffect(() => {
     if (!activeId) return;
-    const channel = supabase
-      .channel(`admin-support-msg-${activeId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "support_messages", filter: `conversation_id=eq.${activeId}` },
-        (payload) => {
-          const row = payload.new as SupportMessageWithAttachments;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === row.id || (row.client_id && m.client_id === row.client_id))) {
-              return prev.map((m) => (m.client_id === row.client_id ? { ...row, attachments: m.attachments } : m));
-            }
-            return [...prev, { ...row, attachments: [] }];
-          });
-          void markConversationRead(activeId, true);
-          void refreshList();
-        }
-      )
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [activeId, refreshList]);
+    let cancelled = false;
+
+    const setup = async () => {
+      await ensureSupportRealtimeAuth();
+      if (cancelled) return;
+
+      return supabase
+        .channel(`admin-support-msg-${activeId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "support_messages", filter: `conversation_id=eq.${activeId}` },
+          (payload) => {
+            const row = payload.new as SupportMessageWithAttachments;
+            setMessages((prev) => mergeSupportMessages(prev, [{ ...row, attachments: [] }]));
+            void markConversationRead(activeId, true);
+            void refreshList({ soft: true });
+            window.setTimeout(() => { void syncLatestMessages(activeId); }, 600);
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "support_attachments", filter: `conversation_id=eq.${activeId}` },
+          () => { void syncLatestMessages(activeId); }
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            void syncLatestMessages(activeId);
+          }
+        });
+    };
+
+    let channel: ReturnType<typeof supabase.channel> | undefined;
+    void setup().then((ch) => {
+      channel = ch;
+    });
+
+    const poll = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void syncLatestMessages(activeId);
+        void refreshList({ soft: true });
+      }
+    }, THREAD_POLL_MS);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void syncLatestMessages(activeId);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, [activeId, refreshList, syncLatestMessages]);
 
   const backToList = () => {
     setActiveId(null);
@@ -172,8 +256,8 @@ export default function AdminSupportPage() {
         clientId,
         files,
       });
-      setMessages((prev) => prev.map((m) => (m.client_id === clientId ? { ...saved, pending: false } : m)));
-      await refreshList();
+      setMessages((prev) => mergeSupportMessages(prev, [{ ...saved, pending: false }]));
+      await refreshList({ soft: true });
     } catch {
       setMessages((prev) => prev.map((m) => (m.client_id === clientId ? { ...m, failed: true, pending: false } : m)));
     }
@@ -208,7 +292,7 @@ export default function AdminSupportPage() {
         <select
           className="select-input h-10 text-base"
           value={active.assigned_admin_id ?? ""}
-          onChange={(e) => void assignConversation(active.id, e.target.value || null).then(refreshList)}
+          onChange={(e) => void assignConversation(active.id, e.target.value || null).then(() => void refreshList({ soft: true }))}
         >
           <option value="">{t("admin.unassigned")}</option>
           {staff.map((s) => (
@@ -223,14 +307,14 @@ export default function AdminSupportPage() {
           <Button
             size="sm"
             variant={active.priority === "normal" ? "secondary" : "outline"}
-            onClick={() => void setConversationPriority(active.id, "normal").then(refreshList)}
+            onClick={() => void setConversationPriority(active.id, "normal").then(() => void refreshList({ soft: true }))}
           >
             {t("admin.priorityNormal")}
           </Button>
           <Button
             size="sm"
             variant={active.priority === "high" ? "secondary" : "outline"}
-            onClick={() => void setConversationPriority(active.id, "high").then(refreshList)}
+            onClick={() => void setConversationPriority(active.id, "high").then(() => void refreshList({ soft: true }))}
           >
             {t("admin.priorityHigh")}
           </Button>
@@ -238,21 +322,21 @@ export default function AdminSupportPage() {
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        <Button size="sm" variant="outline" onClick={() => void setConversationPinned(active.id, !active.pinned).then(refreshList)}>
+        <Button size="sm" variant="outline" onClick={() => void setConversationPinned(active.id, !active.pinned).then(() => void refreshList({ soft: true }))}>
           <Pin className="h-3.5 w-3.5" />
           {active.pinned ? t("admin.unpin") : t("admin.pin")}
         </Button>
         {active.status !== "resolved" ? (
-          <Button size="sm" onClick={() => void updateConversationStatus(active.id, "resolved").then(refreshList)}>
+          <Button size="sm" onClick={() => void updateConversationStatus(active.id, "resolved").then(() => void refreshList({ soft: true }))}>
             {t("admin.markResolved")}
           </Button>
         ) : (
-          <Button size="sm" variant="outline" onClick={() => void updateConversationStatus(active.id, "open").then(refreshList)}>
+          <Button size="sm" variant="outline" onClick={() => void updateConversationStatus(active.id, "open").then(() => void refreshList({ soft: true }))}>
             <RotateCcw className="h-3.5 w-3.5" />
             {t("admin.reopen")}
           </Button>
         )}
-        <Button size="sm" variant="outline" onClick={() => void archiveConversation(active.id, !active.archived).then(refreshList)}>
+        <Button size="sm" variant="outline" onClick={() => void archiveConversation(active.id, !active.archived).then(() => void refreshList({ soft: true }))}>
           <Archive className="h-3.5 w-3.5" />
           {active.archived ? t("admin.unarchive") : t("admin.archive")}
         </Button>
@@ -486,11 +570,11 @@ export default function AdminSupportPage() {
                 <div className="flex flex-wrap gap-1.5 pr-2">
                   <SupportStatusBadge status={active.status} />
                   {active.status !== "resolved" ? (
-                    <Button size="sm" onClick={() => void updateConversationStatus(active.id, "resolved").then(refreshList)}>
+                    <Button size="sm" onClick={() => void updateConversationStatus(active.id, "resolved").then(() => void refreshList({ soft: true }))}>
                       {t("admin.markResolved")}
                     </Button>
                   ) : (
-                    <Button size="sm" variant="outline" onClick={() => void updateConversationStatus(active.id, "open").then(refreshList)}>
+                    <Button size="sm" variant="outline" onClick={() => void updateConversationStatus(active.id, "open").then(() => void refreshList({ soft: true }))}>
                       <RotateCcw className="h-3.5 w-3.5" />
                       {t("admin.reopen")}
                     </Button>

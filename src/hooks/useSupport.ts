@@ -1,18 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
 import {
   createConversation,
+  ensureSupportRealtimeAuth,
   fetchMessages,
+  fetchNewerMessages,
   isConversationUnreadForUser,
   listUserConversations,
   markConversationRead,
+  mergeSupportMessages,
   sendMessage,
   SUPPORT_PAGE_SIZE,
   updateConversationStatus,
   type SupportMessageWithAttachments,
 } from "@/lib/support";
 import type { SupportConversation } from "@/types/database";
+
+const THREAD_POLL_MS = 4_000;
 
 export function useUserSupport(userId: string | undefined) {
   const { t } = useTranslation();
@@ -23,10 +28,14 @@ export function useUserSupport(userId: string | undefined) {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState("");
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  const activeIdRef = useRef(activeId);
+  activeIdRef.current = activeId;
 
-  const refreshList = useCallback(async () => {
+  const refreshList = useCallback(async (opts?: { soft?: boolean }) => {
     if (!userId) return;
-    setLoadingList(true);
+    if (!opts?.soft) setLoadingList(true);
     setError("");
     try {
       const rows = await listUserConversations(userId);
@@ -34,15 +43,34 @@ export function useUserSupport(userId: string | undefined) {
     } catch (e) {
       setError(e instanceof Error ? e.message : t("support.loadConversationsError"));
     } finally {
-      setLoadingList(false);
+      if (!opts?.soft) setLoadingList(false);
     }
   }, [userId, t]);
+
+  const syncLatestMessages = useCallback(async (conversationId: string) => {
+    const current = messagesRef.current;
+    const lastPersisted = [...current].reverse().find((m) => !m.id.startsWith("temp-"));
+    try {
+      if (!lastPersisted) {
+        const rows = await fetchMessages(conversationId, { limit: SUPPORT_PAGE_SIZE });
+        setHasMore(rows.length >= SUPPORT_PAGE_SIZE);
+        setMessages(rows);
+        return;
+      }
+      const newer = await fetchNewerMessages(conversationId, lastPersisted.created_at);
+      if (newer.length > 0) {
+        setMessages((prev) => mergeSupportMessages(prev, newer));
+      }
+    } catch {
+      // Keep existing messages if a soft sync fails.
+    }
+  }, []);
 
   const loadMessages = useCallback(async (conversationId: string, reset = true) => {
     setLoadingMessages(true);
     setError("");
     try {
-      const before = reset ? undefined : messages[0]?.created_at;
+      const before = reset ? undefined : messagesRef.current[0]?.created_at;
       const rows = await fetchMessages(conversationId, { before, limit: SUPPORT_PAGE_SIZE });
       setHasMore(rows.length >= SUPPORT_PAGE_SIZE);
       setMessages((prev) => (reset ? rows : [...rows, ...prev]));
@@ -52,7 +80,7 @@ export function useUserSupport(userId: string | undefined) {
     } finally {
       setLoadingMessages(false);
     }
-  }, [messages, userId, t]);
+  }, [userId, t]);
 
   useEffect(() => {
     void refreshList();
@@ -68,62 +96,116 @@ export function useUserSupport(userId: string | undefined) {
 
   useEffect(() => {
     if (!userId) return;
+    let cancelled = false;
 
-    const convChannel = supabase
-      .channel(`support-conv-user-${userId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "support_conversations", filter: `user_id=eq.${userId}` },
-        () => { void refreshList(); }
-      )
-      .subscribe();
+    const setup = async () => {
+      await ensureSupportRealtimeAuth();
+      if (cancelled) return;
+
+      const convChannel = supabase
+        .channel(`support-conv-user-${userId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "support_conversations", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            void refreshList({ soft: true });
+            const row = payload.new as SupportConversation | undefined;
+            if (row?.id && row.id === activeIdRef.current) {
+              void syncLatestMessages(row.id);
+            }
+          }
+        )
+        .subscribe();
+
+      return convChannel;
+    };
+
+    let convChannel: ReturnType<typeof supabase.channel> | undefined;
+    void setup().then((ch) => {
+      convChannel = ch;
+    });
 
     return () => {
-      void supabase.removeChannel(convChannel);
+      cancelled = true;
+      if (convChannel) void supabase.removeChannel(convChannel);
     };
-  }, [userId, refreshList]);
+  }, [userId, refreshList, syncLatestMessages]);
 
   useEffect(() => {
     if (!activeId) return;
+    let cancelled = false;
 
-    const msgChannel = supabase
-      .channel(`support-msg-${activeId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "support_messages", filter: `conversation_id=eq.${activeId}` },
-        (payload) => {
-          const row = payload.new as SupportMessageWithAttachments;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === row.id || (row.client_id && m.client_id === row.client_id))) {
-              return prev.map((m) =>
-                m.client_id && m.client_id === row.client_id ? { ...row, attachments: m.attachments, pending: false } : m
-              );
-            }
-            return [...prev, { ...row, attachments: [] }];
-          });
-          void markConversationRead(activeId, false);
-          void refreshList();
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "support_messages", filter: `conversation_id=eq.${activeId}` },
-        (payload) => {
-          const row = payload.new as SupportMessageWithAttachments;
-          setMessages((prev) => prev.map((m) => (m.id === row.id ? { ...m, ...row } : m)));
-        }
-      )
-      .subscribe();
+    const setup = async () => {
+      await ensureSupportRealtimeAuth();
+      if (cancelled) return;
+
+      const msgChannel = supabase
+        .channel(`support-msg-${activeId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "support_messages", filter: `conversation_id=eq.${activeId}` },
+          (payload) => {
+            const row = payload.new as SupportMessageWithAttachments;
+            setMessages((prev) => mergeSupportMessages(prev, [{ ...row, attachments: [] }]));
+            void markConversationRead(activeId, false);
+            void refreshList({ soft: true });
+            // Re-fetch shortly so attachments / full row land even if realtime payload is partial.
+            window.setTimeout(() => { void syncLatestMessages(activeId); }, 600);
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "support_messages", filter: `conversation_id=eq.${activeId}` },
+          (payload) => {
+            const row = payload.new as SupportMessageWithAttachments;
+            setMessages((prev) => mergeSupportMessages(prev, [{ ...row, attachments: [] }]));
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "support_attachments", filter: `conversation_id=eq.${activeId}` },
+          () => { void syncLatestMessages(activeId); }
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            void syncLatestMessages(activeId);
+          }
+        });
+
+      return msgChannel;
+    };
+
+    let msgChannel: ReturnType<typeof supabase.channel> | undefined;
+    void setup().then((ch) => {
+      msgChannel = ch;
+    });
+
+    const poll = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void syncLatestMessages(activeId);
+        void refreshList({ soft: true });
+      }
+    }, THREAD_POLL_MS);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void syncLatestMessages(activeId);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
 
     return () => {
-      void supabase.removeChannel(msgChannel);
+      cancelled = true;
+      window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
+      if (msgChannel) void supabase.removeChannel(msgChannel);
     };
-  }, [activeId, refreshList]);
+  }, [activeId, refreshList, syncLatestMessages]);
 
   const startNew = async (subject: string, firstMessage: string) => {
     if (!userId) return;
     const { conversation } = await createConversation(userId, subject, firstMessage);
-    await refreshList();
+    await refreshList({ soft: true });
     setActiveId(conversation.id);
   };
 
@@ -154,10 +236,8 @@ export function useUserSupport(userId: string | undefined) {
         clientId,
         files,
       });
-      setMessages((prev) =>
-        prev.map((m) => (m.client_id === clientId ? { ...saved, pending: false } : m))
-      );
-      await refreshList();
+      setMessages((prev) => mergeSupportMessages(prev, [{ ...saved, pending: false }]));
+      await refreshList({ soft: true });
     } catch {
       setMessages((prev) =>
         prev.map((m) => (m.client_id === clientId ? { ...m, pending: false, failed: true } : m))
@@ -167,7 +247,7 @@ export function useUserSupport(userId: string | undefined) {
 
   const reopen = async (conversationId: string) => {
     await updateConversationStatus(conversationId, "open");
-    await refreshList();
+    await refreshList({ soft: true });
   };
 
   const loadOlder = () => {

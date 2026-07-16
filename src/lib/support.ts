@@ -178,6 +178,89 @@ export async function fetchMessages(
   return messages.map((m) => ({ ...m, attachments: byMsg.get(m.id) ?? [] }));
 }
 
+/** Fetch messages created after a timestamp (for live sync without full reload). */
+export async function fetchNewerMessages(
+  conversationId: string,
+  afterIso: string
+): Promise<SupportMessageWithAttachments[]> {
+  const { data, error } = await supabase
+    .from("support_messages")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .gt("created_at", afterIso)
+    .order("created_at", { ascending: true })
+    .limit(100);
+  if (error) throw error;
+
+  const messages = (data ?? []) as SupportMessage[];
+  if (messages.length === 0) return [];
+
+  const ids = messages.map((m) => m.id);
+  const { data: attachments } = await supabase
+    .from("support_attachments")
+    .select("*")
+    .in("message_id", ids);
+
+  const byMsg = new Map<string, SupportAttachment[]>();
+  for (const att of attachments ?? []) {
+    const list = byMsg.get(att.message_id) ?? [];
+    list.push(att);
+    byMsg.set(att.message_id, list);
+  }
+
+  return messages.map((m) => ({ ...m, attachments: byMsg.get(m.id) ?? [] }));
+}
+
+/** Merge server messages into local list, replacing optimistic temps by client_id. */
+export function mergeSupportMessages(
+  prev: SupportMessageWithAttachments[],
+  incoming: SupportMessageWithAttachments[]
+): SupportMessageWithAttachments[] {
+  if (incoming.length === 0) return prev;
+
+  const next = [...prev];
+  let changed = false;
+
+  for (const row of incoming) {
+    const byClientIdx =
+      row.client_id != null
+        ? next.findIndex((m) => m.client_id === row.client_id)
+        : -1;
+    const byIdIdx = next.findIndex((m) => m.id === row.id);
+    const idx = byIdIdx >= 0 ? byIdIdx : byClientIdx;
+
+    if (idx >= 0) {
+      const prevRow = next[idx];
+      next[idx] = {
+        ...prevRow,
+        ...row,
+        pending: false,
+        failed: false,
+        attachments: row.attachments?.length ? row.attachments : prevRow.attachments,
+      };
+      changed = true;
+      continue;
+    }
+
+    next.push({ ...row, pending: false });
+    changed = true;
+  }
+
+  if (!changed) return prev;
+  return next.sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+}
+
+/** Keep Realtime JWT in sync so RLS-filtered postgres_changes events are delivered. */
+export async function ensureSupportRealtimeAuth() {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (token) {
+    await supabase.realtime.setAuth(token);
+  }
+}
+
 export async function sendMessage(params: {
   conversationId: string;
   senderId: string;
