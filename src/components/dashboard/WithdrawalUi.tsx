@@ -22,6 +22,7 @@ export function WithdrawPageHeader({
   subtitle?: string;
   backTo?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <FadeIn className="mb-6 sm:mb-8">
       <Link
@@ -31,7 +32,7 @@ export function WithdrawPageHeader({
         <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary/40">
           <ArrowLeft className="h-4 w-4" />
         </span>
-        Back
+        {t("common.back")}
       </Link>
       <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
       {subtitle && <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-muted">{subtitle}</p>}
@@ -43,10 +44,10 @@ export function WithdrawalBalanceBanner({ balance }: { balance: number }) {
   const { t } = useTranslation();
 
   return (
-    <div className="surface-panel p-5 md:p-6">
+    <div className="rounded-2xl border border-border bg-card px-5 py-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary/50 text-muted">
             <Wallet className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
@@ -60,18 +61,11 @@ export function WithdrawalBalanceBanner({ balance }: { balance: number }) {
         </div>
 
         {balance > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2.5 py-1 text-xs text-muted">
-              <CheckCircle className="h-3.5 w-3.5 text-emerald" />
-              {t("withdrawals.readyToWithdraw")}
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2.5 py-1 text-xs text-muted">
-              <Clock className="h-3.5 w-3.5" />
-              {t("withdrawals.manualReview")}
-            </span>
-          </div>
+          <p className="max-w-xs text-xs leading-relaxed text-muted sm:text-right">
+            {t("withdrawals.balanceHint")}
+          </p>
         ) : (
-          <Button asChild size="sm">
+          <Button asChild size="sm" variant="outline">
             <Link to="/dashboard/deposits">
               <ArrowDownToLine className="h-4 w-4" />
               {t("withdrawals.addFunds")}
@@ -126,17 +120,19 @@ export function OutstandingFeesPanel({
   };
 
   return (
-    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+    <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] p-5">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400">
-          <AlertTriangle className="h-5 w-5" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400">
+          <AlertTriangle className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-base font-semibold text-foreground">
+          <h2 className="font-display text-sm font-semibold text-foreground">
             {t("withdrawals.feesRequiredTitle")}
           </h2>
-          <p className="mt-1 text-sm text-muted">{t("withdrawals.feesRequiredDesc")}</p>
-          <p className="mt-2 text-sm font-medium text-amber-300">
+          <p className="mt-1 text-xs leading-relaxed text-muted sm:text-sm">
+            {t("withdrawals.feesRequiredDesc")}
+          </p>
+          <p className="mt-2 text-sm font-medium text-foreground">
             {t("withdrawals.feesOutstandingTotal", { amount: formatCurrency(total) })}
           </p>
         </div>
@@ -146,7 +142,7 @@ export function OutstandingFeesPanel({
         {fees.map((fee) => (
           <div
             key={fee.id}
-            className="flex flex-col gap-3 rounded-lg border border-border bg-secondary/40 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 rounded-xl border border-border bg-card/60 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="min-w-0">
               <p className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -160,6 +156,7 @@ export function OutstandingFeesPanel({
               <Button
                 type="button"
                 size="sm"
+                variant="outline"
                 disabled={busyId !== null || balance < Number(fee.amount)}
                 onClick={() => void payOne(fee.id)}
               >
@@ -178,9 +175,7 @@ export function OutstandingFeesPanel({
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted">
-          {balance < total
-            ? t("withdrawals.feesNeedDeposit")
-            : t("withdrawals.feesPayHint")}
+          {balance < total ? t("withdrawals.feesNeedDeposit") : t("withdrawals.feesPayHint")}
         </p>
         <div className="flex flex-wrap gap-2">
           {balance < total && (
@@ -191,7 +186,6 @@ export function OutstandingFeesPanel({
           <Button
             type="button"
             size="sm"
-            variant="gold"
             disabled={busyId !== null || balance < total}
             onClick={() => void payAll()}
           >
@@ -207,16 +201,13 @@ export function WithdrawalSecurityCard() {
   const { t } = useTranslation();
 
   return (
-    <div className="surface-muted p-4 md:p-5">
-      <div className="flex gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted">
-          <Shield className="h-4 w-4" aria-hidden="true" />
-        </div>
-        <div className="space-y-1.5 text-sm leading-relaxed text-muted">
-          <p className="font-medium text-foreground">{t("withdrawals.secureTitle")}</p>
-          <p>{t("withdrawals.securityNote")}</p>
-          <p>{t("withdrawals.processingNote")}</p>
-        </div>
+    <div className="flex gap-3 rounded-2xl border border-border/70 bg-secondary/30 px-4 py-3.5">
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald/12 text-emerald">
+        <Shield className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <div className="min-w-0 space-y-1 text-xs leading-relaxed text-muted sm:text-sm">
+        <p className="font-medium text-foreground">{t("withdrawals.secureTitle")}</p>
+        <p>{t("withdrawals.securityNote")}</p>
       </div>
     </div>
   );
@@ -232,7 +223,7 @@ export function WithdrawalFormPanel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="surface-panel p-5 sm:p-6">
+    <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       {title && <h2 className="font-display text-base font-semibold text-foreground">{title}</h2>}
       {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       <div className={title || description ? "mt-5 space-y-4" : "space-y-4"}>{children}</div>
@@ -244,7 +235,7 @@ export function WithdrawalHistoryPanel({ children }: { children: React.ReactNode
   const { t } = useTranslation();
 
   return (
-    <div className="surface-panel p-5 sm:p-6">
+    <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       <div className="mb-4 flex items-center gap-2">
         <Clock className="h-4 w-4 text-muted" />
         <h2 className="font-display text-base font-semibold text-foreground">{t("withdrawals.recent")}</h2>
@@ -262,12 +253,14 @@ export function WithdrawalAlert({
   children: React.ReactNode;
 }) {
   return (
-    <p className={cn(
-      "flex items-center gap-2 rounded-xl border px-4 py-3 text-sm",
-      type === "success"
-        ? "border-emerald/30 bg-emerald/10 text-emerald"
-        : "border-red-500/30 bg-red-500/10 text-red-400"
-    )}>
+    <p
+      className={cn(
+        "flex items-center gap-2 rounded-xl border px-4 py-3 text-sm",
+        type === "success"
+          ? "border-emerald/30 bg-emerald/10 text-emerald"
+          : "border-red-500/30 bg-red-500/10 text-red-400"
+      )}
+    >
       {type === "success" ? <CheckCircle className="h-4 w-4 shrink-0" /> : null}
       {children}
     </p>
@@ -302,13 +295,17 @@ export function WithdrawalAmountField({
   return (
     <div className="rounded-xl border border-border bg-secondary/20 p-4">
       <div className="flex items-center justify-between gap-2">
-        <Label htmlFor={id} className="text-sm font-medium">{t("withdrawals.amountUsd")}</Label>
+        <Label htmlFor={id} className="text-sm font-medium">
+          {t("withdrawals.amountUsd")}
+        </Label>
         <span className="text-xs text-muted">
           {formatCurrency(balance)} {t("withdrawals.availableShort")}
         </span>
       </div>
       <div className="relative mt-2">
-        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted">$</span>
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted">
+          $
+        </span>
         <Input
           id={id}
           type="number"
@@ -318,7 +315,7 @@ export function WithdrawalAmountField({
           value={amount}
           onChange={(e) => onChange(e.target.value)}
           required
-          className="h-14 pl-8 text-xl font-bold"
+          className="h-12 pl-8 text-lg font-semibold"
         />
       </div>
       {balance > 0 && (
@@ -332,10 +329,10 @@ export function WithdrawalAmountField({
                 type="button"
                 onClick={() => onChange(val.toString())}
                 className={cn(
-                  "rounded-xl border py-2.5 text-center text-sm transition-all",
+                  "rounded-lg border py-2 text-center text-sm transition-colors",
                   amount === val.toString()
-                    ? "border-emerald/50 bg-emerald/15 text-emerald shadow-sm"
-                    : "border-border bg-card text-muted hover:border-emerald/25 hover:text-foreground"
+                    ? "border-border bg-secondary text-foreground"
+                    : "border-border bg-card text-muted hover:bg-secondary/60 hover:text-foreground"
                 )}
               >
                 <span className="block text-[10px] uppercase tracking-wider opacity-70">{label}</span>
@@ -345,7 +342,49 @@ export function WithdrawalAmountField({
           })}
         </div>
       )}
-      {hint && <p className="mt-3 flex items-center gap-1.5 text-xs text-muted"><Clock className="h-3 w-3" />{hint}</p>}
+      {hint && (
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
+          <Clock className="h-3 w-3" />
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Confirm step before submitting a withdrawal request. */
+export function WithdrawalConfirmBar({
+  amount,
+  methodLabel,
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  amount: number;
+  methodLabel: string;
+  loading: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4">
+      <p className="text-sm text-foreground">
+        {t("withdrawals.confirmBody", {
+          amount: formatCurrency(amount),
+          method: methodLabel,
+        })}
+      </p>
+      <p className="text-xs leading-relaxed text-muted">{t("withdrawals.confirmHint")}</p>
+      <div className="grid grid-cols-2 gap-2">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+          {t("common.cancel")}
+        </Button>
+        <Button type="button" onClick={onConfirm} disabled={loading}>
+          {loading ? t("withdrawals.submitting") : t("withdrawals.confirmSubmit")}
+        </Button>
+      </div>
     </div>
   );
 }
