@@ -38,6 +38,21 @@ export interface AdminModerationAction {
   admin_name: string | null;
 }
 
+export type AdminBalanceDirection = "credit" | "debit";
+
+export interface AdminBalanceAdjustment {
+  id: string;
+  direction: AdminBalanceDirection;
+  amount: number;
+  balance_before: number;
+  balance_after: number;
+  reason: string;
+  created_at: string;
+  admin_id: string;
+  admin_email: string | null;
+  admin_name: string | null;
+}
+
 export interface AdminUserDetails {
   profile: Profile;
   balance: number;
@@ -45,6 +60,7 @@ export interface AdminUserDetails {
   auth: AdminUserAuthInfo;
   stats: AdminUserStats;
   fees: UserFee[];
+  balance_adjustments: AdminBalanceAdjustment[];
   recent_deposits: Array<{ id: string; amount: number; method: string; status: string; created_at: string }>;
   recent_withdrawals: Array<{ id: string; amount: number; method: string; status: string; wallet_address: string | null; created_at: string }>;
   kyc_submissions: Array<{
@@ -68,6 +84,7 @@ export async function fetchAdminUserDetails(userId: string): Promise<AdminUserDe
     ...details,
     outstanding_fees_total: Number(details.outstanding_fees_total ?? 0),
     fees: details.fees ?? [],
+    balance_adjustments: details.balance_adjustments ?? [],
     moderation_actions: details.moderation_actions ?? [],
   };
 }
@@ -94,6 +111,31 @@ export async function moderateAdminUser(params: {
   });
   if (error) throw new Error(rpcErrorMessage(error, "Could not complete that action."));
   return data;
+}
+
+export async function adjustAdminUserBalance(params: {
+  userId: string;
+  direction: AdminBalanceDirection;
+  amount: number;
+  reason: string;
+}) {
+  const { data, error } = await supabase.rpc("admin_adjust_user_balance", {
+    p_user_id: params.userId,
+    p_direction: params.direction,
+    p_amount: params.amount,
+    p_reason: params.reason.trim(),
+  });
+  if (error) throw new Error(rpcErrorMessage(error, "Could not adjust balance."));
+  return data as {
+    ok: boolean;
+    id: string;
+    direction: AdminBalanceDirection;
+    amount: number;
+    balance_before: number;
+    balance_after: number;
+    reason: string;
+    created_at: string;
+  };
 }
 
 export async function assignUserFee(params: {

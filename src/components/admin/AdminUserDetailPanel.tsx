@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import {
   X, Mail, Globe2, Wallet, Shield, Clock, Key, Globe,
   Copy, Check, ExternalLink, RefreshCw, Coins, Plus, AlertTriangle, FileCheck,
+  ArrowDownToLine, ArrowUpFromLine,
 } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +14,8 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import {
   fetchAdminUserDetails, sendUserPasswordReset,
-  assignUserFee, updateUserFeeStatus, moderateAdminUser,
-  type AdminUserDetails, type AdminModerationActionType,
+  assignUserFee, updateUserFeeStatus, moderateAdminUser, adjustAdminUserBalance,
+  type AdminUserDetails, type AdminModerationActionType, type AdminBalanceDirection,
 } from "@/lib/admin-api";
 import { createKycDocumentSignedUrl } from "@/lib/kyc";
 import { FEE_TYPES, type FeeTypeId } from "@/constants/fee-types";
@@ -76,6 +77,10 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
   const [moderationBusy, setModerationBusy] = useState(false);
   const [reasonError, setReasonError] = useState("");
   const reasonFieldRef = useRef<HTMLTextAreaElement | null>(null);
+  const [fundDirection, setFundDirection] = useState<AdminBalanceDirection>("credit");
+  const [fundAmount, setFundAmount] = useState("");
+  const [fundReason, setFundReason] = useState("");
+  const [fundBusy, setFundBusy] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!userId) return;
@@ -115,6 +120,7 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
   const auth = data?.auth;
   const stats = data?.stats;
   const fees = data?.fees ?? [];
+  const balanceAdjustments = data?.balance_adjustments ?? [];
   const moderationActions = data?.moderation_actions ?? [];
   const outstandingTotal = Number(data?.outstanding_fees_total ?? 0);
   const locationReady = profile ? hasLocationData(profile) : false;
@@ -223,6 +229,56 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
       setError(err instanceof Error ? err.message : t("admin.userDetail.feeUpdateFailed"));
     } finally {
       setFeeBusy(false);
+    }
+  };
+
+  const handleAdjustFunds = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) return;
+    const amount = parseFloat(fundAmount);
+    const reason = fundReason.trim();
+    if (!amount || amount <= 0) {
+      setError(t("admin.userDetail.fundInvalidAmount"));
+      setMessage("");
+      return;
+    }
+    if (reason.length < 3) {
+      setError(t("admin.userDetail.fundReasonRequired"));
+      setMessage("");
+      return;
+    }
+    if (fundDirection === "debit" && amount > Number(data?.balance ?? 0)) {
+      setError(t("admin.userDetail.fundInsufficient"));
+      setMessage("");
+      return;
+    }
+
+    setFundBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const result = await adjustAdminUserBalance({
+        userId,
+        direction: fundDirection,
+        amount,
+        reason,
+      });
+      setFundAmount("");
+      setFundReason("");
+      setMessage(
+        t(
+          fundDirection === "credit"
+            ? "admin.userDetail.fundCredited"
+            : "admin.userDetail.fundDebited",
+          { amount: formatCurrency(Number(result.amount)), balance: formatCurrency(Number(result.balance_after)) }
+        )
+      );
+      await load(true);
+      onUpdated?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("admin.userDetail.fundFailed"));
+    } finally {
+      setFundBusy(false);
     }
   };
 
@@ -439,6 +495,133 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
                       </ul>
                     )}
                   </div>
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-border bg-secondary/50 p-4">
+                <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold">
+                  <Wallet className="h-4 w-4 text-emerald" />
+                  {t("admin.userDetail.adjustFunds")}
+                </h3>
+                <p className="mb-4 text-xs leading-relaxed text-muted">
+                  {t("admin.userDetail.adjustFundsDesc")}
+                </p>
+
+                <form onSubmit={handleAdjustFunds} className="space-y-3 rounded-lg border border-border bg-secondary/80 p-3">
+                  <div>
+                    <Label>{t("admin.userDetail.fundDirection")}</Label>
+                    <div className="mt-1.5 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFundDirection("credit")}
+                        className={cn(
+                          "flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors",
+                          fundDirection === "credit"
+                            ? "border-emerald/40 bg-emerald/10 text-emerald"
+                            : "border-border bg-void text-muted hover:text-foreground"
+                        )}
+                      >
+                        <ArrowDownToLine className="h-3.5 w-3.5" />
+                        {t("admin.userDetail.fundAdd")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFundDirection("debit")}
+                        className={cn(
+                          "flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors",
+                          fundDirection === "debit"
+                            ? "border-red-500/40 bg-red-500/10 text-red-400"
+                            : "border-border bg-void text-muted hover:text-foreground"
+                        )}
+                      >
+                        <ArrowUpFromLine className="h-3.5 w-3.5" />
+                        {t("admin.userDetail.fundRemove")}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="fund-amount">{t("admin.userDetail.fundAmount")}</Label>
+                    <Input
+                      id="fund-amount"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={fundAmount}
+                      onChange={(e) => setFundAmount(e.target.value)}
+                      className="mt-1.5"
+                      placeholder="0.00"
+                      required
+                    />
+                    <p className="mt-1 text-[11px] text-muted">
+                      {t("admin.userDetail.fundCurrentBalance", {
+                        balance: formatCurrency(Number(data.balance ?? 0)),
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="fund-reason">{t("admin.userDetail.fundReason")}</Label>
+                    <textarea
+                      id="fund-reason"
+                      value={fundReason}
+                      onChange={(e) => setFundReason(e.target.value)}
+                      rows={3}
+                      required
+                      className="mt-1.5 w-full rounded-xl border border-border bg-void px-3 py-2.5 text-sm text-foreground placeholder:text-muted focus:border-emerald/40 focus:outline-none focus:ring-1 focus:ring-emerald/20"
+                      placeholder={t("admin.userDetail.fundReasonPlaceholder")}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    variant={fundDirection === "credit" ? "default" : "destructive"}
+                    disabled={fundBusy}
+                    className="w-full"
+                  >
+                    {fundBusy
+                      ? t("admin.userDetail.fundWorking")
+                      : fundDirection === "credit"
+                        ? t("admin.userDetail.fundAddSubmit")
+                        : t("admin.userDetail.fundRemoveSubmit")}
+                  </Button>
+                </form>
+
+                <div className="mt-4 space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                    {t("admin.userDetail.fundHistory")}
+                  </p>
+                  {balanceAdjustments.length === 0 ? (
+                    <p className="text-sm text-muted">{t("admin.userDetail.noFundHistory")}</p>
+                  ) : (
+                    balanceAdjustments.map((adj) => (
+                      <div key={adj.id} className="rounded-lg bg-secondary/80 px-3 py-3 text-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className={cn(
+                              "font-medium",
+                              adj.direction === "credit" ? "text-emerald" : "text-red-400"
+                            )}>
+                              {adj.direction === "credit" ? "+" : "−"}
+                              {formatCurrency(Number(adj.amount))}
+                              <span className="ml-2 text-xs font-normal text-muted">
+                                {t(`admin.userDetail.fundDirections.${adj.direction}`)}
+                              </span>
+                            </p>
+                            <p className="mt-1 text-xs text-muted">{adj.reason}</p>
+                            <p className="mt-1 text-[11px] text-muted/80">
+                              {adj.admin_name || adj.admin_email || adj.admin_id}
+                              {" · "}
+                              {formatDate(adj.created_at)}
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-right text-xs text-muted">
+                            {formatCurrency(Number(adj.balance_before))}
+                            {" → "}
+                            <span className="text-foreground">{formatCurrency(Number(adj.balance_after))}</span>
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </section>
 
