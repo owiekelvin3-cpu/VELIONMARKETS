@@ -237,6 +237,9 @@ export interface Database {
           amount: number;
           price: number;
           status: TransactionStatus;
+          profit: number;
+          profit_note: string | null;
+          profit_updated_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -247,6 +250,9 @@ export interface Database {
           amount: number;
           price: number;
           status?: TransactionStatus;
+          profit?: number;
+          profit_note?: string | null;
+          profit_updated_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -257,6 +263,44 @@ export interface Database {
           amount?: number;
           price?: number;
           status?: TransactionStatus;
+          profit?: number;
+          profit_note?: string | null;
+          profit_updated_at?: string | null;
+          created_at?: string;
+        };
+      };
+      trade_profit_credits: {
+        Row: {
+          id: string;
+          trade_id: string;
+          user_id: string;
+          admin_id: string;
+          amount: number;
+          note: string | null;
+          balance_before: number;
+          balance_after: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trade_id: string;
+          user_id: string;
+          admin_id: string;
+          amount: number;
+          note?: string | null;
+          balance_before: number;
+          balance_after: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          trade_id?: string;
+          user_id?: string;
+          admin_id?: string;
+          amount?: number;
+          note?: string | null;
+          balance_before?: number;
+          balance_after?: number;
           created_at?: string;
         };
       };
@@ -781,6 +825,7 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Deposit = Database["public"]["Tables"]["deposits"]["Row"];
 export type Withdrawal = Database["public"]["Tables"]["withdrawals"]["Row"];
 export type Trade = Database["public"]["Tables"]["trades"]["Row"];
+export type TradeProfitCredit = Database["public"]["Tables"]["trade_profit_credits"]["Row"];
 export type Holding = Database["public"]["Tables"]["holdings"]["Row"];
 export type Plan = Database["public"]["Tables"]["plans"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];

@@ -221,6 +221,12 @@ function TradeHistory({ trades }: { trades: Trade[] }) {
                 <p className="mt-0.5 font-medium">{formatCurrency(tr.amount * tr.price)}</p>
               </div>
               <div>
+                <p className="text-muted">{t("trading.profit")}</p>
+                <p className={cn("mt-0.5 font-medium", (tr.profit ?? 0) > 0 ? "text-emerald" : "text-foreground")}>
+                  {(tr.profit ?? 0) > 0 ? `+${formatCurrency(tr.profit)}` : "—"}
+                </p>
+              </div>
+              <div>
                 <p className="text-muted">{t("common.date")}</p>
                 <p className="mt-0.5 font-medium">{formatDate(tr.created_at)}</p>
               </div>
@@ -238,6 +244,7 @@ function TradeHistory({ trades }: { trades: Trade[] }) {
               <th>{t("trading.qty")}</th>
               <th>{t("trading.entry")}</th>
               <th>{t("trading.notional")}</th>
+              <th>{t("trading.profit")}</th>
               <th>{t("common.date")}</th>
             </tr>
           </thead>
@@ -253,6 +260,9 @@ function TradeHistory({ trades }: { trades: Trade[] }) {
                 <td className="py-3 text-muted">{tr.amount.toFixed(6)}</td>
                 <td className="py-3">{formatCurrency(tr.price)}</td>
                 <td className="py-3">{formatCurrency(tr.amount * tr.price)}</td>
+                <td className={cn("py-3 font-medium", (tr.profit ?? 0) > 0 ? "text-emerald" : "text-muted")}>
+                  {(tr.profit ?? 0) > 0 ? `+${formatCurrency(tr.profit)}` : "—"}
+                </td>
                 <td className="py-3 text-muted">{formatDate(tr.created_at)}</td>
               </tr>
             ))}

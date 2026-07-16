@@ -17,12 +17,13 @@ import {
 import { TradingChart } from "@/components/trading/TradingChart";
 import { OrderPanel, type OrderSubmitPayload } from "@/components/trading/OrderPanel";
 import { PositionsPanel, type PositionRow } from "@/components/trading/PositionsPanel";
+import { TradingProfitPanel } from "@/components/trading/TradingProfitPanel";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatCurrency } from "@/lib/utils";
 import { ensureValidSession } from "@/lib/auth-session";
 import { cn } from "@/lib/utils";
-import type { Holding, Trade } from "@/types/database";
+import type { Holding, Trade, TradeProfitCredit } from "@/types/database";
 
 const INTERVALS: { id: MarketInterval; labelKey: string }[] = [
   { id: "1m", labelKey: "trading.tf1m" },
@@ -67,6 +68,7 @@ export default function TradingRoomPage() {
   const [balance, setBalance] = useState(0);
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [profitCredits, setProfitCredits] = useState<TradeProfitCredit[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [closingAsset, setClosingAsset] = useState<string | null>(null);
   const [message, setMessage] = useState("");
@@ -78,14 +80,21 @@ export default function TradingRoomPage() {
 
   const loadAccount = useCallback(async () => {
     if (!user) return;
-    const [balRes, holdRes, tradeRes] = await Promise.all([
+    const [balRes, holdRes, tradeRes, creditRes] = await Promise.all([
       supabase.from("balances").select("amount").eq("user_id", user.id).single(),
       supabase.from("holdings").select("*").eq("user_id", user.id).order("asset"),
       supabase.from("trades").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase
+        .from("trade_profit_credits")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20),
     ]);
     setBalance(balRes.data?.amount ?? 0);
     setHoldings(holdRes.data ?? []);
     setTrades(tradeRes.data ?? []);
+    setProfitCredits(creditRes.data ?? []);
   }, [user]);
 
   useEffect(() => {
@@ -129,6 +138,21 @@ export default function TradingRoomPage() {
         };
       });
   }, [holdings, trades, ticker, watchlist, symbol]);
+
+  const realizedProfit = useMemo(
+    () => trades.reduce((sum, tr) => sum + (Number(tr.profit) || 0), 0),
+    [trades]
+  );
+
+  const unrealizedTotal = useMemo(
+    () => positions.reduce((sum, p) => sum + p.unrealizedPnl, 0),
+    [positions]
+  );
+
+  const tradesWithProfit = useMemo(
+    () => trades.filter((tr) => (Number(tr.profit) || 0) > 0),
+    [trades]
+  );
 
   const placeTrade = async (side: "buy" | "sell", quantity: number, price: number) => {
     if (!user) return false;
@@ -358,6 +382,13 @@ export default function TradingRoomPage() {
           {message}
         </p>
       )}
+
+      <TradingProfitPanel
+        realizedProfit={realizedProfit}
+        unrealizedPnl={unrealizedTotal}
+        credits={profitCredits}
+        tradesWithProfit={tradesWithProfit}
+      />
 
       {/* Desk: chart + order ticket */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
