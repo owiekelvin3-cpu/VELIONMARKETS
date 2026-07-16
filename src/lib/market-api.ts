@@ -1,18 +1,19 @@
-export type MarketInterval = "1m" | "30m" | "1h" | "4h" | "1d";
+export type MarketInterval = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1d";
 
 export interface TradingPair {
   symbol: string;
   label: string;
+  base: string;
   category: "crypto";
 }
 
 export const TRADING_PAIRS: TradingPair[] = [
-  { symbol: "BTCUSDT", label: "BTC/USD", category: "crypto" },
-  { symbol: "ETHUSDT", label: "ETH/USD", category: "crypto" },
-  { symbol: "BNBUSDT", label: "BNB/USD", category: "crypto" },
-  { symbol: "SOLUSDT", label: "SOL/USD", category: "crypto" },
-  { symbol: "XRPUSDT", label: "XRP/USD", category: "crypto" },
-  { symbol: "DOGEUSDT", label: "DOGE/USD", category: "crypto" },
+  { symbol: "BTCUSDT", label: "BTC/USDT", base: "BTC", category: "crypto" },
+  { symbol: "ETHUSDT", label: "ETH/USDT", base: "ETH", category: "crypto" },
+  { symbol: "BNBUSDT", label: "BNB/USDT", base: "BNB", category: "crypto" },
+  { symbol: "SOLUSDT", label: "SOL/USDT", base: "SOL", category: "crypto" },
+  { symbol: "XRPUSDT", label: "XRP/USDT", base: "XRP", category: "crypto" },
+  { symbol: "DOGEUSDT", label: "DOGE/USDT", base: "DOGE", category: "crypto" },
 ];
 
 export interface Ticker24h {
@@ -38,6 +39,7 @@ export interface Candle {
 /** Dev proxy first, then Binance public market-data endpoint (works in more regions). */
 const REST_BASES = ["/api/market", "https://data-api.binance.vision/api/v3"];
 const WS_BASE = "wss://data-stream.binance.vision/ws";
+const WS_COMBINED = "wss://data-stream.binance.vision/stream";
 
 async function fetchJson<T>(path: string): Promise<T> {
   let lastError: Error | null = null;
@@ -111,7 +113,20 @@ export async function fetchTicker24h(symbol: string): Promise<Ticker24h> {
   return parseRestTicker(data);
 }
 
-export async function fetchKlines(symbol: string, interval: MarketInterval, limit = 200): Promise<Candle[]> {
+export async function fetchTickers24h(symbols: string[]): Promise<Ticker24h[]> {
+  const results = await Promise.all(
+    symbols.map(async (symbol) => {
+      try {
+        return await fetchTicker24h(symbol);
+      } catch {
+        return null;
+      }
+    })
+  );
+  return results.filter((t): t is Ticker24h => t !== null);
+}
+
+export async function fetchKlines(symbol: string, interval: MarketInterval, limit = 300): Promise<Candle[]> {
   const data = await fetchJson<BinanceKline[]>(
     `/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`
   );
@@ -157,6 +172,48 @@ export function subscribeTicker(symbol: string, onUpdate: (ticker: Ticker24h) =>
     ws.onerror = () => {
       ws?.close();
     };
+  };
+
+  connect();
+
+  return () => {
+    closed = true;
+    if (retryTimer) clearTimeout(retryTimer);
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+      ws.close();
+    }
+  };
+}
+
+/** Combined watchlist stream for multiple symbols. */
+export function subscribeTickers(symbols: string[], onUpdate: (ticker: Ticker24h) => void) {
+  if (symbols.length === 0) return () => undefined;
+
+  const streams = symbols.map((s) => `${s.toLowerCase()}@ticker`).join("/");
+  let ws: WebSocket | null = null;
+  let closed = false;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const connect = () => {
+    if (closed) return;
+    ws = new WebSocket(`${WS_COMBINED}?streams=${streams}`);
+
+    ws.onmessage = (event) => {
+      try {
+        const envelope = JSON.parse(event.data as string) as { data?: BinanceWsTicker };
+        const data = envelope.data;
+        if (data && data.e === "24hrTicker") {
+          onUpdate(parseWsTicker(data));
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    ws.onclose = () => {
+      if (!closed) retryTimer = setTimeout(connect, 3000);
+    };
+    ws.onerror = () => ws?.close();
   };
 
   connect();
@@ -238,4 +295,8 @@ export function formatVolume(vol: number) {
   if (vol >= 1_000_000) return `${(vol / 1_000_000).toFixed(2)}M`;
   if (vol >= 1_000) return `${(vol / 1_000).toFixed(2)}K`;
   return vol.toFixed(2);
+}
+
+export function baseAssetFromPairLabel(label: string) {
+  return label.split("/")[0]?.toUpperCase() ?? label.toUpperCase();
 }

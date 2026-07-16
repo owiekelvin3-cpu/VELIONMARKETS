@@ -260,6 +260,29 @@ export interface Database {
           created_at?: string;
         };
       };
+      holdings: {
+        Row: {
+          id: string;
+          user_id: string;
+          asset: string;
+          quantity: number;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          asset: string;
+          quantity?: number;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          asset?: string;
+          quantity?: number;
+          updated_at?: string;
+        };
+      };
       plans: {
         Row: {
           id: string;
@@ -758,6 +781,7 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Deposit = Database["public"]["Tables"]["deposits"]["Row"];
 export type Withdrawal = Database["public"]["Tables"]["withdrawals"]["Row"];
 export type Trade = Database["public"]["Tables"]["trades"]["Row"];
+export type Holding = Database["public"]["Tables"]["holdings"]["Row"];
 export type Plan = Database["public"]["Tables"]["plans"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 export type SupportConversation = Database["public"]["Tables"]["support_conversations"]["Row"];

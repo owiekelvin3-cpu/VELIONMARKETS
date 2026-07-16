@@ -6,6 +6,7 @@ import {
   HistogramSeries,
   type IChartApi,
   type ISeriesApi,
+  type IPriceLine,
   type UTCTimestamp,
 } from "lightweight-charts";
 import type { Candle } from "@/lib/market-api";
@@ -14,6 +15,7 @@ import { useTheme } from "@/hooks/useTheme";
 interface TradingChartProps {
   candles: Candle[];
   symbol: string;
+  lastPrice?: number;
   loading?: boolean;
 }
 
@@ -26,29 +28,36 @@ function chartTheme(isLight: boolean) {
   };
 }
 
-export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
+function getHeight(width: number) {
+  if (width < 640) return 360;
+  if (width < 1024) return 460;
+  return 520;
+}
+
+export function TradingChart({ candles, symbol, lastPrice, loading }: TradingChartProps) {
   const { theme } = useTheme();
   const isLight = theme === "light";
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const priceLineRef = useRef<IPriceLine | null>(null);
+  const lastLenRef = useRef(0);
+  const lastTimeRef = useRef<number | null>(null);
   const fittedRef = useRef(false);
+  const symbolRef = useRef(symbol);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const colors = chartTheme(isLight);
-
-    const getHeight = () => {
-      const w = containerRef.current?.clientWidth ?? 600;
-      return w < 640 ? 320 : 420;
-    };
+    const width = containerRef.current.clientWidth || 600;
 
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: colors.background },
         textColor: colors.text,
+        attributionLogo: false,
       },
       grid: {
         vertLines: { color: colors.grid },
@@ -56,9 +65,13 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
       },
       crosshair: { mode: 1 },
       rightPriceScale: { borderColor: colors.border },
-      timeScale: { borderColor: colors.border, timeVisible: true },
-      width: containerRef.current.clientWidth || 600,
-      height: getHeight(),
+      timeScale: {
+        borderColor: colors.border,
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      width,
+      height: getHeight(width),
       autoSize: false,
     });
 
@@ -78,21 +91,25 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
     });
 
     chart.priceScale("volume").applyOptions({
-      scaleMargins: { top: 0.85, bottom: 0 },
+      scaleMargins: { top: 0.82, bottom: 0 },
+    });
+    chart.priceScale("right").applyOptions({
+      scaleMargins: { top: 0.08, bottom: 0.22 },
     });
 
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
     fittedRef.current = false;
+    lastLenRef.current = 0;
+    lastTimeRef.current = null;
 
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry || !chartRef.current) return;
-      const width = Math.floor(entry.contentRect.width);
-      const height = width < 640 ? 320 : 420;
-      if (width > 0) {
-        chartRef.current.applyOptions({ width, height });
+      const w = Math.floor(entry.contentRect.width);
+      if (w > 0) {
+        chartRef.current.applyOptions({ width: w, height: getHeight(w) });
       }
     });
 
@@ -100,6 +117,7 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
 
     return () => {
       resizeObserver.disconnect();
+      priceLineRef.current = null;
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
@@ -108,37 +126,78 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
   }, [isLight]);
 
   useEffect(() => {
-    fittedRef.current = false;
+    if (symbolRef.current !== symbol) {
+      symbolRef.current = symbol;
+      fittedRef.current = false;
+      lastLenRef.current = 0;
+      lastTimeRef.current = null;
+    }
   }, [symbol]);
 
   useEffect(() => {
-    if (!candleSeriesRef.current || !volumeSeriesRef.current || candles.length === 0) return;
+    const candleSeries = candleSeriesRef.current;
+    const volumeSeries = volumeSeriesRef.current;
+    if (!candleSeries || !volumeSeries || candles.length === 0) return;
 
-    const candleData = candles.map((c) => ({
+    const toCandle = (c: Candle) => ({
       time: c.time as UTCTimestamp,
       open: c.open,
       high: c.high,
       low: c.low,
       close: c.close,
-    }));
+    });
 
-    const volumeData = candles.map((c) => ({
+    const toVolume = (c: Candle) => ({
       time: c.time as UTCTimestamp,
       value: c.volume,
       color: c.close >= c.open ? "rgba(16,185,129,0.35)" : "rgba(239,68,68,0.35)",
-    }));
+    });
 
-    candleSeriesRef.current.setData(candleData);
-    volumeSeriesRef.current.setData(volumeData);
+    const last = candles[candles.length - 1];
+    const canIncremental =
+      lastLenRef.current > 0 &&
+      lastTimeRef.current !== null &&
+      (last.time === lastTimeRef.current || last.time > lastTimeRef.current) &&
+      candles.length >= lastLenRef.current - 1 &&
+      candles.length <= lastLenRef.current + 1;
 
-    if (!fittedRef.current) {
-      chartRef.current?.timeScale().fitContent();
-      fittedRef.current = true;
+    if (canIncremental && lastLenRef.current > 0) {
+      candleSeries.update(toCandle(last));
+      volumeSeries.update(toVolume(last));
+    } else {
+      candleSeries.setData(candles.map(toCandle));
+      volumeSeries.setData(candles.map(toVolume));
+      if (!fittedRef.current) {
+        chartRef.current?.timeScale().fitContent();
+        fittedRef.current = true;
+      }
     }
+
+    lastLenRef.current = candles.length;
+    lastTimeRef.current = last.time;
   }, [candles, symbol, isLight]);
 
+  useEffect(() => {
+    const series = candleSeriesRef.current;
+    if (!series || !lastPrice || !Number.isFinite(lastPrice)) return;
+
+    if (priceLineRef.current) {
+      series.removePriceLine(priceLineRef.current);
+      priceLineRef.current = null;
+    }
+
+    priceLineRef.current = series.createPriceLine({
+      price: lastPrice,
+      color: "#10b981",
+      lineWidth: 1,
+      lineStyle: 2,
+      axisLabelVisible: true,
+      title: "",
+    });
+  }, [lastPrice, symbol, isLight, candles.length]);
+
   return (
-    <div className="relative min-h-[320px] overflow-hidden surface-panel sm:min-h-[420px]">
+    <div className="relative min-h-[360px] overflow-hidden border-t border-border bg-card sm:min-h-[460px] lg:min-h-[520px]">
       {loading && candles.length === 0 && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/90 text-sm text-muted">
           <span className="inline-flex items-center gap-2">
@@ -152,7 +211,7 @@ export function TradingChart({ candles, symbol, loading }: TradingChartProps) {
           No chart data available
         </div>
       )}
-      <div ref={containerRef} className="h-[320px] w-full sm:h-[420px]" />
+      <div ref={containerRef} className="h-[360px] w-full sm:h-[460px] lg:h-[520px]" />
     </div>
   );
 }
