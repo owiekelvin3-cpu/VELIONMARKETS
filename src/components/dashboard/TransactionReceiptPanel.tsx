@@ -16,9 +16,9 @@ const KIND_ICONS = {
 } as const;
 
 const KIND_ACCENTS = {
-  deposit: "text-emerald bg-emerald/10 border-emerald/20",
-  withdrawal: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-  trade: "text-sky-400 bg-sky-500/10 border-sky-500/20",
+  deposit: "border-emerald bg-emerald text-black shadow-sm",
+  withdrawal: "border-amber-500 bg-amber-500 text-black shadow-sm",
+  trade: "border-sky-500 bg-sky-500 text-black shadow-sm",
 } as const;
 
 function statusVariant(status: string): "success" | "warning" | "destructive" | "secondary" {

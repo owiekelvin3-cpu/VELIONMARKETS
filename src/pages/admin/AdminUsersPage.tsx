@@ -162,6 +162,10 @@ export default function AdminUsersPage() {
         userId={selectedUserId}
         onClose={() => setSelectedUserId(null)}
         onUpdated={load}
+        onDeleted={() => {
+          setSelectedUserId(null);
+          void load();
+        }}
       />
     </div>
   );

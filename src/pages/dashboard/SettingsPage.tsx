@@ -659,7 +659,7 @@ export default function SettingsPage() {
 
                 <div className="overflow-hidden rounded-2xl border border-border/80">
                   <div className="flex flex-col gap-4 border-b border-border/70 bg-secondary/20 px-4 py-4 sm:flex-row sm:items-center">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald/10 text-emerald">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald text-black shadow-sm">
                       <Bell className="h-4 w-4" />
                     </span>
                     <div className="min-w-0 flex-1">

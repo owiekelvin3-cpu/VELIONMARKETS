@@ -18,7 +18,7 @@ export function NotificationPermissionBanner() {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-emerald/25 bg-emerald/5 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald/10 text-emerald">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald text-black shadow-sm">
           <Bell className="h-5 w-5" />
         </div>
         <div>

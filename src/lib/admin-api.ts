@@ -94,6 +94,15 @@ function rpcErrorMessage(error: { message?: string; details?: string; hint?: str
   return [error.message, error.details, error.hint].filter(Boolean).join(" — ") || fallback;
 }
 
+export async function deleteAdminUser(params: { userId: string; reason: string }) {
+  const { data, error } = await supabase.rpc("admin_delete_user", {
+    p_user_id: params.userId,
+    p_reason: params.reason.trim(),
+  });
+  if (error) throw new Error(rpcErrorMessage(error, "Could not delete user."));
+  return data as { ok: boolean; user_id: string; email: string };
+}
+
 export async function moderateAdminUser(params: {
   userId: string;
   action: AdminModerationActionType;

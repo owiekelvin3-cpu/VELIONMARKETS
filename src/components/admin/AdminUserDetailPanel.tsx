@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import {
   X, Mail, Globe2, Wallet, Shield, Clock, Key, Globe,
   Copy, Check, ExternalLink, RefreshCw, Coins, Plus, AlertTriangle, FileCheck,
-  ArrowDownToLine, ArrowUpFromLine,
+  ArrowDownToLine, ArrowUpFromLine, Trash2,
 } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import {
   fetchAdminUserDetails, sendUserPasswordReset,
   assignUserFee, updateUserFeeStatus, moderateAdminUser, adjustAdminUserBalance,
+  deleteAdminUser,
   type AdminUserDetails, type AdminModerationActionType, type AdminBalanceDirection,
 } from "@/lib/admin-api";
 import { createKycDocumentSignedUrl } from "@/lib/kyc";
@@ -27,6 +28,7 @@ interface AdminUserDetailPanelProps {
   userId: string | null;
   onClose: () => void;
   onUpdated?: () => void;
+  onDeleted?: () => void;
 }
 
 function DetailRow({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
@@ -60,7 +62,7 @@ function hasLocationData(profile: AdminUserDetails["profile"]): boolean {
   );
 }
 
-export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDetailPanelProps) {
+export function AdminUserDetailPanel({ userId, onClose, onUpdated, onDeleted }: AdminUserDetailPanelProps) {
   const { t } = useTranslation();
   const [data, setData] = useState<AdminUserDetails | null>(null);
   const [loading, setLoading] = useState(false);
@@ -81,6 +83,8 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
   const [fundAmount, setFundAmount] = useState("");
   const [fundReason, setFundReason] = useState("");
   const [fundBusy, setFundBusy] = useState(false);
+  const [deleteConfirming, setDeleteConfirming] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!userId) return;
@@ -100,6 +104,11 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
   }, [userId, onUpdated]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    setDeleteConfirming(false);
+    setDeleteBusy(false);
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -155,6 +164,44 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
       setError(msg);
     } finally {
       setModerationBusy(false);
+    }
+  };
+
+  const requestDeleteUser = () => {
+    const typedReason = moderationReason.trim();
+    if (typedReason.length < 3) {
+      setReasonError(t("admin.userDetail.reasonRequired"));
+      setError(t("admin.userDetail.reasonRequired"));
+      setMessage("");
+      reasonFieldRef.current?.focus();
+      reasonFieldRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setReasonError("");
+    setError("");
+    setMessage("");
+    setDeleteConfirming(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userId) return;
+    const typedReason = moderationReason.trim();
+    if (typedReason.length < 3) {
+      setReasonError(t("admin.userDetail.reasonRequired"));
+      return;
+    }
+    setDeleteBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await deleteAdminUser({ userId, reason: typedReason });
+      onDeleted?.();
+      onClose();
+    } catch (err) {
+      setDeleteConfirming(false);
+      setError(err instanceof Error ? err.message : t("admin.userDetail.deleteFailed"));
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -496,6 +543,59 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated }: AdminUserDe
                     )}
                   </div>
                 </div>
+              </section>
+
+              <section className="rounded-xl border border-red-500/25 bg-red-500/5 p-4">
+                <h3 className="mb-1 flex items-center gap-2 font-display text-sm font-semibold text-red-400">
+                  <Trash2 className="h-4 w-4" />
+                  {t("admin.userDetail.deleteUserTitle")}
+                </h3>
+                <p className="mb-4 text-xs leading-relaxed text-muted">
+                  {t("admin.userDetail.deleteUserDesc")}
+                </p>
+
+                {deleteConfirming ? (
+                  <div className="space-y-3 rounded-xl border border-red-500/30 bg-card/80 p-4">
+                    <p className="text-sm text-foreground">
+                      {t("admin.userDetail.deleteConfirmBody", {
+                        name: profile.full_name || profile.email,
+                        email: profile.email,
+                      })}
+                    </p>
+                    <p className="text-xs text-muted">{t("admin.userDetail.deleteConfirmHint")}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        disabled={deleteBusy}
+                        onClick={() => void confirmDeleteUser()}
+                      >
+                        {deleteBusy ? t("admin.userDetail.deleting") : t("admin.userDetail.deleteConfirmSubmit")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={deleteBusy}
+                        onClick={() => setDeleteConfirming(false)}
+                      >
+                        {t("common.cancel")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    disabled={moderationBusy || deleteBusy}
+                    onClick={requestDeleteUser}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {t("admin.userDetail.deleteUser")}
+                  </Button>
+                )}
               </section>
 
               <section className="rounded-xl border border-border bg-secondary/50 p-4">
