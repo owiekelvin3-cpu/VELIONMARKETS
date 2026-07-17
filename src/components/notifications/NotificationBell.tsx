@@ -44,8 +44,9 @@ export function NotificationBell() {
           type="button"
           className={cn(
             "relative inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-visible rounded-full",
-            "border border-border bg-card text-foreground shadow-sm",
+            "border border-border bg-surface-elevated text-foreground shadow-sm",
             "transition-colors hover:border-emerald/35 hover:bg-secondary hover:text-foreground",
+            "data-[state=open]:border-emerald/35 data-[state=open]:bg-surface-elevated",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           )}
           aria-label={t("notifications.bellLabel")}
@@ -53,7 +54,7 @@ export function NotificationBell() {
           <Bell className="h-[1.125rem] w-[1.125rem]" aria-hidden="true" />
           {unreadCount > 0 && (
             <span
-              className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-emerald px-1 text-[10px] font-bold leading-none text-[#0c0c0e] ring-2 ring-card"
+              className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-emerald px-1 text-[10px] font-bold leading-none text-[#0c0c0e] ring-2 ring-surface-elevated"
               aria-hidden="true"
             >
               {unreadCount > 9 ? "9+" : unreadCount}
@@ -65,9 +66,9 @@ export function NotificationBell() {
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="z-[140] w-[min(100vw-1.5rem,22rem)] overflow-hidden border border-border bg-card p-0 shadow-[0_16px_48px_rgba(0,0,0,0.45)]"
+        className="w-[min(100vw-1.5rem,22rem)] overflow-hidden p-0"
       >
-        <div className="flex items-center justify-between gap-2 border-b border-border bg-card px-4 py-3">
+        <div className="flex items-center justify-between gap-2 border-b border-border bg-surface-elevated px-4 py-3">
           <div className="min-w-0">
             <p className="font-display text-sm font-semibold text-foreground">{t("notifications.title")}</p>
             {unreadCount > 0 && (
@@ -88,7 +89,7 @@ export function NotificationBell() {
           )}
         </div>
 
-        <div className="max-h-80 overflow-y-auto bg-card">
+        <div className="max-h-80 overflow-y-auto bg-surface-elevated">
           <NotificationList
             items={preview}
             loading={loading}
@@ -96,7 +97,7 @@ export function NotificationBell() {
           />
         </div>
 
-        <div className="border-t border-border bg-card px-3 py-2.5">
+        <div className="border-t border-border bg-surface-elevated px-3 py-2.5">
           <button
             type="button"
             onClick={() => {
@@ -110,7 +111,7 @@ export function NotificationBell() {
         </div>
 
         {supported && (
-          <div className="border-t border-border bg-card px-4 py-3">
+          <div className="border-t border-border bg-surface-elevated px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-medium text-foreground">{t("notifications.pushTitle")}</p>

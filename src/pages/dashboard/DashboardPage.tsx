@@ -251,7 +251,7 @@ export default function DashboardPage() {
                   value={accountCurrency}
                   onChange={handleCurrencyChange}
                   busy={currencyBusy}
-                  className="h-8 min-w-[5.5rem] border-white/20 bg-white/10 px-2.5 text-xs text-white hover:bg-white/15 [&_svg]:text-white/60"
+                  className="h-8 min-w-[5.5rem] border-white/25 bg-[#141416] px-2.5 text-xs text-white hover:bg-[#1c1c1f] data-[state=open]:border-white/35 data-[state=open]:bg-[#1c1c1f] [&_svg]:text-white/60"
                 />
               </div>
 

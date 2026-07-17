@@ -272,7 +272,7 @@ export function DashboardLayout() {
         >
           <button
             type="button"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:border-emerald/35 hover:bg-secondary lg:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface-elevated text-foreground shadow-sm transition-colors hover:border-emerald/35 hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label={t("dashboard.openSidebar")}
           >
@@ -281,7 +281,7 @@ export function DashboardLayout() {
 
           <Link
             to="/dashboard/settings"
-            className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-card shadow-sm lg:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-elevated shadow-sm lg:hidden"
             aria-label={t("dashboard.settings")}
           >
             <UserAvatar

@@ -56,7 +56,7 @@ export function CurrencySelector({ value, onChange, className, disabled, busy }:
           type="button"
           disabled={disabled || busy}
           className={cn(
-            "flex h-10 min-w-[8.5rem] items-center justify-between gap-2 rounded-full border border-border bg-secondary/40 px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/40 disabled:opacity-60",
+            "flex h-10 min-w-[8.5rem] items-center justify-between gap-2 rounded-full border border-border bg-surface-elevated px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/40 disabled:opacity-60 data-[state=open]:border-emerald/35 data-[state=open]:bg-surface-elevated",
             className
           )}
           aria-label={`${t("settingsPage.currency")}: ${currentLabel}`}
@@ -65,8 +65,8 @@ export function CurrencySelector({ value, onChange, className, disabled, busy }:
           <ChevronDown className="h-4 w-4 text-muted" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 p-0">
-        <div className="border-b border-border p-2">
+      <DropdownMenuContent align="end" className="w-72 overflow-hidden p-0">
+        <div className="border-b border-border bg-surface-elevated p-2">
           <DropdownMenuLabel className="px-1 pb-2 pt-1">{t("settingsPage.currency")}</DropdownMenuLabel>
           <Input
             value={query}
@@ -76,7 +76,7 @@ export function CurrencySelector({ value, onChange, className, disabled, busy }:
             onKeyDown={(e) => e.stopPropagation()}
           />
         </div>
-        <div className="max-h-72 overflow-y-auto p-1">
+        <div className="max-h-72 overflow-y-auto bg-surface-elevated p-1">
           {filtered.length === 0 ? (
             <p className="px-3 py-6 text-center text-xs text-muted">{t("settingsPage.currencyNoMatch")}</p>
           ) : (
