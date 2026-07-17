@@ -38,6 +38,7 @@ export interface Database {
           suspended_by: string | null;
           suspension_reason: string | null;
           admin_notes: string | null;
+          preferred_currency: string;
           created_at: string;
           updated_at: string;
         };
@@ -64,6 +65,7 @@ export interface Database {
           suspended_by?: string | null;
           suspension_reason?: string | null;
           admin_notes?: string | null;
+          preferred_currency?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -90,6 +92,7 @@ export interface Database {
           suspended_by?: string | null;
           suspension_reason?: string | null;
           admin_notes?: string | null;
+          preferred_currency?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -386,27 +389,45 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          package_id: string | null;
           package_name: string;
           investment: number;
           daily_return: number;
+          hashrate: string | null;
+          term_days: number | null;
+          expires_at: string | null;
+          accrued_profit: number;
+          last_accrual_at: string;
           status: string;
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
+          package_id?: string | null;
           package_name: string;
           investment: number;
           daily_return: number;
+          hashrate?: string | null;
+          term_days?: number | null;
+          expires_at?: string | null;
+          accrued_profit?: number;
+          last_accrual_at?: string;
           status?: string;
           created_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
+          package_id?: string | null;
           package_name?: string;
           investment?: number;
           daily_return?: number;
+          hashrate?: string | null;
+          term_days?: number | null;
+          expires_at?: string | null;
+          accrued_profit?: number;
+          last_accrual_at?: string;
           status?: string;
           created_at?: string;
         };
@@ -415,6 +436,7 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          package_id: string | null;
           package_name: string;
           price: number;
           status: string;
@@ -424,6 +446,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          package_id?: string | null;
           package_name: string;
           price: number;
           status?: string;
@@ -433,10 +456,61 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
+          package_id?: string | null;
           package_name?: string;
           price?: number;
           status?: string;
           expires_at?: string | null;
+          created_at?: string;
+        };
+      };
+      trading_signals: {
+        Row: {
+          id: string;
+          symbol: string;
+          direction: string;
+          entry_price: string;
+          target_price: string;
+          stop_price: string;
+          status: string;
+          min_tier: string;
+          confidence: number;
+          outcome: string | null;
+          notes: string | null;
+          published_at: string;
+          closed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          symbol: string;
+          direction: string;
+          entry_price: string;
+          target_price: string;
+          stop_price: string;
+          status?: string;
+          min_tier?: string;
+          confidence?: number;
+          outcome?: string | null;
+          notes?: string | null;
+          published_at?: string;
+          closed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          symbol?: string;
+          direction?: string;
+          entry_price?: string;
+          target_price?: string;
+          stop_price?: string;
+          status?: string;
+          min_tier?: string;
+          confidence?: number;
+          outcome?: string | null;
+          notes?: string | null;
+          published_at?: string;
+          closed_at?: string | null;
           created_at?: string;
         };
       };

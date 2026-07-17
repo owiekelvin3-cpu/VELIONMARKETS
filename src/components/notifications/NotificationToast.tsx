@@ -69,7 +69,7 @@ export function NotificationToast() {
                 onClick={openToast}
                 className="flex min-w-0 flex-1 gap-3 text-left"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald text-black shadow-sm">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald/30 bg-emerald text-black shadow-sm">
                   <Bell className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1 pt-0.5">

@@ -45,15 +45,15 @@ export function NotificationList({
             type="button"
             onClick={() => onItemClick(n)}
             className={cn(
-              "flex w-full gap-3 px-4 py-3.5 text-left transition-colors hover:bg-secondary/50",
-              !n.read && "bg-emerald/[0.06]",
-              selectedId === n.id && "bg-secondary/70"
+              "flex w-full gap-3 px-4 py-3.5 text-left transition-colors hover:bg-secondary",
+              !n.read && "bg-emerald/10 dark:bg-emerald/15",
+              selectedId === n.id && "bg-secondary"
             )}
           >
             <span
               className={cn(
                 "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                n.read ? "bg-transparent" : "bg-emerald"
+                n.read ? "bg-border" : "bg-emerald"
               )}
               aria-hidden="true"
             />

@@ -20,8 +20,7 @@ async function uploadGiftCardImage(userId: string, file: File, side: "front" | "
   const path = `${userId}/gift-cards/${Date.now()}-${side}-${file.name}`;
   const { error } = await supabase.storage.from("kyc-documents").upload(path, file);
   if (error) throw error;
-  const { data } = supabase.storage.from("kyc-documents").getPublicUrl(path);
-  return data.publicUrl;
+  return path;
 }
 
 export default function GiftCardBrandDepositPage() {

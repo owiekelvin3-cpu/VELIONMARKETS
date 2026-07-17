@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Bot, ChevronDown, Clock, Sparkles } from "@/lib/icons";
+import { Bot, Clock, Sparkles } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +40,6 @@ export function RunningBotView({
   onManualTrade,
 }: RunningBotViewProps) {
   const { t } = useTranslation();
-  const [earnMoreOpen, setEarnMoreOpen] = useState(false);
   const [tradeAmount, setTradeAmount] = useState("");
 
   if (activeSubs.length === 0 || !selectedSub) {
@@ -131,23 +130,22 @@ export function RunningBotView({
         <p className="mt-4 text-center text-sm text-muted">{t("aiTrading.moneyBackNote")}</p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-secondary/20">
-        <button
-          type="button"
-          onClick={() => setEarnMoreOpen((o) => !o)}
-          className="flex w-full items-center justify-between px-4 py-3.5 text-left"
-        >
-          <div>
-            <p className="text-sm font-semibold text-foreground">{t("aiTrading.earnMore")}</p>
-            <p className="mt-0.5 text-xs text-muted">{t("aiTrading.earnMoreDesc")}</p>
-          </div>
-          <ChevronDown
-            className={cn("h-4 w-4 shrink-0 text-muted transition-transform", earnMoreOpen && "rotate-180")}
-          />
-        </button>
+      <section className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="border-b border-border/70 px-5 py-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald">
+            {t("aiTrading.manualExecutionEyebrow")}
+          </p>
+          <h3 className="mt-1 font-display text-base font-semibold text-foreground">
+            {t("aiTrading.earnMore")}
+          </h3>
+          <p className="mt-1 text-sm leading-relaxed text-muted">{t("aiTrading.earnMoreDesc")}</p>
+        </div>
 
-        {earnMoreOpen && (
-          <div className="space-y-4 border-t border-border/70 px-4 py-4">
+        <div className="space-y-5 px-5 py-5">
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+              {t("aiTrading.quickExecution")}
+            </p>
             <div className="grid grid-cols-3 gap-2">
               {[
                 { label: t("aiTrading.tradeSmall"), pct: 0.25 },
@@ -162,67 +160,72 @@ export function RunningBotView({
                     type="button"
                     disabled={loading || amt <= 0}
                     onClick={() => onQuickTrade(pct)}
-                    className="rounded-xl border border-border bg-secondary/40 py-3.5 text-center transition-colors hover:border-emerald/30 disabled:opacity-40"
+                    className="rounded-xl border border-border bg-secondary py-3.5 text-center transition-colors hover:border-emerald/30 hover:bg-secondary/80 disabled:opacity-40"
                   >
-                    <p className="text-xs font-medium text-foreground">{label}</p>
-                    <p className="mt-1 text-[11px] text-muted">{formatCurrency(amt)}</p>
+                    <p className="font-display text-lg font-bold text-foreground">{label}</p>
+                    <p className="mt-0.5 text-[10px] text-muted">{t("aiTrading.tradePctLabel")}</p>
+                    <p className="mt-2 text-[11px] text-muted">{formatCurrency(amt)}</p>
                     <p className="mt-1 text-xs font-semibold text-emerald">+{formatCurrency(profit)}</p>
                   </button>
                 );
               })}
             </div>
-
-            <div>
-              <Label htmlFor="extra-trade" className="text-xs">
-                {t("aiTrading.tradeAmount")}
-              </Label>
-              <div className="mt-1.5 flex gap-2">
-                <Input
-                  id="extra-trade"
-                  type="number"
-                  min={1}
-                  max={selectedSub.allocation}
-                  value={tradeAmount}
-                  onChange={(e) => setTradeAmount(e.target.value)}
-                  placeholder={String(Math.floor(selectedSub.allocation * 0.25))}
-                />
-                <Button
-                  disabled={loading || tradeNum <= 0}
-                  onClick={() => onManualTrade(tradeNum)}
-                >
-                  {loading ? t("aiTrading.trading") : t("aiTrading.executeTrade")}
-                </Button>
-              </div>
-              <p className="mt-1.5 text-xs text-muted">
-                {t("aiTrading.tradeCryptoDesc", {
-                  asset: selectedSub.crypto_asset,
-                  rate: getTradeRate(botId),
-                })}
-                {tradeNum > 0 && (
-                  <> · +{formatCurrency(estimateTradeProfit(tradeNum, botId))}</>
-                )}
-              </p>
-            </div>
-
-            {subTrades.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs font-medium text-muted">{t("aiTrading.recentTrades")}</p>
-                <div className="space-y-1.5">
-                  {subTrades.slice(0, 5).map((tr) => (
-                    <div
-                      key={tr.id}
-                      className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2 text-sm"
-                    >
-                      <span className="text-muted">{tr.crypto_asset}</span>
-                      <span className="font-medium text-emerald">+{formatCurrency(tr.profit)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
-        )}
-      </div>
+
+          <div className="rounded-xl border border-border bg-secondary/40 p-4">
+            <Label htmlFor="extra-trade" className="text-sm font-medium text-foreground">
+              {t("aiTrading.tradeAmount")}
+            </Label>
+            <div className="mt-2 flex gap-2">
+              <Input
+                id="extra-trade"
+                type="number"
+                min={1}
+                max={selectedSub.allocation}
+                value={tradeAmount}
+                onChange={(e) => setTradeAmount(e.target.value)}
+                placeholder={String(Math.floor(selectedSub.allocation * 0.25))}
+                className="h-11"
+              />
+              <Button
+                className="shrink-0"
+                disabled={loading || tradeNum <= 0}
+                onClick={() => onManualTrade(tradeNum)}
+              >
+                {loading ? t("aiTrading.trading") : t("aiTrading.executeTrade")}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-muted">
+              {t("aiTrading.tradeCryptoDesc", {
+                asset: selectedSub.crypto_asset,
+                rate: getTradeRate(botId),
+              })}
+              {tradeNum > 0 && (
+                <> · {t("aiTrading.expectedTradeProfit")}: +{formatCurrency(estimateTradeProfit(tradeNum, botId))}</>
+              )}
+            </p>
+          </div>
+
+          {subTrades.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                {t("aiTrading.recentTrades")}
+              </p>
+              <div className="overflow-hidden rounded-xl border border-border">
+                {subTrades.slice(0, 5).map((tr) => (
+                  <div
+                    key={tr.id}
+                    className="flex items-center justify-between border-b border-border/70 px-3 py-2.5 text-sm last:border-0"
+                  >
+                    <span className="font-medium text-foreground">{tr.crypto_asset}</span>
+                    <span className="font-semibold tabular-nums text-emerald">+{formatCurrency(tr.profit)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       <Button variant="outline" className="w-full" onClick={onStartAnother}>
         {t("aiTrading.buyAnother")}

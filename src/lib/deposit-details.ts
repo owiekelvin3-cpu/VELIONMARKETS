@@ -51,6 +51,12 @@ export function parseDepositNotes(notes: string | null, method: string): ParsedD
   return { type: "plain", text: notes };
 }
 
+export function getGiftCardBrand(method: string) {
+  if (!method.startsWith("gift_card_")) return null;
+  const brandId = method.replace("gift_card_", "");
+  return GIFT_CARD_BRANDS.find((b) => b.id === brandId) ?? null;
+}
+
 export function formatDepositMethod(method: string): string {
   if (method.startsWith("gift_card_")) {
     const brandId = method.replace("gift_card_", "");

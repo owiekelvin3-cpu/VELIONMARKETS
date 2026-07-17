@@ -3,6 +3,8 @@ import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { ensureValidSession, isJwtExpiredError, onSessionExpired } from "@/lib/auth-session";
 import { syncUserLocation } from "@/lib/user-location";
+import { setActiveCurrency } from "@/lib/currency";
+import { DEFAULT_CURRENCY, normalizeCurrency } from "@/constants/currencies";
 import type { Profile } from "@/types/database";
 
 interface AuthContextType {
@@ -17,7 +19,7 @@ interface AuthContextType {
     email: string,
     password: string,
     fullName: string,
-    location?: { country: string; region: string }
+    location?: { country: string; region: string; preferredCurrency?: string }
   ) => Promise<{ error: Error | null; user: User | null; session: Session | null }>;
   signOut: () => Promise<void>;
   refreshProfile: (userId?: string) => Promise<Profile | null>;
@@ -59,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (retry.data) {
             setProfile(retry.data);
             setProfileStatus("ready");
+            setActiveCurrency(retry.data.preferred_currency ?? DEFAULT_CURRENCY);
             return retry.data;
           }
           setProfile(null);
@@ -80,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setProfile(data);
       setProfileStatus("ready");
+      setActiveCurrency(data.preferred_currency ?? DEFAULT_CURRENCY);
       void syncUserLocation(userId);
       return data;
     } catch (err) {
@@ -205,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (payload) => {
           const next = payload.new as Profile;
           setProfile(next);
+          setActiveCurrency(next.preferred_currency ?? DEFAULT_CURRENCY);
           setProfileStatus("ready");
         }
       )
@@ -237,8 +242,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     fullName: string,
-    location?: { country: string; region: string }
+    location?: { country: string; region: string; preferredCurrency?: string }
   ) => {
+    const preferredCurrency = normalizeCurrency(location?.preferredCurrency);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -247,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           full_name: fullName,
           country: location?.country,
           region: location?.region,
+          preferred_currency: preferredCurrency,
         },
       },
     });
@@ -255,7 +262,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         full_name: fullName,
         country: location?.country || null,
         region: location?.region || null,
+        preferred_currency: preferredCurrency,
       }).eq("id", data.user.id);
+      await supabase.from("balances").update({ currency: preferredCurrency }).eq("user_id", data.user.id);
+      setActiveCurrency(preferredCurrency);
       setSessionExpired(false);
       // Same race fix as signIn — sync React state before navigating.
       if (data.session) {
@@ -276,6 +286,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setProfile(null);
     setProfileStatus("idle");
+    setActiveCurrency(DEFAULT_CURRENCY);
   };
 
   return (

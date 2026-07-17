@@ -319,9 +319,7 @@ export function DashboardLayout() {
               <ThemeToggle />
               <LanguageSelector />
             </div>
-            <div className={cn(isOverview && "[&_button]:text-white/80 [&_button]:hover:bg-white/10 [&_button]:hover:text-white")}>
-              <NotificationBell />
-            </div>
+            <NotificationBell tone={isOverview ? "hero" : "default"} />
           </div>
         </header>
 

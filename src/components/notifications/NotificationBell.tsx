@@ -16,7 +16,12 @@ import {
 import { NotificationList } from "@/components/notifications/NotificationList";
 import { cn } from "@/lib/utils";
 
-export function NotificationBell() {
+interface NotificationBellProps {
+  /** Hero tone for the dark overview header; default for standard pages. */
+  tone?: "default" | "hero";
+}
+
+export function NotificationBell({ tone = "default" }: NotificationBellProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -43,7 +48,12 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative rounded-full border border-border/70 bg-secondary shadow-sm hover:bg-secondary"
+          className={cn(
+            "relative rounded-full border shadow-sm",
+            tone === "hero"
+              ? "border-white/25 bg-white text-[#0c0c0e] hover:bg-white/95 hover:text-[#0c0c0e]"
+              : "border-border bg-secondary text-foreground hover:bg-secondary hover:text-foreground"
+          )}
           aria-label={t("notifications.bellLabel")}
         >
           <Bell className="h-5 w-5" />
@@ -58,7 +68,7 @@ export function NotificationBell() {
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="z-[140] w-[min(100vw-1.5rem,22rem)] overflow-hidden p-0 shadow-[0_16px_48px_rgba(0,0,0,0.22)]"
+        className="z-[140] w-[min(100vw-1.5rem,22rem)] overflow-hidden border border-border bg-card p-0 shadow-[0_16px_48px_rgba(0,0,0,0.45)]"
       >
         <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
           <div className="min-w-0">
@@ -96,7 +106,7 @@ export function NotificationBell() {
               setOpen(false);
               navigate(inboxPath);
             }}
-            className="w-full rounded-lg px-2 py-2 text-center text-xs font-semibold text-emerald hover:bg-emerald/10"
+            className="w-full rounded-lg px-2 py-2 text-center text-xs font-semibold text-emerald transition-colors hover:bg-emerald/10 dark:hover:bg-emerald/15"
           >
             {t("notifications.viewAll")}
           </button>

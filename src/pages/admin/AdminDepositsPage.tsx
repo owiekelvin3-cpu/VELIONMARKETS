@@ -11,9 +11,12 @@ import { Button } from "@/components/ui/button";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import {
   formatDepositMethod,
+  getGiftCardBrand,
+  isGiftCardDeposit,
   parseDepositNotes,
   type AdminDeposit,
 } from "@/lib/deposit-details";
+import { BrandLogo } from "@/components/dashboard/DepositIcons";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -157,6 +160,8 @@ export default function AdminDepositsPage() {
           <div className="space-y-2">
             {filtered.map((d) => {
               const meta = parseDepositNotes(d.notes, d.method);
+              const isGiftCard = isGiftCardDeposit(d.method);
+              const giftBrand = getGiftCardBrand(d.method);
               const hasImages = meta.type === "gift_card" && (meta.frontImageUrl || meta.backImageUrl);
               const isExpanded = expandedId === d.id;
               const pending = isPending(d.status);
@@ -171,12 +176,20 @@ export default function AdminDepositsPage() {
                   )}
                 >
                   <div className="flex items-center gap-3 px-4 py-3">
+                    {giftBrand && (
+                      <BrandLogo src={giftBrand.iconUrl} alt={giftBrand.label} size="sm" tileClassName="rounded-lg" />
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span className="font-display text-base font-semibold text-foreground">
                           {formatCurrency(d.amount)}
                         </span>
                         <StatusBadge status={d.status} />
+                        {isGiftCard && (
+                          <span className="inline-flex items-center rounded-full border border-gold/30 bg-gold/10 px-2 py-0.5 text-[10px] font-medium text-gold">
+                            {t("admin.giftCardDeposit")}
+                          </span>
+                        )}
                         {hasImages && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted">
                             <ImageIcon className="h-3 w-3" />

@@ -20,6 +20,8 @@ import {
   getRegionsForCountry,
   hasPresetRegions,
 } from "@/constants/geo";
+import { DEFAULT_CURRENCY, suggestCurrencyForCountry } from "@/constants/currencies";
+import { CurrencySelectField } from "@/components/settings/CurrencySelector";
 import { Mail, X, ChevronDown } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +53,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [countryCode, setCountryCode] = useState("");
   const [region, setRegion] = useState("");
+  const [preferredCurrency, setPreferredCurrency] = useState(DEFAULT_CURRENCY);
 
   useEffect(() => {
     if (sessionExpired) clearSessionExpired();
@@ -58,6 +61,9 @@ export default function AuthPage() {
 
   useEffect(() => {
     setRegion("");
+    if (countryCode) {
+      setPreferredCurrency(suggestCurrencyForCountry(countryCode));
+    }
   }, [countryCode]);
 
   useEffect(() => {
@@ -74,6 +80,7 @@ export default function AuthPage() {
     setInfo("");
     setCountryCode("");
     setRegion("");
+    setPreferredCurrency(DEFAULT_CURRENCY);
     setSearchParams(next === "register" ? { mode: "register" } : {}, { replace: true });
   }
 
@@ -129,6 +136,7 @@ export default function AuthPage() {
       {
         country: getCountryName(countryCode),
         region: region.trim(),
+        preferredCurrency,
       }
     );
     if (error) {
@@ -137,6 +145,7 @@ export default function AuthPage() {
       setInfo(t("auth.checkEmail"));
       setCountryCode("");
       setRegion("");
+      setPreferredCurrency(DEFAULT_CURRENCY);
       setSearchParams({}, { replace: true });
     } else {
       if (created) {
@@ -335,6 +344,19 @@ export default function AuthPage() {
                           />
                         )}
                       </div>
+                    </div>
+
+                    <div className="relative">
+                      <label htmlFor="reg-currency" className="sr-only">{t("auth.accountCurrency")}</label>
+                      <CurrencySelectField
+                        id="reg-currency"
+                        name="currency"
+                        value={preferredCurrency}
+                        onChange={setPreferredCurrency}
+                        className={cn(selectClass, "text-foreground")}
+                      />
+                      <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                      <p className="mt-1.5 text-xs text-muted">{t("auth.accountCurrencyHint")}</p>
                     </div>
 
                     <PasswordInput

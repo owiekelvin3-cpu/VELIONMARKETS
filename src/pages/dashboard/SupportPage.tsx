@@ -62,7 +62,7 @@ export default function SupportPage() {
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-4 sm:p-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mx-auto w-full max-w-lg space-y-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald text-black shadow-sm">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald/30 bg-emerald text-black shadow-sm">
             <MessageCircle className="h-5 w-5" />
           </div>
           <div className="min-w-0">

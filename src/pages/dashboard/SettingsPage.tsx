@@ -19,13 +19,17 @@ import {
 import { UserAvatar } from "@/components/settings/UserAvatar";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
 import { ThemeSelector } from "@/components/layout/ThemeToggle";
+import { CurrencySelector } from "@/components/settings/CurrencySelector";
 import { supabase } from "@/lib/supabase";
 import {
   uploadAvatar,
   removeAvatar,
   updateProfileFields,
+  updateUserCurrency,
   connectBrowserWallet,
 } from "@/lib/profile-settings";
+import { setActiveCurrency } from "@/lib/currency";
+import { DEFAULT_CURRENCY } from "@/constants/currencies";
 import {
   Bell,
   Check,
@@ -135,6 +139,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [connectingWallet, setConnectingWallet] = useState(false);
+  const [currencyBusy, setCurrencyBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -160,6 +165,21 @@ export default function SettingsPage() {
       setMessage("");
       setError("");
     }, 4000);
+  };
+
+  const handleCurrencyChange = async (code: string) => {
+    if (!user) return;
+    setCurrencyBusy(true);
+    try {
+      await updateUserCurrency(user.id, code);
+      setActiveCurrency(code);
+      await refreshProfile(user.id);
+      flash(t("settingsPage.currencyUpdated"));
+    } catch {
+      flash(t("settingsPage.saveFailed"), true);
+    } finally {
+      setCurrencyBusy(false);
+    }
   };
 
   const handleAvatarPick = async (file: File) => {
@@ -659,7 +679,7 @@ export default function SettingsPage() {
 
                 <div className="overflow-hidden rounded-2xl border border-border/80">
                   <div className="flex flex-col gap-4 border-b border-border/70 bg-secondary/20 px-4 py-4 sm:flex-row sm:items-center">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald text-black shadow-sm">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald/30 bg-emerald text-black shadow-sm">
                       <Bell className="h-4 w-4" />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -757,6 +777,17 @@ export default function SettingsPage() {
                 <CardDescription>{t("settingsPage.preferencesDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-4">
+                  <div>
+                    <p className="text-sm font-medium">{t("settingsPage.currency")}</p>
+                    <p className="text-xs text-muted">{t("settingsPage.currencyDesc")}</p>
+                  </div>
+                  <CurrencySelector
+                    value={profile?.preferred_currency ?? DEFAULT_CURRENCY}
+                    onChange={handleCurrencyChange}
+                    busy={currencyBusy}
+                  />
+                </div>
                 <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-4">
                   <div>
                     <p className="text-sm font-medium">{t("settingsPage.language")}</p>

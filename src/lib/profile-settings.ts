@@ -42,12 +42,18 @@ export async function updateProfileFields(
     bio?: string | null;
     wallet_address?: string | null;
     wallet_label?: string | null;
+    preferred_currency?: string;
   }
 ) {
   const { error } = await supabase
     .from("profiles")
     .update({ ...fields, updated_at: new Date().toISOString() })
     .eq("id", userId);
+  if (error) throw error;
+}
+
+export async function updateUserCurrency(_userId: string, currency: string) {
+  const { error } = await supabase.rpc("update_user_currency", { p_currency: currency });
   if (error) throw error;
 }
 
