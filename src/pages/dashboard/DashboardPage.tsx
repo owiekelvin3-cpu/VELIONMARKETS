@@ -6,8 +6,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { formatAuthError, withValidSession } from "@/lib/auth-session";
 import { Button } from "@/components/ui/button";
+import { CurrencySelector } from "@/components/settings/CurrencySelector";
 import { cn, formatCurrency } from "@/lib/utils";
 import { isKycApproved } from "@/lib/kyc";
+import { updateUserCurrency } from "@/lib/profile-settings";
+import {
+  formatMoney,
+  parseCurrencyConversionResult,
+  setActiveCurrency,
+} from "@/lib/currency";
+import { DEFAULT_CURRENCY } from "@/constants/currencies";
 import {
   ArrowDownToLine, ArrowUpFromLine, TrendingUp, ShieldCheck, CandlestickChart, ChevronRight,
 } from "@/lib/icons";
@@ -32,23 +40,30 @@ function isSettled(status: string) {
   return status === "completed" || status === "approved";
 }
 
-function formatBalanceParts(amount: number) {
-  const formatted = formatCurrency(amount);
+function formatBalanceParts(amount: number, currency: string) {
+  const formatted = formatCurrency(amount, currency);
   const match = formatted.match(/^([^0-9.-]*)([0-9,]+)([.][0-9]+)?(.*)$/);
-  if (!match) return { prefix: "", whole: formatted, decimals: "", suffix: "" };
+  if (!match) {
+    const symbol = formatMoney(0, currency).replace(/[\d.,\s\u00a0-]/g, "").trim();
+    return { prefix: symbol, whole: formatted, decimals: "", suffix: "" };
+  }
   return { prefix: match[1], whole: match[2], decimals: match[3] ?? "", suffix: match[4] };
 }
 
 export default function DashboardPage() {
   const { t } = useTranslation();
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [balance, setBalance] = useState(0);
   const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
   const [selectedTx, setSelectedTx] = useState<UserTransaction | null>(null);
   const [error, setError] = useState("");
+  const [currencyMessage, setCurrencyMessage] = useState("");
+  const [currencyBusy, setCurrencyBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const accountCurrency = profile?.preferred_currency ?? DEFAULT_CURRENCY;
 
   const load = useCallback(async (opts?: { soft?: boolean }) => {
     if (!user) return;
@@ -94,6 +109,35 @@ export default function DashboardPage() {
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [user, load]);
+
+  const handleCurrencyChange = async (code: string) => {
+    if (!user) return;
+    if (code === accountCurrency) return;
+    setCurrencyBusy(true);
+    setCurrencyMessage("");
+    try {
+      const data = await updateUserCurrency(user.id, code);
+      const result = parseCurrencyConversionResult(data);
+      setActiveCurrency(code);
+      await refreshProfile(user.id);
+      if (result?.converted) {
+        setCurrencyMessage(
+          t("settingsPage.currencyConverted", {
+            currency: result.toCurrency,
+            balance: formatMoney(result.balance, result.toCurrency),
+          })
+        );
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else {
+        setCurrencyMessage(t("settingsPage.currencyUpdated"));
+        void load({ soft: true });
+      }
+    } catch {
+      setError(t("settingsPage.saveFailed"));
+    } finally {
+      setCurrencyBusy(false);
+    }
+  };
 
   const totalDeposits = useMemo(
     () => allDeposits.filter((d) => isSettled(d.status)).reduce((s, d) => s + Number(d.amount), 0),
@@ -147,7 +191,7 @@ export default function DashboardPage() {
   const kycStatus = profile?.kyc_status ?? "none";
   const kycApproved = isKycApproved(profile);
   const kycKey = KYC_LABELS[kycStatus] ?? "dashboard.kycNone";
-  const balanceParts = formatBalanceParts(balance);
+  const balanceParts = formatBalanceParts(balance, accountCurrency);
   const cashHref = kycApproved ? "/dashboard/deposits" : "/dashboard/kyc";
   const withdrawHref = kycApproved ? "/dashboard/withdrawals" : "/dashboard/kyc";
   const tradeHref = kycApproved ? "/dashboard/trading-room" : "/dashboard/kyc";
@@ -156,13 +200,13 @@ export default function DashboardPage() {
   const metrics = [
     {
       label: t("dashboard.totalDeposits"),
-      value: formatCurrency(totalDeposits),
+      value: formatCurrency(totalDeposits, accountCurrency),
       icon: ArrowDownToLine,
       href: cashHref,
     },
     {
       label: t("dashboard.totalWithdrawals"),
-      value: formatCurrency(totalWithdrawals),
+      value: formatCurrency(totalWithdrawals, accountCurrency),
       icon: ArrowUpFromLine,
       href: withdrawHref,
     },
@@ -185,6 +229,12 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {currencyMessage && (
+        <div className="rounded-2xl border border-emerald/25 bg-emerald/10 px-4 py-3">
+          <p className="text-sm text-emerald">{currencyMessage}</p>
+        </div>
+      )}
+
       <FadeIn>
         <section className="dashboard-hero -mx-3 rounded-none px-5 pb-7 pt-3 sm:mx-0 sm:rounded-[1.75rem] sm:px-8 sm:pb-8 sm:pt-7">
           <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(12rem,18rem)] lg:items-end lg:gap-10">
@@ -193,21 +243,36 @@ export default function DashboardPage() {
                 {t("dashboard.welcomeBack", { name: firstName })}
               </p>
 
-              <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                {t("dashboard.totalBalance")}
-              </p>
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                  {t("dashboard.totalBalance")}
+                </p>
+                <CurrencySelector
+                  value={accountCurrency}
+                  onChange={handleCurrencyChange}
+                  busy={currencyBusy}
+                  className="h-8 min-w-[5.5rem] border-white/20 bg-white/10 px-2.5 text-xs text-white hover:bg-white/15 [&_svg]:text-white/60"
+                />
+              </div>
 
               {loading ? (
                 <div className="mt-3 h-14 w-52 animate-pulse rounded-2xl bg-white/10" />
               ) : (
                 <p className="mt-2 font-display text-[2.85rem] font-semibold leading-none tracking-tight text-white sm:text-[3.25rem]">
-                  <span className="mr-1 text-[1.65rem] font-medium text-white/65 sm:text-3xl">
-                    {balanceParts.prefix || "$"}
-                  </span>
+                  {balanceParts.prefix ? (
+                    <span className="mr-1 text-[1.65rem] font-medium text-white/65 sm:text-3xl">
+                      {balanceParts.prefix}
+                    </span>
+                  ) : null}
                   {balanceParts.whole}
                   {balanceParts.decimals ? (
                     <span className="text-[1.65rem] font-medium text-white/45 sm:text-3xl">
                       {balanceParts.decimals}
+                    </span>
+                  ) : null}
+                  {balanceParts.suffix ? (
+                    <span className="ml-1 text-[1.65rem] font-medium text-white/65 sm:text-3xl">
+                      {balanceParts.suffix}
                     </span>
                   ) : null}
                 </p>
