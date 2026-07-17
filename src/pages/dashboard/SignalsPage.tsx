@@ -24,6 +24,7 @@ import {
   type SignalSubscription,
   type TradingSignal,
 } from "@/lib/signals";
+import { convertFromUsd } from "@/lib/currency";
 import { ArrowDownToLine, Bell, CandlestickChart, Check, Lock, Radio, TrendingDown, TrendingUp } from "@/lib/icons";
 
 function SignalRow({ signal }: { signal: TradingSignal }) {
@@ -117,7 +118,7 @@ export default function SignalsPage() {
       setMessage(t("kyc.required"));
       return;
     }
-    if (pkg.price > balance) {
+    if (convertFromUsd(pkg.price) > balance) {
       setMessage(t("signals.insufficientBalance"));
       return;
     }
@@ -132,11 +133,12 @@ export default function SignalsPage() {
     const name = t(pending.nameKey);
     const expires = new Date();
     expires.setDate(expires.getDate() + pending.durationDays);
+    const price = convertFromUsd(pending.price);
     const { error } = await supabase.from("signal_packages").insert({
       user_id: user.id,
       package_id: pending.id,
       package_name: name,
-      price: pending.price,
+      price,
       status: "active",
       expires_at: expires.toISOString(),
     });
@@ -286,6 +288,7 @@ export default function SignalsPage() {
             {SIGNAL_PACKAGES.map((pkg) => {
               const name = t(pkg.nameKey);
               const isCurrent = activeTier === pkg.id;
+              const price = convertFromUsd(pkg.price);
               return (
                 <div
                   key={pkg.id}
@@ -299,7 +302,7 @@ export default function SignalsPage() {
                     {isCurrent && <Badge variant="success">{t("signals.currentPlan")}</Badge>}
                   </div>
                   <p className="mt-3 font-display text-2xl font-semibold tracking-tight">
-                    {formatCurrency(pkg.price)}
+                    {formatCurrency(price)}
                     <span className="ml-1 text-sm font-normal text-muted">
                       {t("signals.perPeriod", { days: pkg.durationDays })}
                     </span>
@@ -322,7 +325,7 @@ export default function SignalsPage() {
                   >
                     {isCurrent ? t("signals.planActive") : loading === pkg.id ? t("common.saving") : t("signals.subscribe")}
                   </Button>
-                  {balance < pkg.price && !isCurrent && (
+                  {balance < price && !isCurrent && (
                     <Button variant="ghost" size="sm" className="mt-1 w-full text-xs" asChild>
                       <Link to="/dashboard/deposits">
                         <ArrowDownToLine className="h-3.5 w-3.5" />
@@ -342,7 +345,7 @@ export default function SignalsPage() {
               variant="risk"
               title={t("signals.confirmTitle")}
               body={t("signals.confirmBody", {
-                amount: formatCurrency(pending.price),
+                amount: formatCurrency(convertFromUsd(pending.price)),
                 name: t(pending.nameKey),
                 days: pending.durationDays,
               })}

@@ -79,7 +79,6 @@ export function DashboardLayout() {
 
   const settingsActive = location.pathname === "/dashboard/settings";
   const hideDock = shouldHideDashboardDock(location.pathname);
-  const isOverview = location.pathname === "/dashboard";
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -268,20 +267,12 @@ export function DashboardLayout() {
       <div className="relative z-[1] flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
         <header
           className={cn(
-            "sticky top-0 z-20 flex min-h-14 shrink-0 items-center gap-2 px-3 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4 md:px-6",
-            isOverview
-              ? "border-b-0 bg-transparent"
-              : "border-b border-border/60 bg-background/80 backdrop-blur-xl"
+            "sticky top-0 z-20 flex min-h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/95 px-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:gap-3 sm:px-4 md:px-6"
           )}
         >
           <button
             type="button"
-            className={cn(
-              "flex h-11 w-11 shrink-0 items-center justify-center rounded-full lg:hidden",
-              isOverview
-                ? "text-white/80 hover:bg-white/10 hover:text-white"
-                : "text-muted hover:bg-secondary"
-            )}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:border-emerald/35 hover:bg-secondary lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label={t("dashboard.openSidebar")}
           >
@@ -290,10 +281,7 @@ export function DashboardLayout() {
 
           <Link
             to="/dashboard/settings"
-            className={cn(
-              "flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full lg:hidden",
-              isOverview ? "ring-1 ring-white/25" : "ring-1 ring-border/80"
-            )}
+            className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-card shadow-sm lg:hidden"
             aria-label={t("dashboard.settings")}
           >
             <UserAvatar
@@ -314,12 +302,12 @@ export function DashboardLayout() {
             />
           </form>
 
-      <div className="ml-auto flex shrink-0 items-center gap-0.5">
-            <div className="hidden lg:flex lg:items-center lg:gap-0.5">
+      <div className="ml-auto flex shrink-0 items-center gap-1.5">
+            <div className="hidden lg:flex lg:items-center lg:gap-1.5">
               <ThemeToggle />
               <LanguageSelector />
             </div>
-            <NotificationBell tone={isOverview ? "hero" : "default"} />
+            <NotificationBell />
           </div>
         </header>
 

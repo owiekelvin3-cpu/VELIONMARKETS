@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
+import { convertFromUsd } from "@/lib/currency";
 import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 import { COPY_STRATEGIES, type CopyStrategy } from "@/constants/products";
 import { ArrowDownToLine } from "@/lib/icons";
@@ -69,8 +70,9 @@ export default function CopyTradingPage() {
       setIsSuccess(false);
       return;
     }
-    if (!amount || amount < selected.minAllocation) {
-      setMessage(t("copyTrading.minAllocation", { amount: formatCurrency(selected.minAllocation) }));
+    const minAllocation = selected ? convertFromUsd(selected.minAllocation) : 0;
+    if (!amount || amount < minAllocation) {
+      setMessage(t("copyTrading.minAllocation", { amount: formatCurrency(minAllocation) }));
       setIsSuccess(false);
       return;
     }
@@ -152,7 +154,7 @@ export default function CopyTradingPage() {
                   setSelected(tr);
                   setConfirming(false);
                   setMessage("");
-                  setAllocation(String(tr.minAllocation));
+                  setAllocation(String(convertFromUsd(tr.minAllocation)));
                 }}
                 className={cn(
                   "rounded-2xl border bg-card p-4 text-left transition-colors",
@@ -190,13 +192,15 @@ export default function CopyTradingPage() {
           })}
         </div>
 
-        {selected && (
+        {selected && (() => {
+          const minAllocation = convertFromUsd(selected.minAllocation);
+          return (
           <DashboardSheet className="mt-4">
             <h2 className="font-display text-base font-semibold">
               {t("copyTrading.subscribeTo", { name: selected.name })}
             </h2>
             <p className="mt-1 text-xs text-muted">
-              {t("copyTrading.minAllocation", { amount: formatCurrency(selected.minAllocation) })}
+              {t("copyTrading.minAllocation", { amount: formatCurrency(minAllocation) })}
             </p>
 
             {confirming ? (
@@ -230,14 +234,14 @@ export default function CopyTradingPage() {
                   <Input
                     id="copy-allocation"
                     type="number"
-                    min={selected.minAllocation}
+                    min={minAllocation}
                     value={allocation}
                     onChange={(e) => setAllocation(e.target.value)}
                     className="mt-2"
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {balance < selected.minAllocation && (
+                  {balance < minAllocation && (
                     <Button variant="outline" className="rounded-full" asChild>
                       <Link to="/dashboard/deposits">
                         <ArrowDownToLine className="h-3.5 w-3.5" />
@@ -256,7 +260,8 @@ export default function CopyTradingPage() {
               </div>
             )}
           </DashboardSheet>
-        )}
+          );
+        })()}
 
         {message && (
           <p className={cn("mt-3 text-sm", isSuccess ? "text-emerald" : "text-amber-400")}>{message}</p>

@@ -53,8 +53,9 @@ export async function updateProfileFields(
 }
 
 export async function updateUserCurrency(_userId: string, currency: string) {
-  const { error } = await supabase.rpc("update_user_currency", { p_currency: currency });
+  const { data, error } = await supabase.rpc("update_user_currency", { p_currency: currency });
   if (error) throw error;
+  return data;
 }
 
 declare global {

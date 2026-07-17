@@ -13,6 +13,7 @@ import { computeLiveProfit, estimateTradeProfit } from "@/lib/ai-trading";
 import { ensureValidSession } from "@/lib/auth-session";
 import { hasSeenWalkthrough } from "@/lib/ai-trading-onboarding";
 import { formatCurrency, cn } from "@/lib/utils";
+import { convertFromUsd } from "@/lib/currency";
 import AITradingWalkthrough from "@/components/dashboard/AITradingWalkthrough";
 import { StartBotFlow } from "@/components/ai-trading/StartBotFlow";
 import { RunningBotView } from "@/components/ai-trading/RunningBotView";
@@ -108,7 +109,8 @@ export default function AITradingPage() {
   const completedSubs = subs.filter((s) => s.status === "completed");
   const selectedSub = activeSubs.find((s) => s.id === selectedSubId) ?? activeSubs[0] ?? null;
   const totalEarnings = activeSubs.reduce((sum, s) => sum + computeLiveProfit(s), 0);
-  const needsFunds = balance < bot.minPower;
+  const minPower = convertFromUsd(bot.minPower);
+  const needsFunds = balance < minPower;
   const isSuccessMsg =
     message.includes("+") || message.includes("!") || message.toLowerCase().includes("success");
 
@@ -124,8 +126,8 @@ export default function AITradingPage() {
       setMessage(t("kyc.required"));
       return;
     }
-    if (!amountNum || amountNum < bot.minPower) {
-      setMessage(t("aiTrading.minPower", { amount: formatCurrency(bot.minPower) }));
+    if (!amountNum || amountNum < minPower) {
+      setMessage(t("aiTrading.minPower", { amount: formatCurrency(minPower) }));
       return;
     }
     if (amountNum > balance) {

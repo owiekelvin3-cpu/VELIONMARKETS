@@ -28,7 +28,7 @@ import {
   updateUserCurrency,
   connectBrowserWallet,
 } from "@/lib/profile-settings";
-import { setActiveCurrency } from "@/lib/currency";
+import { setActiveCurrency, formatMoney, parseCurrencyConversionResult } from "@/lib/currency";
 import { DEFAULT_CURRENCY } from "@/constants/currencies";
 import {
   Bell,
@@ -169,12 +169,24 @@ export default function SettingsPage() {
 
   const handleCurrencyChange = async (code: string) => {
     if (!user) return;
+    if (code === (profile?.preferred_currency ?? DEFAULT_CURRENCY)) return;
     setCurrencyBusy(true);
     try {
-      await updateUserCurrency(user.id, code);
+      const data = await updateUserCurrency(user.id, code);
+      const result = parseCurrencyConversionResult(data);
       setActiveCurrency(code);
       await refreshProfile(user.id);
-      flash(t("settingsPage.currencyUpdated"));
+      if (result?.converted) {
+        flash(
+          t("settingsPage.currencyConverted", {
+            currency: result.toCurrency,
+            balance: formatMoney(result.balance, result.toCurrency),
+          })
+        );
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else {
+        flash(t("settingsPage.currencyUpdated"));
+      }
     } catch {
       flash(t("settingsPage.saveFailed"), true);
     } finally {

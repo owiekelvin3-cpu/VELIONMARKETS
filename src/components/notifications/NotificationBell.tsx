@@ -16,12 +16,7 @@ import {
 import { NotificationList } from "@/components/notifications/NotificationList";
 import { cn } from "@/lib/utils";
 
-interface NotificationBellProps {
-  /** Hero tone for the dark overview header; default for standard pages. */
-  tone?: "default" | "hero";
-}
-
-export function NotificationBell({ tone = "default" }: NotificationBellProps) {
+export function NotificationBell() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -45,24 +40,26 @@ export function NotificationBell({ tone = "default" }: NotificationBellProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
+          type="button"
           className={cn(
-            "relative rounded-full border shadow-sm",
-            tone === "hero"
-              ? "border-white/25 bg-white text-[#0c0c0e] hover:bg-white/95 hover:text-[#0c0c0e]"
-              : "border-border bg-secondary text-foreground hover:bg-secondary hover:text-foreground"
+            "relative inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-visible rounded-full",
+            "border border-border bg-card text-foreground shadow-sm",
+            "transition-colors hover:border-emerald/35 hover:bg-secondary hover:text-foreground",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           )}
           aria-label={t("notifications.bellLabel")}
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-[1.125rem] w-[1.125rem]" aria-hidden="true" />
           {unreadCount > 0 && (
-            <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald px-1 text-[10px] font-bold text-black">
+            <span
+              className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-emerald px-1 text-[10px] font-bold leading-none text-[#0c0c0e] ring-2 ring-card"
+              aria-hidden="true"
+            >
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
-        </Button>
+        </button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
@@ -70,7 +67,7 @@ export function NotificationBell({ tone = "default" }: NotificationBellProps) {
         sideOffset={10}
         className="z-[140] w-[min(100vw-1.5rem,22rem)] overflow-hidden border border-border bg-card p-0 shadow-[0_16px_48px_rgba(0,0,0,0.45)]"
       >
-        <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between gap-2 border-b border-border bg-card px-4 py-3">
           <div className="min-w-0">
             <p className="font-display text-sm font-semibold text-foreground">{t("notifications.title")}</p>
             {unreadCount > 0 && (
@@ -91,7 +88,7 @@ export function NotificationBell({ tone = "default" }: NotificationBellProps) {
           )}
         </div>
 
-        <div className="max-h-80 overflow-y-auto">
+        <div className="max-h-80 overflow-y-auto bg-card">
           <NotificationList
             items={preview}
             loading={loading}
@@ -99,21 +96,21 @@ export function NotificationBell({ tone = "default" }: NotificationBellProps) {
           />
         </div>
 
-        <div className="border-t border-border px-3 py-2.5">
+        <div className="border-t border-border bg-card px-3 py-2.5">
           <button
             type="button"
             onClick={() => {
               setOpen(false);
               navigate(inboxPath);
             }}
-            className="w-full rounded-lg px-2 py-2 text-center text-xs font-semibold text-emerald transition-colors hover:bg-emerald/10 dark:hover:bg-emerald/15"
+            className="w-full rounded-lg px-2 py-2 text-center text-xs font-semibold text-emerald transition-colors hover:bg-emerald/10"
           >
             {t("notifications.viewAll")}
           </button>
         </div>
 
         {supported && (
-          <div className="border-t border-border px-4 py-3">
+          <div className="border-t border-border bg-card px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-medium text-foreground">{t("notifications.pushTitle")}</p>

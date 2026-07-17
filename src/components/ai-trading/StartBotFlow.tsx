@@ -14,6 +14,7 @@ import {
   estimatePassiveProfit, getHourlyRate,
 } from "@/lib/ai-trading";
 import { formatCurrency, cn } from "@/lib/utils";
+import { convertFromUsd } from "@/lib/currency";
 import type { StartStep } from "./types";
 
 interface StartBotFlowProps {
@@ -53,12 +54,13 @@ export function StartBotFlow({
 }: StartBotFlowProps) {
   const { t } = useTranslation();
   const bot = AI_BOTS.find((b) => b.id === selectedBot)!;
+  const minPower = convertFromUsd(bot.minPower);
   const amountNum = parseFloat(amount) || 0;
-  const estimate = amountNum >= bot.minPower
+  const estimate = amountNum >= minPower
     ? estimatePassiveProfit(amountNum, bot.id, durationHours)
     : 0;
-  const needsFunds = balance < bot.minPower;
-  const canStart = amountNum >= bot.minPower && amountNum <= balance && !needsFunds;
+  const needsFunds = balance < minPower;
+  const canStart = amountNum >= minPower && amountNum <= balance && !needsFunds;
 
   const presets = [
     { label: t("aiTrading.amountLow"), pct: 0.25 },
@@ -148,7 +150,7 @@ export function StartBotFlow({
                       </div>
                       <p className="mt-1 text-sm text-muted">{b.simpleDescription}</p>
                       <p className="mt-2 text-xs text-muted">
-                        {t("aiTrading.startsAt")} {formatCurrency(b.minPower)} · {b.hourlyReturn}
+                        {t("aiTrading.startsAt")} {formatCurrency(convertFromUsd(b.minPower))} · {b.hourlyReturn}
                       </p>
                     </div>
                     {selected && <CheckCircle className="h-5 w-5 shrink-0 text-emerald" />}
@@ -202,21 +204,21 @@ export function StartBotFlow({
               {t("aiTrading.howMuch")}
             </Label>
             <p className="mt-1 text-xs text-muted">
-              {t("aiTrading.howMuchHint", { min: formatCurrency(bot.minPower) })}
+              {t("aiTrading.howMuchHint", { min: formatCurrency(minPower) })}
             </p>
             <Input
               id="ai-amount"
               type="number"
-              min={bot.minPower}
+              min={minPower}
               value={amount}
               onChange={(e) => onAmountChange(e.target.value)}
-              placeholder={String(bot.minPower)}
+              placeholder={String(minPower)}
               className="mt-3 h-14 text-center text-xl font-bold"
             />
             <div className="mt-3 grid grid-cols-3 gap-2">
               {presets.map(({ label, pct }) => {
                 const amt = Math.floor(balance * pct);
-                if (amt < bot.minPower) return null;
+                if (amt < minPower) return null;
                 return (
                   <button
                     key={pct}

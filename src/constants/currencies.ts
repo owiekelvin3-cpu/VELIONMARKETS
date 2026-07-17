@@ -1,59 +1,27 @@
+import { COUNTRY_CURRENCY } from "@/constants/country-currency";
+import { FX_UNITS_PER_USD } from "@/constants/fx-rates";
+import { WORLD_CURRENCY_CODES } from "@/constants/world-currencies";
+
 export interface CurrencyOption {
   code: string;
-  labelKey: string;
-  /** BCP 47 locale for Intl currency formatting */
-  locale: string;
 }
-
-/** Fiat account currencies supported by the platform. */
-export const SUPPORTED_CURRENCIES: CurrencyOption[] = [
-  { code: "USD", labelKey: "currencies.USD", locale: "en-US" },
-  { code: "EUR", labelKey: "currencies.EUR", locale: "de-DE" },
-  { code: "GBP", labelKey: "currencies.GBP", locale: "en-GB" },
-  { code: "AUD", labelKey: "currencies.AUD", locale: "en-AU" },
-  { code: "CAD", labelKey: "currencies.CAD", locale: "en-CA" },
-  { code: "CHF", labelKey: "currencies.CHF", locale: "de-CH" },
-  { code: "JPY", labelKey: "currencies.JPY", locale: "ja-JP" },
-  { code: "AED", labelKey: "currencies.AED", locale: "ar-AE" },
-  { code: "SGD", labelKey: "currencies.SGD", locale: "en-SG" },
-  { code: "HKD", labelKey: "currencies.HKD", locale: "zh-HK" },
-];
 
 export const DEFAULT_CURRENCY = "USD";
 
-const SUPPORTED_SET = new Set(SUPPORTED_CURRENCIES.map((c) => c.code));
+/** All ISO 4217 account currencies (170+ codes). */
+export const SUPPORTED_CURRENCIES: CurrencyOption[] = WORLD_CURRENCY_CODES.map((code) => ({ code }));
 
-/** Suggest account currency from ISO country code at registration. */
-const COUNTRY_CURRENCY: Record<string, string> = {
-  US: "USD",
-  GB: "GBP",
-  AU: "AUD",
-  CA: "CAD",
-  CH: "CHF",
-  JP: "JPY",
-  AE: "AED",
-  SG: "SGD",
-  HK: "HKD",
-  AT: "EUR",
-  BE: "EUR",
-  CY: "EUR",
-  DE: "EUR",
-  EE: "EUR",
-  ES: "EUR",
-  FI: "EUR",
-  FR: "EUR",
-  GR: "EUR",
-  IE: "EUR",
-  IT: "EUR",
-  LT: "EUR",
-  LU: "EUR",
-  LV: "EUR",
-  MT: "EUR",
-  NL: "EUR",
-  PT: "EUR",
-  SK: "EUR",
-  SI: "EUR",
-};
+const SUPPORTED_SET = new Set<string>(WORLD_CURRENCY_CODES);
+
+const displayNamesCache = new Map<string, Intl.DisplayNames>();
+
+function getDisplayNames(locale: string): Intl.DisplayNames {
+  const cached = displayNamesCache.get(locale);
+  if (cached) return cached;
+  const names = new Intl.DisplayNames([locale], { type: "currency" });
+  displayNamesCache.set(locale, names);
+  return names;
+}
 
 export function isSupportedCurrency(code: string | null | undefined): code is string {
   return Boolean(code && SUPPORTED_SET.has(code.toUpperCase()));
@@ -64,8 +32,26 @@ export function normalizeCurrency(code: string | null | undefined): string {
   return isSupportedCurrency(upper) ? upper : DEFAULT_CURRENCY;
 }
 
+export function getCurrencyDisplayName(code: string, locale = "en"): string {
+  const normalized = normalizeCurrency(code);
+  try {
+    return getDisplayNames(locale).of(normalized) ?? normalized;
+  } catch {
+    return normalized;
+  }
+}
+
 export function getCurrencyLocale(code: string): string {
-  return SUPPORTED_CURRENCIES.find((c) => c.code === code)?.locale ?? "en-US";
+  const normalized = normalizeCurrency(code);
+  try {
+    const resolved = new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: normalized,
+    }).resolvedOptions().locale;
+    return resolved ?? "en-US";
+  } catch {
+    return "en-US";
+  }
 }
 
 export function suggestCurrencyForCountry(countryCode: string | null | undefined): string {
@@ -73,3 +59,29 @@ export function suggestCurrencyForCountry(countryCode: string | null | undefined
   const suggested = COUNTRY_CURRENCY[countryCode.toUpperCase()];
   return isSupportedCurrency(suggested) ? suggested : DEFAULT_CURRENCY;
 }
+
+export function fxUnitsPerUsd(code: string): number {
+  const normalized = normalizeCurrency(code);
+  return FX_UNITS_PER_USD[normalized] ?? 1;
+}
+
+export function currencyFractionDigits(code: string): number {
+  const normalized = normalizeCurrency(code);
+  try {
+    return (
+      new Intl.NumberFormat("en-US", { style: "currency", currency: normalized }).resolvedOptions()
+        .maximumFractionDigits ?? 2
+    );
+  } catch {
+    return 2;
+  }
+}
+
+export function roundMoneyForCurrency(amount: number, code: string): number {
+  const digits = currencyFractionDigits(code);
+  if (digits === 0) return Math.round(amount);
+  const factor = 10 ** digits;
+  return Math.round(amount * factor) / factor;
+}
+
+export { FX_UNITS_PER_USD };

@@ -22,6 +22,7 @@ import {
   syncMiningAccruals,
   type MiningContract,
 } from "@/lib/mining";
+import { convertFromUsd } from "@/lib/currency";
 import { ArrowDownToLine, Clock, Pickaxe, RefreshCw } from "@/lib/icons";
 
 function MiningContractRow({ contract, tick }: { contract: MiningContract; tick: number }) {
@@ -161,7 +162,7 @@ export default function MiningPage() {
       setMessage(t("kyc.required"));
       return;
     }
-    if (pkg.investment > balance) {
+    if (convertFromUsd(pkg.investment) > balance) {
       setMessage(t("mining.insufficientBalance"));
       return;
     }
@@ -174,11 +175,12 @@ export default function MiningPage() {
     setMessage("");
     setIsSuccess(false);
     const name = t(pending.nameKey);
+    const investment = convertFromUsd(pending.investment);
     const { error } = await supabase.from("mining_packages").insert({
       user_id: user.id,
       package_id: pending.id,
       package_name: name,
-      investment: pending.investment,
+      investment,
       daily_return: pending.dailyReturnEstimate,
       hashrate: pending.hashrate,
       term_days: pending.termDays,
@@ -263,13 +265,14 @@ export default function MiningPage() {
           <div className="grid gap-3 md:grid-cols-3">
             {MINING_PACKAGES.map((pkg) => {
               const name = t(pkg.nameKey);
-              const canAfford = balance >= pkg.investment;
-              const dailyEst = getDailyYieldEstimate(pkg.investment, pkg.dailyReturnEstimate);
+              const price = convertFromUsd(pkg.investment);
+              const canAfford = balance >= price;
+              const dailyEst = getDailyYieldEstimate(price, pkg.dailyReturnEstimate);
               return (
                 <div key={pkg.id} className="flex flex-col rounded-2xl border border-border bg-card p-4">
                   <p className="font-display text-lg font-semibold text-foreground">{name}</p>
                   <p className="mt-3 font-display text-2xl font-semibold tracking-tight">
-                    {formatCurrency(pkg.investment)}
+                    {formatCurrency(price)}
                   </p>
                   <dl className="mt-4 flex-1 space-y-2 text-xs text-muted">
                     <div className="flex justify-between gap-3">
@@ -317,7 +320,7 @@ export default function MiningPage() {
               variant="risk"
               title={t("mining.confirmTitle")}
               body={t("mining.confirmBody", {
-                amount: formatCurrency(pending.investment),
+                amount: formatCurrency(convertFromUsd(pending.investment)),
                 name: t(pending.nameKey),
                 days: pending.termDays,
               })}
