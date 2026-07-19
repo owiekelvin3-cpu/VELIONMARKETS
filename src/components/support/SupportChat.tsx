@@ -162,6 +162,30 @@ export function SupportMobileChatOverlay({
   );
 }
 
+/** PC fullscreen chat shell (covers admin chrome like a desktop messenger). */
+export function SupportDesktopFullscreen({
+  open,
+  children,
+}: {
+  open: boolean;
+  children: ReactNode;
+}) {
+  useBodyScrollLock(open, "(min-width: 1024px)");
+
+  if (!open || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className="support-desktop-fullscreen fixed inset-0 z-[90] hidden flex-col overflow-hidden bg-background lg:flex"
+      role="dialog"
+      aria-modal="true"
+    >
+      {children}
+    </div>,
+    document.body
+  );
+}
+
 export function SupportStatusBadge({
   status,
   className,

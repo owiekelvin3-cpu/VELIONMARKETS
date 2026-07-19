@@ -1448,6 +1448,9 @@
     "support": "Support",
     "supportTitle": "Support Center",
     "supportSubtitle": "Manage customer conversations in real time.",
+    "enterFullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen",
+    "supportFullscreenHint": "Press Esc to exit full screen",
     "supportSearch": "Search by name or email…",
     "supportEmpty": "No conversations match this filter.",
     "supportFilter": {

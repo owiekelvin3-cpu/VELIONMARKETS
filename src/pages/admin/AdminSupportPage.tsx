@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Archive, Pin, RotateCcw, Search, Trash2, User, HelpCircle, X,
+  Archive, Pin, RotateCcw, Search, Trash2, User, HelpCircle, X, Maximize2, Minimize2,
 } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   SupportComposer,
+  SupportDesktopFullscreen,
   SupportEmptyState,
   SupportMessageList,
   SupportMobileChatOverlay,
@@ -60,6 +61,7 @@ export default function AdminSupportPage() {
   const [error, setError] = useState("");
   const [mobileDetails, setMobileDetails] = useState(false);
   const [desktopDetailsOpen, setDesktopDetailsOpen] = useState(true);
+  const [fullscreen, setFullscreen] = useState(false);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
   const activeIdRef = useRef(activeId);
@@ -85,6 +87,15 @@ export default function AdminSupportPage() {
     void refreshList();
     void listAdminStaff().then(setStaff).catch(() => undefined);
   }, [refreshList]);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreen]);
 
   const syncLatestMessages = useCallback(async (conversationId: string) => {
     const current = messagesRef.current;
@@ -423,13 +434,168 @@ export default function AdminSupportPage() {
     </button>
   );
 
+  const filterBar = (
+    <div className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-secondary/30 p-1 scrollbar-none">
+      {FILTERS.map((f) => (
+        <button
+          key={f}
+          type="button"
+          onClick={() => setFilter(f)}
+          className={cn(
+            "min-h-9 shrink-0 rounded-lg px-3 py-2 text-xs font-medium capitalize transition-colors",
+            filter === f ? "bg-surface-elevated text-foreground shadow-sm" : "text-muted hover:text-foreground"
+          )}
+        >
+          {t(`admin.supportFilter.${f}`)}
+        </button>
+      ))}
+    </div>
+  );
+
+  const inboxSearch = (rounded: "full" | "xl") => (
+    <div className="relative">
+      <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder={t("admin.supportSearch")}
+        className={cn(
+          "h-10 w-full border border-border bg-secondary/40 pl-9 pr-3 outline-none focus:ring-1 focus:ring-emerald/20",
+          rounded === "full" ? "rounded-full text-base" : "rounded-xl text-sm"
+        )}
+      />
+    </div>
+  );
+
+  const fullscreenToggle = (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className="hidden shrink-0 lg:inline-flex"
+      onClick={() => setFullscreen((v) => !v)}
+      aria-label={fullscreen ? t("admin.exitFullscreen") : t("admin.enterFullscreen")}
+      title={fullscreen ? t("admin.exitFullscreen") : t("admin.enterFullscreen")}
+    >
+      {fullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+      <span className="hidden xl:inline">{fullscreen ? t("admin.exitFullscreen") : t("admin.enterFullscreen")}</span>
+    </Button>
+  );
+
+  const renderDesktopPane = (mode: "embedded" | "fullscreen") => {
+    const isFs = mode === "fullscreen";
+    const showDetailsCol = isFs || desktopDetailsOpen;
+    return (
+      <div
+        className={cn(
+          "min-h-0 overflow-hidden bg-surface-elevated",
+          isFs
+            ? "grid h-full flex-1 grid-cols-[280px_minmax(0,1fr)_300px] rounded-none border-0"
+            : cn(
+                "hidden flex-1 rounded-2xl border border-border lg:grid",
+                showDetailsCol
+                  ? "lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_300px]"
+                  : "lg:grid-cols-[280px_minmax(0,1fr)]"
+              )
+        )}
+      >
+        <aside className="flex min-h-0 flex-col border-r border-border">
+          <div className="border-b border-border p-3">{inboxSearch("xl")}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {loadingList ? (
+              <div className="space-y-2 p-3">
+                {[1, 2, 3, 4].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-secondary/50" />)}
+              </div>
+            ) : conversations.length === 0 ? (
+              <p className="p-4 text-sm text-muted">{t("admin.supportEmpty")}</p>
+            ) : (
+              conversations.map((c) => conversationButton(c, true))
+            )}
+          </div>
+        </aside>
+
+        <section className="relative flex min-h-0 min-w-0 flex-col border-r border-border xl:border-r-0">
+          {active ? (
+            <SupportThreadFrame
+              title={active.subject}
+              subtitle={active.user?.full_name || active.user?.email}
+              trailing={
+                <div className="flex flex-wrap items-center justify-end gap-1.5 pr-1">
+                  <SupportStatusBadge status={active.status} />
+                  {active.status !== "resolved" ? (
+                    <Button size="sm" onClick={() => void updateConversationStatus(active.id, "resolved").then(() => void refreshList({ soft: true }))}>
+                      {t("admin.markResolved")}
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => void updateConversationStatus(active.id, "open").then(() => void refreshList({ soft: true }))}>
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      {t("admin.reopen")}
+                    </Button>
+                  )}
+                  {!isFs && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="xl:hidden"
+                      onClick={() => setDesktopDetailsOpen((v) => !v)}
+                      aria-label={t("admin.userInfo")}
+                    >
+                      <HelpCircle className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  {fullscreenToggle}
+                </div>
+              }
+            >
+              {threadContent}
+            </SupportThreadFrame>
+          ) : (
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="flex shrink-0 items-center justify-end border-b border-border px-3 py-2">
+                {fullscreenToggle}
+              </div>
+              <SupportEmptyState />
+            </div>
+          )}
+
+          {!isFs && active && desktopDetailsOpen && (
+            <div className="absolute inset-y-0 right-0 z-20 flex w-[min(100%,20rem)] flex-col border-l border-border bg-surface-elevated shadow-xl xl:hidden">
+              <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+                <p className="text-sm font-semibold text-foreground">{t("admin.userInfo")}</p>
+                <button
+                  type="button"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
+                  onClick={() => setDesktopDetailsOpen(false)}
+                  aria-label={t("common.close")}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto">{detailsPanel}</div>
+            </div>
+          )}
+        </section>
+
+        <aside
+          className={cn(
+            "min-h-0 overflow-y-auto border-l border-border",
+            isFs ? "block" : "hidden xl:block"
+          )}
+        >
+          {detailsPanel}
+        </aside>
+      </div>
+    );
+  };
+
   return (
-    <div className="flex min-h-0 flex-col gap-4 lg:h-[calc(100dvh-7.5rem)] lg:min-h-[560px]">
-      <div className={cn("shrink-0", showThread && "hidden lg:block")}>
+    <div className={cn("flex min-h-0 flex-col gap-4", !fullscreen && "lg:h-[calc(100dvh-7.5rem)] lg:min-h-[560px]")}>
+      <div className={cn("shrink-0", showThread && "hidden lg:block", fullscreen && "lg:hidden")}>
         <PageHeader
           eyebrow={t("admin.portalLabel")}
           title={t("admin.supportTitle")}
           subtitle={t("admin.supportSubtitle")}
+          actions={fullscreenToggle}
         />
       </div>
 
@@ -437,36 +603,14 @@ export default function AdminSupportPage() {
         <p className="shrink-0 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</p>
       )}
 
-      <div className={cn("flex shrink-0 gap-1 overflow-x-auto rounded-xl border border-border bg-secondary/30 p-1 scrollbar-none", showThread && "hidden lg:flex")}>
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFilter(f)}
-            className={cn(
-              "min-h-9 shrink-0 rounded-lg px-3 py-2 text-xs font-medium capitalize transition-colors",
-              filter === f ? "bg-surface-elevated text-foreground shadow-sm" : "text-muted hover:text-foreground"
-            )}
-          >
-            {t(`admin.supportFilter.${f}`)}
-          </button>
-        ))}
+      <div className={cn("shrink-0", showThread && "hidden lg:block", fullscreen && "lg:hidden")}>
+        {filterBar}
       </div>
 
       {/* Mobile inbox */}
       <div className={cn("min-h-0 flex-1 lg:hidden", showThread && "hidden")}>
         <div className="flex h-full min-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface-elevated">
-          <div className="border-b border-border p-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("admin.supportSearch")}
-                className="h-10 w-full rounded-full border border-border bg-secondary/40 pl-9 pr-3 text-base outline-none focus:ring-1 focus:ring-emerald/20"
-              />
-            </div>
-          </div>
+          <div className="border-b border-border p-3">{inboxSearch("full")}</div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {loadingList ? (
               <div className="space-y-2 p-3">
@@ -516,99 +660,24 @@ export default function AdminSupportPage() {
         )}
       </SupportMobileChatOverlay>
 
-      {/* Desktop / laptop split — available from lg (1024px) for PC laptops */}
-      <div
-        className={cn(
-          "hidden min-h-0 flex-1 overflow-hidden rounded-2xl border border-border bg-surface-elevated lg:grid",
-          desktopDetailsOpen
-            ? "lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_300px]"
-            : "lg:grid-cols-[280px_minmax(0,1fr)]"
-        )}
-      >
-        <aside className="flex min-h-0 flex-col border-r border-border">
-          <div className="border-b border-border p-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("admin.supportSearch")}
-                className="h-10 w-full rounded-xl border border-border bg-secondary/40 pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-emerald/20"
-              />
+      {/* Embedded desktop / laptop split */}
+      {!fullscreen && renderDesktopPane("embedded")}
+
+      {/* PC fullscreen messenger */}
+      <SupportDesktopFullscreen open={fullscreen}>
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="flex shrink-0 items-center gap-3 border-b border-border bg-surface-elevated px-4 py-2.5">
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-display text-sm font-semibold text-foreground">{t("admin.supportTitle")}</p>
+              <p className="truncate text-[11px] text-muted">{t("admin.supportFullscreenHint")}</p>
             </div>
+            <div className="hidden min-w-0 flex-[1.4] xl:block">{filterBar}</div>
+            {fullscreenToggle}
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {loadingList ? (
-              <div className="space-y-2 p-3">
-                {[1, 2, 3, 4].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-secondary/50" />)}
-              </div>
-            ) : conversations.length === 0 ? (
-              <p className="p-4 text-sm text-muted">{t("admin.supportEmpty")}</p>
-            ) : (
-              conversations.map((c) => conversationButton(c, true))
-            )}
-          </div>
-        </aside>
-
-        <section className="relative flex min-h-0 min-w-0 flex-col border-r border-border xl:border-r-0">
-          {active ? (
-            <SupportThreadFrame
-              title={active.subject}
-              subtitle={active.user?.full_name || active.user?.email}
-              trailing={
-                <div className="flex flex-wrap items-center justify-end gap-1.5 pr-1">
-                  <SupportStatusBadge status={active.status} />
-                  {active.status !== "resolved" ? (
-                    <Button size="sm" onClick={() => void updateConversationStatus(active.id, "resolved").then(() => void refreshList({ soft: true }))}>
-                      {t("admin.markResolved")}
-                    </Button>
-                  ) : (
-                    <Button size="sm" variant="outline" onClick={() => void updateConversationStatus(active.id, "open").then(() => void refreshList({ soft: true }))}>
-                      <RotateCcw className="h-3.5 w-3.5" />
-                      {t("admin.reopen")}
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="xl:hidden"
-                    onClick={() => setDesktopDetailsOpen((v) => !v)}
-                    aria-label={t("admin.userInfo")}
-                  >
-                    <HelpCircle className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              }
-            >
-              {threadContent}
-            </SupportThreadFrame>
-          ) : (
-            <SupportEmptyState />
-          )}
-
-          {/* Laptop (lg–xl): slide-over details so the chat stays readable */}
-          {active && desktopDetailsOpen && (
-            <div className="absolute inset-y-0 right-0 z-20 flex w-[min(100%,20rem)] flex-col border-l border-border bg-surface-elevated shadow-xl xl:hidden">
-              <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
-                <p className="text-sm font-semibold text-foreground">{t("admin.userInfo")}</p>
-                <button
-                  type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
-                  onClick={() => setDesktopDetailsOpen(false)}
-                  aria-label={t("common.close")}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto">{detailsPanel}</div>
-            </div>
-          )}
-        </section>
-
-        <aside className="hidden min-h-0 overflow-y-auto border-l border-border xl:block">
-          {detailsPanel}
-        </aside>
-      </div>
+          <div className="shrink-0 border-b border-border px-4 py-2 xl:hidden">{filterBar}</div>
+          {renderDesktopPane("fullscreen")}
+        </div>
+      </SupportDesktopFullscreen>
     </div>
   );
 }
