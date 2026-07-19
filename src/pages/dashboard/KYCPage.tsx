@@ -742,35 +742,34 @@ export default function KYCPage() {
               )}
             </DashboardSheet>
 
-            <div className="sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-10 flex items-center gap-2 rounded-2xl border border-border/80 bg-background/90 p-2 shadow-lg backdrop-blur-xl sm:static sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
+            {/* Sit above the mobile dashboard dock (pb-dock ≈ 5.75rem + safe area). */}
+            <div className="sticky bottom-[calc(5.75rem+env(safe-area-inset-bottom,0px))] z-30 flex items-center gap-2 rounded-2xl border border-border bg-surface-elevated p-2 shadow-lg lg:static lg:bottom-auto lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
               {step > 1 ? (
-                <Button type="button" variant="outline" className="rounded-full" onClick={goBack}>
+                <Button type="button" variant="outline" className="shrink-0 rounded-full px-3 sm:px-4" onClick={goBack}>
                   <ArrowLeft className="h-4 w-4" />
-                  {t("kyc.back")}
+                  <span className="max-sm:sr-only">{t("kyc.back")}</span>
                 </Button>
-              ) : (
-                <div className="hidden flex-1 sm:block" />
-              )}
-              <div className="ml-auto flex flex-1 justify-end gap-2 sm:flex-none">
+              ) : null}
+              <div className="ml-auto flex min-w-0 flex-1 justify-end gap-2 lg:flex-none">
                 {step < 4 ? (
                   <Button
                     type="button"
                     variant="pill"
                     disabled={!canContinue}
                     onClick={goNext}
-                    className="min-w-[8.5rem]"
+                    className="min-w-0 flex-1 sm:min-w-[8.5rem] sm:flex-none"
                   >
                     {t("kyc.continue")}
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 shrink-0" />
                   </Button>
                 ) : (
                   <Button
                     type="submit"
                     variant="pill"
                     disabled={loading || !file || !selfie}
-                    className="min-w-[10rem]"
+                    className="min-w-0 flex-1 sm:min-w-[10rem] sm:flex-none"
                   >
-                    <Shield className="h-4 w-4" />
+                    <Shield className="h-4 w-4 shrink-0" />
                     {loading ? t("common.saving") : t("kyc.submit")}
                   </Button>
                 )}
