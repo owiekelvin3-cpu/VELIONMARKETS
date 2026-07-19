@@ -742,15 +742,14 @@ export default function KYCPage() {
               )}
             </DashboardSheet>
 
-            {/* Sit above the mobile dashboard dock (pb-dock ≈ 5.75rem + safe area). */}
-            <div className="sticky bottom-[calc(5.75rem+env(safe-area-inset-bottom,0px))] z-30 flex items-center gap-2 rounded-2xl border border-border bg-surface-elevated p-2 shadow-lg lg:static lg:bottom-auto lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+            <div className="flex items-center gap-2 pt-1">
               {step > 1 ? (
                 <Button type="button" variant="outline" className="shrink-0 rounded-full px-3 sm:px-4" onClick={goBack}>
                   <ArrowLeft className="h-4 w-4" />
                   <span className="max-sm:sr-only">{t("kyc.back")}</span>
                 </Button>
               ) : null}
-              <div className="ml-auto flex min-w-0 flex-1 justify-end gap-2 lg:flex-none">
+              <div className="ml-auto flex min-w-0 flex-1 justify-end gap-2 sm:flex-none">
                 {step < 4 ? (
                   <Button
                     type="button"
