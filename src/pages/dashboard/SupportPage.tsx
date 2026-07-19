@@ -184,17 +184,20 @@ export default function SupportPage() {
                     key={c.id}
                     type="button"
                     onClick={() => { setComposing(false); support.setActiveId(c.id); }}
-                    className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-left active:bg-secondary/60"
+                    className="flex w-full flex-col gap-1.5 border-b border-border px-4 py-3.5 text-left active:bg-secondary/60"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className={cn("min-w-0 truncate text-[15px]", unread ? "font-semibold text-foreground" : "font-medium text-foreground")}>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={cn("min-w-0 flex-1 truncate text-[15px]", unread ? "font-semibold text-foreground" : "font-medium text-foreground")}>
                         {c.subject}
                       </p>
-                      <span className="shrink-0 text-[11px] text-muted">{formatDate(c.last_message_at)}</span>
+                      <SupportStatusBadge status={c.status} />
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                      <p className="truncate text-[13px] text-muted">{c.last_message_preview || t("support.noMessagesYet")}</p>
-                      {unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald" />}
+                      <p className="min-w-0 truncate text-[13px] text-muted">{c.last_message_preview || t("support.noMessagesYet")}</p>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-[11px] text-muted">{formatDate(c.last_message_at)}</span>
+                        {unread && <span className="h-2.5 w-2.5 rounded-full bg-emerald" />}
+                      </div>
                     </div>
                   </button>
                 );
@@ -212,11 +215,7 @@ export default function SupportPage() {
           onBack={backToList}
           safeAreaTop
           trailing={
-            active ? (
-              <div className="max-w-[40%] truncate pr-1">
-                <SupportStatusBadge status={active.status} />
-              </div>
-            ) : undefined
+            active ? <SupportStatusBadge status={active.status} /> : undefined
           }
         >
           {threadBody}

@@ -162,7 +162,13 @@ export function SupportMobileChatOverlay({
   );
 }
 
-export function SupportStatusBadge({ status }: { status: SupportConversationStatus }) {
+export function SupportStatusBadge({
+  status,
+  className,
+}: {
+  status: SupportConversationStatus;
+  className?: string;
+}) {
   const { t } = useTranslation();
   const styles: Record<SupportConversationStatus, string> = {
     open: "bg-emerald/15 text-emerald border-emerald/25",
@@ -171,7 +177,13 @@ export function SupportStatusBadge({ status }: { status: SupportConversationStat
     archived: "bg-secondary text-muted border-border",
   };
   return (
-    <span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", styles[status])}>
+    <span
+      className={cn(
+        "inline-flex shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+        styles[status],
+        className
+      )}
+    >
       {t(`support.status.${status}`)}
     </span>
   );
@@ -632,11 +644,13 @@ export function SupportThreadFrame({
             </svg>
           </button>
         )}
-        <div className="min-w-0 flex-1 px-1 text-center sm:text-left">
+        <div className="min-w-0 flex-1 px-1 text-left">
           <p className="truncate font-display text-[15px] font-semibold leading-tight tracking-tight text-foreground sm:text-base">{title}</p>
           {subtitle && <p className="truncate text-[11px] leading-tight text-muted">{subtitle}</p>}
         </div>
-        <div className="flex h-11 min-w-[2.75rem] shrink-0 items-center justify-end gap-1">{trailing}</div>
+        <div className="flex min-h-11 max-w-[48%] shrink-0 items-center justify-end gap-1 overflow-visible">
+          {trailing}
+        </div>
       </header>
       <div className="support-thread-wallpaper flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
       {composer}
