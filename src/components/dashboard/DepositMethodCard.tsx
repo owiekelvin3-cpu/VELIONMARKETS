@@ -7,7 +7,7 @@ interface DepositMethodCardProps {
   title: string;
   description: string;
   iconGrid: React.ReactNode;
-  iconRow: React.ReactNode;
+  iconRow?: React.ReactNode;
 }
 
 export function DepositMethodCard({
@@ -29,7 +29,7 @@ export function DepositMethodCard({
       <div className="min-w-0 flex-1">
         <h3 className="font-display text-base font-semibold text-foreground">{title}</h3>
         <p className="mt-1 text-sm leading-relaxed text-muted">{description}</p>
-        <div className="mt-3">{iconRow}</div>
+        {iconRow ? <div className="mt-3">{iconRow}</div> : null}
       </div>
       <ChevronRight
         className="h-5 w-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-emerald"

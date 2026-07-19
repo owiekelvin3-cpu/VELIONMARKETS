@@ -13,8 +13,8 @@ export default function GiftCardDepositPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <DepositPageHeader
-        title={t("deposits.title")}
-        subtitle={t("deposits.subtitle")}
+        title={t("deposits.giftCardTitle")}
+        subtitle={t("deposits.giftCardPageDesc")}
         backTo="/dashboard/deposits"
       />
 

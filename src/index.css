@@ -733,6 +733,12 @@
     var(--color-background);
 }
 
+:root.light .support-thread-wallpaper {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(16, 185, 129, 0.06), transparent),
+    #f8fafc;
+}
+
 html.support-chat-open,
 html.support-chat-open body {
   overflow: hidden;

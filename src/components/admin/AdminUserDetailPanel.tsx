@@ -16,7 +16,7 @@ import {
   fetchAdminUserDetails, sendUserPasswordReset,
   assignUserFee, updateUserFeeStatus, moderateAdminUser, adjustAdminUserBalance,
   deleteAdminUser,
-  type AdminUserDetails, type AdminModerationActionType, type AdminBalanceDirection,
+  type AdminUserDetails, type AdminModerationUiAction, type AdminBalanceDirection,
 } from "@/lib/admin-api";
 import { createKycDocumentSignedUrl } from "@/lib/kyc";
 import { FEE_TYPES, type FeeTypeId } from "@/constants/fee-types";
@@ -137,7 +137,7 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated, onDeleted }: 
     || [profile?.city, profile?.country].filter(Boolean).join(", ")
     || null;
 
-  const runModeration = async (action: AdminModerationActionType) => {
+  const runModeration = async (action: AdminModerationUiAction) => {
     if (!userId) return;
     const typedReason = moderationReason.trim();
     // Lift suspension must not block on an empty reason field.
@@ -473,27 +473,6 @@ export function AdminUserDetailPanel({ userId, onClose, onUpdated, onDeleted }: 
                       <FileCheck className="h-3.5 w-3.5" />
                       {t("admin.userDetail.resetKyc")}
                     </Button>
-                    {profile.role === "admin" ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={moderationBusy}
-                        onClick={() => void runModeration("demote")}
-                      >
-                        {t("admin.userDetail.demote")}
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={moderationBusy || profile.is_suspended}
-                        onClick={() => void runModeration("make_admin")}
-                      >
-                        {t("admin.userDetail.makeAdmin")}
-                      </Button>
-                    )}
                     <Button
                       type="button"
                       size="sm"

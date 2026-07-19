@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
-  FileText, ImageIcon, Paperclip, Send, Smile, X,
+  FileText, ImageIcon, Paperclip, Send, Smile, X, MessageCircle,
 } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -181,8 +181,8 @@ export function SupportEmptyState({ onNew }: { onNew?: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="flex h-full min-h-[240px] flex-col items-center justify-center px-6 text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-[1.75rem] border border-border bg-secondary/50 text-2xl shadow-sm">
-        💬
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-[1.75rem] border border-border bg-surface-elevated text-emerald shadow-sm">
+        <MessageCircle className="h-7 w-7" aria-hidden="true" />
       </div>
       <h3 className="font-display text-lg font-semibold text-foreground">{t("support.emptyTitle")}</h3>
       <p className="mt-2 max-w-sm text-sm text-muted">{t("support.emptyDesc")}</p>
@@ -470,7 +470,7 @@ export function SupportComposer({
   return (
     <div
       className={cn(
-        "support-composer shrink-0 border-t border-border/80 bg-background px-2 pt-1.5 sm:px-3 sm:pt-2",
+        "support-composer shrink-0 border-t border-border bg-surface-elevated px-2 pt-1.5 sm:px-3 sm:pt-2",
         kbOpen ? "pb-1.5" : "pb-[max(0.5rem,env(safe-area-inset-bottom))]",
         dragOver && "ring-2 ring-inset ring-emerald/40"
       )}
@@ -497,7 +497,7 @@ export function SupportComposer({
       )}
 
       {emojiOpen && (
-        <div className="mb-1.5 grid max-h-28 grid-cols-8 gap-0.5 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-lg">
+        <div className="mb-1.5 grid max-h-28 grid-cols-8 gap-0.5 overflow-y-auto rounded-2xl border border-border bg-surface-elevated p-1.5 shadow-lg">
           {SUPPORT_EMOJI.map((e) => (
             <button
               key={e}
@@ -557,7 +557,7 @@ export function SupportComposer({
             autoCorrect="on"
             placeholder={placeholder ?? t("support.messagePlaceholder")}
             /* text-base (16px) prevents iOS Safari zoom-on-focus */
-            className="max-h-[100px] min-h-[40px] w-full resize-none rounded-[20px] border border-border/80 bg-secondary/50 px-3.5 py-2.5 text-base leading-5 text-foreground outline-none placeholder:text-muted focus:border-emerald/35 focus:ring-1 focus:ring-emerald/20"
+            className="max-h-[100px] min-h-[40px] w-full resize-none rounded-[20px] border border-border/80 bg-surface-elevated px-3.5 py-2.5 text-base leading-5 text-foreground outline-none placeholder:text-muted focus:border-emerald/35 focus:ring-1 focus:ring-emerald/20"
             onFocus={() => {
               scrollMobileThreadToBottom();
               window.setTimeout(scrollMobileThreadToBottom, 120);
@@ -616,7 +616,7 @@ export function SupportThreadFrame({
     <div className={cn("flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background", className)}>
       <header
         className={cn(
-          "flex shrink-0 items-center gap-1.5 border-b border-border/80 bg-background/95 px-1.5 py-2 backdrop-blur-xl sm:gap-2 sm:px-3 sm:py-2.5",
+          "flex shrink-0 items-center gap-1.5 border-b border-border bg-surface-elevated/95 px-1.5 py-2 backdrop-blur-xl sm:gap-2 sm:px-3 sm:py-2.5",
           safeAreaTop && "pt-[max(0.5rem,env(safe-area-inset-top))]"
         )}
       >

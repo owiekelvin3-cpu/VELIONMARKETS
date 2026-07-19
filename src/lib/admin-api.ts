@@ -24,9 +24,13 @@ export type AdminModerationActionType =
   | "suspend"
   | "unsuspend"
   | "reset_kyc"
+  | "note"
+  /** Kept for historical moderation log rows only — no longer callable from the UI. */
   | "make_admin"
-  | "demote"
-  | "note";
+  | "demote";
+
+/** Actions that can be triggered from the admin UI. Role promotion is disabled. */
+export type AdminModerationUiAction = "suspend" | "unsuspend" | "reset_kyc" | "note";
 
 export interface AdminModerationAction {
   id: string;
@@ -105,7 +109,7 @@ export async function deleteAdminUser(params: { userId: string; reason: string }
 
 export async function moderateAdminUser(params: {
   userId: string;
-  action: AdminModerationActionType;
+  action: AdminModerationUiAction;
   reason?: string;
 }) {
   const reason =
@@ -179,7 +183,7 @@ export async function updateUserFeeStatus(
 
 export async function updateAdminUserProfile(
   userId: string,
-  fields: Partial<Pick<Profile, "country" | "city" | "timezone" | "last_known_ip" | "last_known_location" | "full_name" | "phone" | "bio" | "kyc_status" | "role">>
+  fields: Partial<Pick<Profile, "country" | "city" | "timezone" | "last_known_ip" | "last_known_location" | "full_name" | "phone" | "bio" | "kyc_status">>
 ) {
   const { error } = await supabase.from("profiles").update(fields).eq("id", userId);
   if (error) throw error;
@@ -199,11 +203,15 @@ export async function approveDeposit(depositId: string, userId: string, amount: 
     .eq("id", depositId);
   if (depErr) throw depErr;
 
-  const { data: bal } = await supabase.from("balances").select("amount").eq("user_id", userId).single();
+  const [{ data: bal }, { data: profile }] = await Promise.all([
+    supabase.from("balances").select("amount, currency").eq("user_id", userId).single(),
+    supabase.from("profiles").select("preferred_currency").eq("id", userId).single(),
+  ]);
+  const currency = bal?.currency || profile?.preferred_currency || "USD";
   const newAmount = (bal?.amount ?? 0) + amount;
   const { error: balErr } = await supabase
     .from("balances")
-    .upsert({ user_id: userId, amount: newAmount, currency: "USD" }, { onConflict: "user_id" });
+    .upsert({ user_id: userId, amount: newAmount, currency }, { onConflict: "user_id" });
   if (balErr) throw balErr;
 }
 

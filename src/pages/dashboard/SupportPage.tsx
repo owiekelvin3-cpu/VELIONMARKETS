@@ -130,8 +130,8 @@ export default function SupportPage() {
       : undefined;
 
   return (
-    <div className="space-y-4">
-      <div className={cn(showThread && "hidden lg:block")}>
+    <div className="flex min-h-0 flex-col gap-4 lg:h-[calc(100dvh-8.5rem)] lg:min-h-[520px]">
+      <div className={cn("shrink-0", showThread && "hidden lg:block")}>
         <PageHeader
           eyebrow={t("dashboard.navGroupAccount")}
           title={t("support.title")}
@@ -150,12 +150,12 @@ export default function SupportPage() {
       </div>
 
       {support.error && (
-        <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-400">{support.error}</p>
+        <p className="shrink-0 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-400">{support.error}</p>
       )}
 
       {/* Mobile inbox list */}
-      <div className={cn("lg:hidden", showThread && "hidden")}>
-        <div className="surface-panel flex min-h-[calc(100dvh-11rem)] flex-col overflow-hidden">
+      <div className={cn("min-h-0 flex-1 lg:hidden", showThread && "hidden")}>
+        <div className="flex h-full min-h-[calc(100dvh-11rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface-elevated">
           <div className="border-b border-border p-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
@@ -223,8 +223,8 @@ export default function SupportPage() {
         </SupportThreadFrame>
       </SupportMobileChatOverlay>
 
-      {/* Desktop split pane */}
-      <div className="surface-panel hidden min-h-[min(72vh,760px)] overflow-hidden lg:grid lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
+      {/* Desktop / laptop split pane */}
+      <div className="hidden min-h-0 flex-1 overflow-hidden rounded-2xl border border-border bg-surface-elevated lg:grid lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="flex min-h-0 flex-col border-r border-border">
           <div className="border-b border-border p-3">
             <div className="relative">
@@ -278,7 +278,7 @@ export default function SupportPage() {
           </div>
         </aside>
 
-        <section className="flex min-h-0 flex-col">
+        <section className="flex min-h-0 min-w-0 flex-col">
           {composing || active ? (
             <SupportThreadFrame
               title={threadTitle}

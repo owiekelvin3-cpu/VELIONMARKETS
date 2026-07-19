@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Archive, Pin, RotateCcw, Search, Trash2, User, HelpCircle,
+  Archive, Pin, RotateCcw, Search, Trash2, User, HelpCircle, X,
 } from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,7 @@ export default function AdminSupportPage() {
   const [noteDraft, setNoteDraft] = useState("");
   const [error, setError] = useState("");
   const [mobileDetails, setMobileDetails] = useState(false);
+  const [desktopDetailsOpen, setDesktopDetailsOpen] = useState(true);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
   const activeIdRef = useRef(activeId);
@@ -271,16 +272,16 @@ export default function AdminSupportPage() {
   };
 
   const detailsPanel = active ? (
-    <div className="space-y-5 p-4">
+    <div className="space-y-5 p-4 lg:p-5">
       <div>
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">{t("admin.userInfo")}</p>
-        <div className="surface-muted space-y-2 p-3 text-sm">
+        <div className="rounded-xl border border-border bg-surface-elevated p-3 text-sm">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-muted" />
-            <span className="font-medium">{active.user?.full_name || "—"}</span>
+            <span className="font-medium text-foreground">{active.user?.full_name || "—"}</span>
           </div>
-          <p className="text-muted">{active.user?.email}</p>
-          <p className="text-xs text-muted">{t("admin.accountId")}: {active.user_id.slice(0, 8)}…</p>
+          <p className="mt-2 text-muted">{active.user?.email}</p>
+          <p className="mt-1 text-xs text-muted">{t("admin.accountId")}: {active.user_id.slice(0, 8)}…</p>
           <p className="text-xs text-muted">{t("admin.registered")}: {active.user?.created_at ? formatDate(active.user.created_at) : "—"}</p>
           <p className="text-xs text-muted">{t("admin.kyc")}: {active.user?.kyc_status ?? "—"}</p>
           <p className="text-xs text-muted">{t("admin.lastActivity")}: {formatDate(active.last_message_at)}</p>
@@ -362,7 +363,7 @@ export default function AdminSupportPage() {
           value={noteDraft}
           onChange={(e) => setNoteDraft(e.target.value)}
           placeholder={t("admin.notePlaceholder")}
-          className="min-h-[80px] w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-base outline-none focus:ring-1 focus:ring-emerald/20"
+          className="min-h-[80px] w-full rounded-xl border border-border bg-surface-elevated px-3 py-2 text-base outline-none focus:ring-1 focus:ring-emerald/20"
         />
         <Button size="sm" className="mt-2" onClick={() => void saveNote()} disabled={!noteDraft.trim()}>
           {t("admin.addNote")}
@@ -394,9 +395,37 @@ export default function AdminSupportPage() {
     </>
   ) : null;
 
+  const conversationButton = (c: SupportConversationWithUser, dense = false) => (
+    <button
+      key={c.id}
+      type="button"
+      onClick={() => setActiveId(c.id)}
+      className={cn(
+        "w-full border-b border-border text-left transition-colors",
+        dense ? "px-4 py-3" : "px-4 py-3.5 active:bg-secondary/60",
+        c.id === activeId ? "bg-secondary/70" : "hover:bg-secondary/40"
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className={cn("flex min-w-0 items-center gap-1.5 truncate font-medium text-foreground", dense ? "text-sm" : "text-[15px]")}>
+          {c.pinned && <Pin className="h-3 w-3 shrink-0 text-gold" aria-hidden="true" />}
+          <span className="truncate">{c.user?.full_name || c.user?.email || t("common.investor")}</span>
+        </p>
+        {(c.unread_count ?? 0) > 0 && (
+          <span className="rounded-full bg-emerald px-1.5 text-[10px] font-bold text-white">{c.unread_count}</span>
+        )}
+      </div>
+      <p className={cn("truncate text-muted", dense ? "text-xs" : "text-[13px]")}>{c.subject}</p>
+      <div className="mt-1 flex items-center justify-between gap-2">
+        <SupportStatusBadge status={c.status} />
+        <span className={cn("text-muted", dense ? "text-[10px]" : "text-[11px]")}>{formatDate(c.last_message_at)}</span>
+      </div>
+    </button>
+  );
+
   return (
-    <div className="space-y-4">
-      <div className={cn(showThread && "hidden xl:block")}>
+    <div className="flex min-h-0 flex-col gap-4 lg:h-[calc(100dvh-7.5rem)] lg:min-h-[560px]">
+      <div className={cn("shrink-0", showThread && "hidden lg:block")}>
         <PageHeader
           eyebrow={t("admin.portalLabel")}
           title={t("admin.supportTitle")}
@@ -405,10 +434,10 @@ export default function AdminSupportPage() {
       </div>
 
       {error && (
-        <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</p>
+        <p className="shrink-0 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</p>
       )}
 
-      <div className={cn("flex gap-1 overflow-x-auto rounded-xl border border-border bg-secondary/30 p-1 scrollbar-none", showThread && "hidden xl:flex")}>
+      <div className={cn("flex shrink-0 gap-1 overflow-x-auto rounded-xl border border-border bg-secondary/30 p-1 scrollbar-none", showThread && "hidden lg:flex")}>
         {FILTERS.map((f) => (
           <button
             key={f}
@@ -416,7 +445,7 @@ export default function AdminSupportPage() {
             onClick={() => setFilter(f)}
             className={cn(
               "min-h-9 shrink-0 rounded-lg px-3 py-2 text-xs font-medium capitalize transition-colors",
-              filter === f ? "bg-card text-foreground shadow-sm" : "text-muted hover:text-foreground"
+              filter === f ? "bg-surface-elevated text-foreground shadow-sm" : "text-muted hover:text-foreground"
             )}
           >
             {t(`admin.supportFilter.${f}`)}
@@ -425,8 +454,8 @@ export default function AdminSupportPage() {
       </div>
 
       {/* Mobile inbox */}
-      <div className={cn("xl:hidden", showThread && "hidden")}>
-        <div className="surface-panel flex min-h-[calc(100dvh-12rem)] flex-col overflow-hidden">
+      <div className={cn("min-h-0 flex-1 lg:hidden", showThread && "hidden")}>
+        <div className="flex h-full min-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface-elevated">
           <div className="border-b border-border p-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
@@ -446,36 +475,14 @@ export default function AdminSupportPage() {
             ) : conversations.length === 0 ? (
               <p className="p-4 text-sm text-muted">{t("admin.supportEmpty")}</p>
             ) : (
-              conversations.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setActiveId(c.id)}
-                  className="w-full border-b border-border px-4 py-3.5 text-left active:bg-secondary/60"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-[15px] font-medium text-foreground">
-                      {c.pinned ? "📌 " : ""}
-                      {c.user?.full_name || c.user?.email || t("common.investor")}
-                    </p>
-                    {(c.unread_count ?? 0) > 0 && (
-                      <span className="rounded-full bg-emerald px-1.5 text-[10px] font-bold text-white">{c.unread_count}</span>
-                    )}
-                  </div>
-                  <p className="truncate text-[13px] text-muted">{c.subject}</p>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <SupportStatusBadge status={c.status} />
-                    <span className="text-[11px] text-muted">{formatDate(c.last_message_at)}</span>
-                  </div>
-                </button>
-              ))
+              conversations.map((c) => conversationButton(c))
             )}
           </div>
         </div>
       </div>
 
       {/* Mobile full-screen thread */}
-      <SupportMobileChatOverlay open={showThread} hideFrom="xl">
+      <SupportMobileChatOverlay open={showThread} hideFrom="lg">
         {active && (
           mobileDetails ? (
             <SupportThreadFrame
@@ -509,8 +516,15 @@ export default function AdminSupportPage() {
         )}
       </SupportMobileChatOverlay>
 
-      {/* Desktop / tablet split */}
-      <div className="surface-panel hidden min-h-[min(75vh,800px)] overflow-hidden xl:grid xl:grid-cols-[320px_minmax(0,1fr)_280px]">
+      {/* Desktop / laptop split — available from lg (1024px) for PC laptops */}
+      <div
+        className={cn(
+          "hidden min-h-0 flex-1 overflow-hidden rounded-2xl border border-border bg-surface-elevated lg:grid",
+          desktopDetailsOpen
+            ? "lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_300px]"
+            : "lg:grid-cols-[280px_minmax(0,1fr)]"
+        )}
+      >
         <aside className="flex min-h-0 flex-col border-r border-border">
           <div className="border-b border-border p-3">
             <div className="relative">
@@ -519,7 +533,7 @@ export default function AdminSupportPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("admin.supportSearch")}
-                className="h-10 w-full rounded-xl border border-border bg-secondary/40 pl-9 pr-3 text-base outline-none focus:ring-1 focus:ring-emerald/20"
+                className="h-10 w-full rounded-xl border border-border bg-secondary/40 pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-emerald/20"
               />
             </div>
           </div>
@@ -531,43 +545,18 @@ export default function AdminSupportPage() {
             ) : conversations.length === 0 ? (
               <p className="p-4 text-sm text-muted">{t("admin.supportEmpty")}</p>
             ) : (
-              conversations.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setActiveId(c.id)}
-                  className={cn(
-                    "w-full border-b border-border px-4 py-3 text-left transition-colors",
-                    c.id === activeId ? "bg-secondary/70" : "hover:bg-secondary/40"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {c.pinned ? "📌 " : ""}
-                      {c.user?.full_name || c.user?.email || t("common.investor")}
-                    </p>
-                    {(c.unread_count ?? 0) > 0 && (
-                      <span className="rounded-full bg-emerald px-1.5 text-[10px] font-bold text-white">{c.unread_count}</span>
-                    )}
-                  </div>
-                  <p className="truncate text-xs text-muted">{c.subject}</p>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <SupportStatusBadge status={c.status} />
-                    <span className="text-[10px] text-muted">{formatDate(c.last_message_at)}</span>
-                  </div>
-                </button>
-              ))
+              conversations.map((c) => conversationButton(c, true))
             )}
           </div>
         </aside>
 
-        <section className="flex min-h-0 flex-col border-r border-border">
+        <section className="relative flex min-h-0 min-w-0 flex-col border-r border-border xl:border-r-0">
           {active ? (
             <SupportThreadFrame
               title={active.subject}
-              subtitle={active.user?.email}
+              subtitle={active.user?.full_name || active.user?.email}
               trailing={
-                <div className="flex flex-wrap gap-1.5 pr-2">
+                <div className="flex flex-wrap items-center justify-end gap-1.5 pr-1">
                   <SupportStatusBadge status={active.status} />
                   {active.status !== "resolved" ? (
                     <Button size="sm" onClick={() => void updateConversationStatus(active.id, "resolved").then(() => void refreshList({ soft: true }))}>
@@ -579,6 +568,15 @@ export default function AdminSupportPage() {
                       {t("admin.reopen")}
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="xl:hidden"
+                    onClick={() => setDesktopDetailsOpen((v) => !v)}
+                    aria-label={t("admin.userInfo")}
+                  >
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               }
             >
@@ -587,9 +585,29 @@ export default function AdminSupportPage() {
           ) : (
             <SupportEmptyState />
           )}
+
+          {/* Laptop (lg–xl): slide-over details so the chat stays readable */}
+          {active && desktopDetailsOpen && (
+            <div className="absolute inset-y-0 right-0 z-20 flex w-[min(100%,20rem)] flex-col border-l border-border bg-surface-elevated shadow-xl xl:hidden">
+              <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+                <p className="text-sm font-semibold text-foreground">{t("admin.userInfo")}</p>
+                <button
+                  type="button"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
+                  onClick={() => setDesktopDetailsOpen(false)}
+                  aria-label={t("common.close")}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto">{detailsPanel}</div>
+            </div>
+          )}
         </section>
 
-        <aside className="min-h-0 overflow-y-auto">{detailsPanel}</aside>
+        <aside className="hidden min-h-0 overflow-y-auto border-l border-border xl:block">
+          {detailsPanel}
+        </aside>
       </div>
     </div>
   );

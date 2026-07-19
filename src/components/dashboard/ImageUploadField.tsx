@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Upload, X } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -21,16 +21,16 @@ export function ImageUploadField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
-  const handleFile = (file: File | null) => {
-    if (preview) URL.revokeObjectURL(preview);
-    if (!file) {
+  useEffect(() => {
+    if (!value) {
       setPreview(null);
-      onChange(null);
+      if (inputRef.current) inputRef.current.value = "";
       return;
     }
-    setPreview(URL.createObjectURL(file));
-    onChange(file);
-  };
+    const url = URL.createObjectURL(value);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [value]);
 
   return (
     <div>
@@ -45,7 +45,7 @@ export function ImageUploadField({
         accept="image/*"
         className="sr-only"
         required={required && !value}
-        onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+        onChange={(e) => onChange(e.target.files?.[0] ?? null)}
       />
       {preview ? (
         <div className="relative mt-2 overflow-hidden rounded-xl border border-border">
@@ -53,7 +53,7 @@ export function ImageUploadField({
           <button
             type="button"
             onClick={() => {
-              handleFile(null);
+              onChange(null);
               if (inputRef.current) inputRef.current.value = "";
             }}
             className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"

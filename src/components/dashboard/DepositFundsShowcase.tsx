@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight, Coins, ExternalLink, Gift, HelpCircle, Sparkles } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { BRAND } from "@/constants/brand";
 import { useDepositConfig } from "@/hooks/useDepositConfig";
 import { getActivePartners } from "@/lib/deposit-config";
 import type { PurchasePartner } from "@/constants/purchase-partners";
@@ -133,14 +134,14 @@ function BuyCryptoPartners() {
       badge={t("deposits.buyCryptoBadge")}
       title={t("deposits.buyCryptoTitle")}
       subtitle={t("deposits.buyCryptoDesc")}
-      stepHint={t("deposits.buyCryptoStep")}
+      stepHint={t("deposits.buyCryptoStep", { brandName: BRAND.shortName })}
     >
       {partners.map((partner) => (
         <PartnerCard key={partner.id} partner={partner} accent="emerald" />
       ))}
       <p className="flex items-start gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-xs leading-relaxed text-muted">
         <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald" aria-hidden="true" />
-        {t("deposits.buyCryptoFooter")}
+        {t("deposits.buyCryptoFooter", { brandName: BRAND.shortName })}
       </p>
     </SectionShell>
   );
@@ -158,14 +159,14 @@ function BuyGiftCardPartners() {
       badge={t("deposits.giftCardsBadge")}
       title={t("deposits.giftCardsTitle")}
       subtitle={t("deposits.giftCardsDesc")}
-      stepHint={t("deposits.giftCardsStep")}
+      stepHint={t("deposits.giftCardsStep", { brandName: BRAND.shortName })}
     >
       {partners.map((partner) => (
         <PartnerCard key={partner.id} partner={partner} accent="gold" />
       ))}
       <p className="flex items-start gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-xs leading-relaxed text-muted">
         <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" aria-hidden="true" />
-        {t("deposits.giftCardsFooter")}
+        {t("deposits.giftCardsFooter", { brandName: BRAND.shortName })}
       </p>
     </SectionShell>
   );
@@ -177,11 +178,11 @@ export function DepositFundsShowcase() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
         <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted/70">
           {t("deposits.moreOptions")}
         </span>
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
       </div>
       <BuyCryptoPartners />
       <BuyGiftCardPartners />

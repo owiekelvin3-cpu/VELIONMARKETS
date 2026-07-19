@@ -12,9 +12,9 @@ import { DashboardSheet } from "@/components/dashboard/DashboardSheet";
 import { KycRequiredGate } from "@/components/dashboard/KycRequiredGate";
 import { CryptoBrandIcon } from "@/components/dashboard/DepositIcons";
 import { FadeIn } from "@/components/motion/Motion";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { isKycApproved, formatTransactionError } from "@/lib/kyc";
+import { DEFAULT_CURRENCY } from "@/constants/currencies";
 import { Copy, Check } from "@/lib/icons";
 import { CRYPTO_ASSETS } from "@/constants/deposit-assets";
 import { useDepositConfig } from "@/hooks/useDepositConfig";
@@ -36,6 +36,7 @@ export default function CryptoDepositPage() {
   const [copied, setCopied] = useState(false);
   const [history, setHistory] = useState<Deposit[]>([]);
 
+  const accountCurrency = profile?.preferred_currency ?? DEFAULT_CURRENCY;
   const crypto = CRYPTO_ASSETS.find((c) => c.id === selected)!;
   const wallet = getCryptoWallet(depositConfig ?? getDefaultDepositConfig(), selected);
 
@@ -57,9 +58,12 @@ export default function CryptoDepositPage() {
     }
   }, [coinParam]);
 
-  useEffect(() => { loadHistory(); }, [user, loadHistory]);
+  useEffect(() => {
+    void loadHistory();
+  }, [user, loadHistory]);
 
   const copyAddress = async () => {
+    if (!wallet) return;
     await navigator.clipboard.writeText(wallet);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -72,21 +76,32 @@ export default function CryptoDepositPage() {
       setMessage(t("kyc.required"));
       return;
     }
+    const parsedAmount = parseFloat(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setMessage(t("deposits.invalidAmount"));
+      return;
+    }
+    if (!wallet) {
+      setMessage(t("deposits.walletUnavailable"));
+      return;
+    }
     setLoading(true);
     setMessage("");
     const { error } = await supabase.from("deposits").insert({
       user_id: user.id,
-      amount: parseFloat(amount),
+      amount: parsedAmount,
+      currency: accountCurrency,
       method: selected,
       status: "pending",
       notes: txHash || null,
     });
-    if (error) setMessage(formatTransactionError(error, t("deposits.submitError"), t("kyc.required")));
-    else {
+    if (error) {
+      setMessage(formatTransactionError(error, t("deposits.submitError"), t("kyc.required")));
+    } else {
       setMessage(t("deposits.submitSuccess"));
       setAmount("");
       setTxHash("");
-      loadHistory();
+      void loadHistory();
     }
     setLoading(false);
   };
@@ -100,90 +115,112 @@ export default function CryptoDepositPage() {
       />
 
       <KycRequiredGate>
-      <DashboardSheet>
-      <FadeIn className="space-y-6">
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
-          {CRYPTO_ASSETS.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setSelected(c.id)}
-              className={`rounded-xl border p-3 text-center transition-all ${
-                selected === c.id
-                  ? "border-emerald/40 bg-emerald/10"
-                  : "border-border bg-secondary/50 hover:border-border"
-              }`}
-            >
-              <CryptoBrandIcon asset={c} selected={selected === c.id} />
-              <span className="text-xs font-medium text-foreground">{c.symbol}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="rounded-2xl border border-border bg-secondary/50 p-5">
-          <p className="text-sm text-muted">{t("deposits.sendTo", { asset: crypto.label })}</p>
-          <div className="mt-3 flex items-center gap-2">
-            <code className="flex-1 truncate rounded-lg bg-secondary px-3 py-2.5 text-xs text-emerald sm:text-sm">
-              {wallet}
-            </code>
-            <Button type="button" variant="outline" size="icon" onClick={copyAddress} className="shrink-0">
-              {copied ? <Check className="h-4 w-4 text-emerald" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border bg-secondary/50 p-5">
-          <div>
-            <Label htmlFor="amount">{t("deposits.amountUsd")}</Label>
-            <Input
-              id="amount"
-              type="number"
-              min="1"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-              className="mt-2 h-11"
-            />
-          </div>
-          <div>
-            <Label htmlFor="txHash">{t("deposits.txHash")}</Label>
-            <Input
-              id="txHash"
-              value={txHash}
-              onChange={(e) => setTxHash(e.target.value)}
-              placeholder={t("deposits.txHashPlaceholder")}
-              className="mt-2 h-11"
-            />
-          </div>
-          {message && (
-            <p className={cn("text-sm", message === t("deposits.submitSuccess") ? "text-emerald" : "text-amber-400")}>
-              {message}
-            </p>
-          )}
-          <Button type="submit" className="h-11 w-full" disabled={loading}>
-            {loading ? t("deposits.submitting") : t("deposits.submitDeposit")}
-          </Button>
-        </form>
-
-        {history.length > 0 && (
-          <div className="rounded-2xl border border-border bg-secondary/50 p-5">
-            <h2 className="mb-4 font-display font-semibold text-foreground">{t("deposits.recentDeposits")}</h2>
-            <div className="space-y-3">
-              {history.map((d) => (
-                <div key={d.id} className="flex items-center justify-between text-sm">
-                  <div>
-                    <p className="font-medium">{formatCurrency(d.amount)}</p>
-                    <p className="text-xs text-muted">{d.method} · {formatDate(d.created_at)}</p>
-                  </div>
-                  <Badge variant={d.status === "completed" || d.status === "approved" ? "success" : "warning"}>{d.status}</Badge>
-                </div>
+        <DashboardSheet>
+          <FadeIn className="space-y-6">
+            <div className="grid grid-cols-4 gap-2">
+              {CRYPTO_ASSETS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelected(c.id)}
+                  className={`rounded-xl border p-3 text-center transition-all ${
+                    selected === c.id
+                      ? "border-emerald/40 bg-emerald/10"
+                      : "border-border bg-secondary/50 hover:border-border"
+                  }`}
+                >
+                  <CryptoBrandIcon asset={c} selected={selected === c.id} />
+                  <span className="text-xs font-medium text-foreground">{c.symbol}</span>
+                </button>
               ))}
             </div>
-          </div>
-        )}
-      </FadeIn>
-      </DashboardSheet>
+
+            <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+              <p className="text-sm text-muted">{t("deposits.sendTo", { asset: crypto.label })}</p>
+              <div className="mt-3 flex items-center gap-2">
+                <code className="flex-1 truncate rounded-lg bg-secondary px-3 py-2.5 text-xs text-emerald sm:text-sm">
+                  {wallet || t("deposits.walletUnavailable")}
+                </code>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => void copyAddress()}
+                  className="shrink-0"
+                  disabled={!wallet}
+                >
+                  {copied ? <Check className="h-4 w-4 text-emerald" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border bg-secondary/50 p-5">
+              <div>
+                <Label htmlFor="amount">{t("deposits.amountLabel", { currency: accountCurrency })}</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label htmlFor="txHash">{t("deposits.txHash")}</Label>
+                <Input
+                  id="txHash"
+                  value={txHash}
+                  onChange={(e) => setTxHash(e.target.value)}
+                  placeholder={t("deposits.txHashPlaceholder")}
+                  className="mt-2 h-11"
+                />
+              </div>
+              {message && (
+                <p
+                  className={cn(
+                    "text-sm",
+                    message === t("deposits.submitSuccess") ? "text-emerald" : "text-amber-400"
+                  )}
+                >
+                  {message}
+                </p>
+              )}
+              <Button type="submit" className="h-11 w-full" disabled={loading || !wallet}>
+                {loading ? t("deposits.submitting") : t("deposits.submitDeposit")}
+              </Button>
+            </form>
+
+            {history.length > 0 && (
+              <div className="rounded-2xl border border-border bg-secondary/50 p-5">
+                <h2 className="mb-4 font-display font-semibold text-foreground">
+                  {t("deposits.recentDeposits")}
+                </h2>
+                <div className="space-y-3">
+                  {history.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between text-sm">
+                      <div>
+                        <p className="font-medium">{formatCurrency(d.amount, d.currency)}</p>
+                        <p className="text-xs text-muted">
+                          {d.method} · {formatDate(d.created_at)}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={
+                          d.status === "completed" || d.status === "approved" ? "success" : "warning"
+                        }
+                      >
+                        {d.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </FadeIn>
+        </DashboardSheet>
       </KycRequiredGate>
     </div>
   );

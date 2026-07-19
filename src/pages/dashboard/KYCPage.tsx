@@ -264,7 +264,7 @@ export default function KYCPage() {
         document_url: docPath,
         selfie_url: selfiePath,
         face_captured_at: new Date().toISOString(),
-        status: "pending",
+        status: "approved",
       });
 
     let { error: insertError } = await insertOnce();
@@ -281,7 +281,7 @@ export default function KYCPage() {
       return;
     }
 
-    await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user.id);
+    await supabase.from("profiles").update({ kyc_status: "approved" }).eq("id", user.id);
     await refreshProfile();
     setFile(null);
     setSelfie(null);

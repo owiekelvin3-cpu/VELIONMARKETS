@@ -37,7 +37,6 @@ export default function DepositsPage() {
             title={t("deposits.cryptoTitle")}
             description={t("deposits.cryptoDesc")}
             iconGrid={<CryptoIconGrid size="lg" />}
-            iconRow={<CryptoIconGrid size="sm" />}
           />
 
           <DepositMethodCard
@@ -45,7 +44,6 @@ export default function DepositsPage() {
             title={t("deposits.giftCardTitle")}
             description={t("deposits.giftCardDesc")}
             iconGrid={<GiftCardIconGrid size="lg" />}
-            iconRow={<GiftCardIconGrid size="sm" />}
           />
 
           <div className="surface-muted flex gap-4 p-4">
